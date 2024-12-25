@@ -8,3 +8,6 @@ def first_circle():
 
 def second_circle():
     return render_template('secondCircle.html')
+
+def disappearing_circle():
+    return render_template('disappearingCircle.html')
