@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Home</title>
+        <script src="{{ url_for('static', filename='js/app.js')}}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+    <body>
+        <div class="main">
+            <h1>Home</h1>
+            <div class="pages">
+                <a href="{{ url_for('first_circle') }}">
+                    <div class="circle-page">
+                        <div class='img-wrapper'>
+                            <img src="{{ url_for('static', filename='imgs/firstCircle.png') }}">
+                            <div class='img-overlay'></div>
+                        </div>
+                        <h2>The First One</h2>
+                    </div>
+                </a>
+                <a href="{{ url_for('second_circle') }}">
+                    <div class="circle-page">
+                        <div class='img-wrapper'>                            
+                            <img src="{{ url_for('static', filename='imgs/secondCircle.png') }}">
+                            <div class='img-overlay'></div>
+                        </div>
+                        <h2>Gotta Move Quickly</h2>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </body>
+    <script>
+        checkPage();
+    </script>
+</html>
