@@ -71,13 +71,21 @@ function getCurrentCirclePosition($circle) {
     // Get the computed style of the circle
     const computedStyle = window.getComputedStyle($circle[0]);
     const transformMatrix = computedStyle.transform;
-  
+    let yVal = 0;
     // Extract the translateX value from the matrix
     if (transformMatrix && transformMatrix !== 'none') {
       const matrixValues = transformMatrix.match(/matrix.*\((.+)\)/)[1].split(', ');
-      return {x: parseFloat(matrixValues[4]), y: parseFloat(matrixValues[5])};
+      yVal = parseFloat(matrixValues[5]);
     }
-    return 0; // Default to 0 if no transform is applied
+    // get computed style of circle-wrapper
+    const computedStyleWrapper = window.getComputedStyle($circle.parent()[0]);
+    const transformMatrixWrapper = computedStyleWrapper.transform;
+    let xVal = 0;
+    if (transformMatrixWrapper && transformMatrixWrapper !== 'none') {
+        const matrixValuesWrapper = transformMatrixWrapper.match(/matrix.*\((.+)\)/)[1].split(', ');
+        xVal = parseFloat(matrixValuesWrapper[4]);
+    }
+    return {x: xVal, y: yVal};
   }
 
 function circleDone($circle, hit) {
@@ -88,6 +96,7 @@ function circleDone($circle, hit) {
     let circlePosition = getCurrentCirclePosition($circle);
     $circle.removeClass('slide');
     $circle.parent().removeClass('slide');
+    console.log(circlePosition);
     $circle.css('transform', `translate(${circlePosition.x}px, ${circlePosition.y}px)`);
     const color = hit ? 'green' : 'red';
     const text = hit ? 'HIT!' : 'MISS!';
