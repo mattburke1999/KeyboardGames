@@ -45,35 +45,16 @@ function getCurrentTransformScale($circle) {
     return matrix.a;
 }
 
-function circleDone($circle, hit) {
-    if ($circle.data('done') === 'true') {
-        return;
-    }
-    $circle.data('done', 'true');
-    const color = hit ? 'green' : 'red';
-    const text = hit ? 'HIT!' : 'MISS!';
+function resetCircle($circle, hit) {
     if(!hit) {
         $circle.css('transform', 'scale(1)');
     } else {
         let currentScale = getCurrentTransformScale($circle);
         $circle.css('transform', `scale(${currentScale})`);
     }
-    $circle.css('borderColor', color); 
-    $circle.css('color', color);
-    $circle.css('backgroundColor', 'white');
-    $circle.text(text);
-    if (!hit) { $circle.css('fontSize', '1.1rem'); }
-    setTimeout(function() {
-        $circle.remove();
-    }, 500);
 }
-
-
+function clearCircle($circle) { $circle.remove(); }
 
 function clearCircles() {
-    $('.circle').each(function() {
-        if ($(this).id !== 'circle-template') {
-            $(this).remove();
-        }
-    });
+    $('.circle').each(function() { clearCircle($(this)); });
 }

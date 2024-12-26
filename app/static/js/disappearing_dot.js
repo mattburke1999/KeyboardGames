@@ -48,30 +48,13 @@ function copyCircle() {
     }, 4500);
 }
 
-function circleDone($circle, hit) {
-    if ($circle.data('done') === 'true') {
-        return;
-    }
-    $circle.data('done', 'true');
-    const color = hit ? 'green' : 'red';
-    const text = hit ? 'HIT!' : 'MISS!';
-    $circle.css('borderColor', color); 
-    $circle.css('color', color);
-    $circle.css('backgroundColor', 'white');
-    $circle.text(text);
-    if (!hit) { $circle.css('fontSize', '1.1rem'); }
-    setTimeout(function() {
-        $circle.remove();
-    }, 500);
-}
+function resetCircle(_) { return; }
 
-
+function clearCircle($circle) { $circle.remove(); }
 
 function clearCircles() {
     $('.circle').each(function() {
-        if ($(this).id !== 'circle-template') {
-            $(this).remove();
-        }
+        clearCircle($(this));
     });
     clearInterval(dotInterval);
 }

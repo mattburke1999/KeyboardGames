@@ -88,29 +88,20 @@ function getCurrentCirclePosition($circle) {
     return {x: xVal, y: yVal};
   }
 
-function circleDone($circle, hit) {
-    if ($circle.data('done') === 'true') {
-        return;
-    }
-    $circle.data('done', 'true');
+
+
+function resetCircle($circle) {
     let circlePosition = getCurrentCirclePosition($circle);
     $circle.removeClass('slide');
     $circle.parent().removeClass('slide');
-    console.log(circlePosition);
     $circle.css('transform', `translate(${circlePosition.x}px, ${circlePosition.y}px)`);
-    const color = hit ? 'green' : 'red';
-    const text = hit ? 'HIT!' : 'MISS!';
-    $circle.css('borderColor', color); 
-    $circle.css('color', color);
-    $circle.css('backgroundColor', 'white');
-    $circle.text(text);
-    if (!hit) { $circle.css('fontSize', '1.1rem'); }
-    setTimeout(function() {
-        $circle.css('borderColor', 'transparent');
-        $circle.css('backgroundColor', 'transparent');
-        $circle.text('');
-        displayedCircles.splice(displayedCircles.indexOf($circle.parent().attr('id')), 1);
-    }, 500);
+}
+
+function clearCircle($circle) {
+    $circle.css('borderColor', 'transparent');
+    $circle.css('backgroundColor', 'transparent');
+    $circle.text('');
+    displayedCircles.splice(displayedCircles.indexOf($circle.parent().attr('id')), 1);
 }
 
 function clearCircles() {

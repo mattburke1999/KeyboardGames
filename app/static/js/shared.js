@@ -166,3 +166,21 @@ function finishGame(timer) {
         window.location.reload();
     });
 }
+
+function circleDone($circle, hit) {
+    if ($circle.data('done') === 'true') {
+        return;
+    }
+    $circle.data('done', 'true');
+    const color = hit ? 'green' : 'red';
+    const text = hit ? 'HIT!' : 'MISS!';
+    resetCircle($circle, hit);
+    $circle.css('borderColor', color); 
+    $circle.css('color', color);
+    $circle.css('backgroundColor', 'white');
+    $circle.text(text);
+    if (!hit) { $circle.css('fontSize', '1.1rem'); }
+    setTimeout(function() {
+        clearCircle($circle);
+    }, 500);
+}

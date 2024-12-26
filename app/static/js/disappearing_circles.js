@@ -53,30 +53,12 @@ function copyCircle() {
     }, 8000);
 }
 
-function circleDone($circle, hit) {
-    if ($circle.data('done') === 'true') {
-        return;
-    }
-    $circle.data('done', 'true');
-    const color = hit ? 'green' : 'red';
-    const text = hit ? 'HIT!' : 'MISS!';
-    $circle.css('borderColor', color); 
-    $circle.css('color', color);
-    $circle.css('backgroundColor', 'white');
-    $circle.text(text);
-    if (!hit) { $circle.css('fontSize', '1.1rem'); }
+function resetCircle($circle) {
     clearInterval($circle.data('disappearingInterval'));
-    setTimeout(function() {
-        $circle.remove();
-    }, 500);
 }
 
-
+function clearCircle($circle) { $circle.remove(); }
 
 function clearCircles() {
-    $('.circle').each(function() {
-        if ($(this).id !== 'circle-template') {
-            $(this).remove();
-        }
-    });
+    $('.circle').each(function() { clearCircle($(this)); });
 }
