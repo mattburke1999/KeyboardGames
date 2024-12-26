@@ -1,5 +1,5 @@
 const numCircles = 25;
-const storageName = 'dotGame-highScore2';
+const storageName = 'dotGame-highScore-secondCircle';
 const allCircles = [];
 const displayedCircles = [];
 createCircles();

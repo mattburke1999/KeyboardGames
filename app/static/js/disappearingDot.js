@@ -1,5 +1,5 @@
 
-const storageName = 'dotGame-highScore1';
+const storageName = 'dotGame-highScore-disappearingDot';
 
 let dotInterval;
 function gameStarter() {

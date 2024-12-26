@@ -1,5 +1,5 @@
 
-const storageName = 'dotGame-highScore3';
+const storageName = 'dotGame-highScore-disappearingCircle';
 
 function gameStarter() {
     startGame(copyCircle, 1000);
