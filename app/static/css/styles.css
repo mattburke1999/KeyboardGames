@@ -28,6 +28,7 @@ body {
     width: 100%;
     gap: 3rem;
     flex-wrap: wrap;
+    margin-bottom: 4rem;
 }
 .circle-page {
     width: 100%;

@@ -7,7 +7,10 @@ def home():
     return render_template('index.html', games=game_results[1][1], game_info=game_results[1][0])
 
 def game_view(game):
-    game_info = get_game_info(game)
+    game_info_results = get_game_info(game)
+    game_info = game_info_results[1]['game_info']
+    if not game_info:
+        return render_template('404.html'), 404
     if game_info['basic_circle_template']:
         return basic_circle_template(game, game_info)
     return render_template(f'{game}.html', game_info=game_info)

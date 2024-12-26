@@ -28,5 +28,9 @@ def get_games():
 
 def get_game_info(game):
     if not GAME_INFO:
-        get_games()
-    return GAME_INFO[game]
+        games_result = get_games()
+        if not games_result[0]:
+            return (False, None)
+    if game not in GAME_INFO:
+        return (True, {'game_info': None})
+    return (True, {'game_info': GAME_INFO[game]})

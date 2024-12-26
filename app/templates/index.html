@@ -10,7 +10,7 @@
             <h1>Home</h1>
             <div class="pages">
                 {% for game in games %}
-                    <a href="{{ url_for(game) }}">
+                    <a href="/games/{{ game }}">
                         <div class="circle-page">
                             <div class='img-wrapper'>
                                 <img src="{{ url_for('static', filename='imgs/' + game +'.png') }}">
