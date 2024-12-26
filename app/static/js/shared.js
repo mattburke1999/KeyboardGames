@@ -110,7 +110,7 @@ function dotEnteredCircle($circle) {
     circleDone($circle, true);
 }
 
-function startGame(intervalFunc, interval) {
+function startGame(intervalFunc, intervalFuncInterval, intervalFuncActions, interval) {
     console.log('Starting game!');
     let countDown = 3;
     $('#instructions').css('display', 'none');
@@ -126,7 +126,7 @@ function startGame(intervalFunc, interval) {
             $('#score-card').css('display', 'flex');
             intervalFunc();
             circleInterval = setInterval(function() {
-                intervalFunc();
+                intervalFunc(intervalFuncInterval, intervalFuncActions);
             }, interval);
             startTimer();
         }
@@ -183,4 +183,36 @@ function circleDone($circle, hit) {
     setTimeout(function() {
         clearCircle($circle);
     }, 500);
+}
+
+function game_action(timeout, extra_actions) {
+    const $circleTemplate = $('#circle-template');
+    const $circle = $circleTemplate.clone(true);
+    // apply a random position on the screen
+    $circle.css('left', Math.floor(Math.random() * window.innerWidth) + 'px');
+    $circle.css('top', Math.floor(Math.random() * window.innerHeight) + 'px');
+    // display the circle
+    $circle.css('display', 'flex');
+    $circle.data('pointAdded', 'false');
+    $circle.data('done', 'false');
+    $circle.appendTo('body');
+
+    if (extra_actions) {
+        extra_actions($circle);
+    }
+    
+    document.addEventListener('keydown', function(event) {
+        event.stopPropagation();
+        if (event.key === ' ' && $circle.data('done') !== 'true') {
+            checkDotInsideCircle(event, $circle);
+        }
+    });
+
+    // Automatically remove the circle
+    setTimeout(function () {
+        document.removeEventListener('keydown', checkDotInsideCircle);
+        if ($circle.data('done') !== 'true') {
+            circleDone($circle, false);
+        }
+    }, timeout);
 }
