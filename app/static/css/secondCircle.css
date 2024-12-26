@@ -15,22 +15,11 @@ body {
     left: 0;
 }
 
+
 .circle {
-    display: flex;
-    width: 60px;
-    height: 60px;
-    background-color: transparent;
-    border: 3px solid transparent;
-    border-radius: 50%;
-    z-index: 5;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-weight: 900;
-    font-size: 1.2rem;
-    justify-self: center; 
-    align-self: center;   
+  border-color: transparent;
+  justify-self: center; 
+  align-self: center;   
 }
 
 .circle-wrapper.slide {
