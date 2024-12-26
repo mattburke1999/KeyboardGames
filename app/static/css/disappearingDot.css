@@ -1,0 +1,29 @@
+body {
+    background: linear-gradient(145deg, #64ff45, #e90bfd);
+}
+
+.circle {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-color: transparent;
+    border: 3px solid white;
+    border-radius: 50%;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 900;
+    font-size: 1.2rem;
+}
+
+.game-title {
+    color: #8ff8da;
+    text-emphasis-style: dot;
+}
+.game-title::after {
+    content: 'Disappearing Dot';
+    text-emphasis-style: dot;
+}

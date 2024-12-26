@@ -3,6 +3,7 @@ from views import home as home_view
 from views import first_circle as first_circle_view
 from views import second_circle as second_circle_view
 from views import disappearing_circle as disappearing_circle_view
+from views import disappearing_dot as disappearing_dot_view
 
 app = Flask(__name__)
 
@@ -21,3 +22,7 @@ def second_circle():
 @app.route('/games/disappearing-circle', methods=['GET'])
 def disappearing_circle():
     return disappearing_circle_view()
+
+@app.route('/games/disappearing-dot', methods=['GET'])
+def disappearing_dot():
+    return disappearing_dot_view()

@@ -11,3 +11,6 @@ def second_circle():
 
 def disappearing_circle():
     return render_template('disappearingCircle.html')
+
+def disappearing_dot():
+    return render_template('disappearingDot.html')

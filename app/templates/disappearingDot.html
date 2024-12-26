@@ -1,0 +1,12 @@
+{% extends 'game_template.html' %}
+{% block title %}Disappearing Dot{% endblock %}
+{% block script %}
+    <script src="{{ url_for('static', filename='js/disappearingDot.js') }}" defer></script>
+{% endblock %}
+{% block style %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/disappearingDot.css') }}">
+{% endblock %}
+{% block game_title %}Disappearing Dot{% endblock %}
+{% block game_content %}
+    <div id="circle-template" class="circle"></div>
+{% endblock %}
