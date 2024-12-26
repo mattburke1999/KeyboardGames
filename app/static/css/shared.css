@@ -188,3 +188,18 @@ button:hover {
     font-weight: 900;
     font-size: 1.2rem;
 }
+
+
+.circle.shrink {
+    animation: shrinkAnimation 6s linear;
+}
+
+
+@keyframes shrinkAnimation {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(0);
+    }
+}

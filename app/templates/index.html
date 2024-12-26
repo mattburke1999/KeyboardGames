@@ -9,51 +9,17 @@
         <div class="main">
             <h1>Home</h1>
             <div class="pages">
-                <a href="{{ url_for('first_circle') }}">
-                    <div class="circle-page">
-                        <div class='img-wrapper'>
-                            <img src="{{ url_for('static', filename='imgs/firstCircle.png') }}">
-                            <div class='img-overlay'></div>
+                {% for game in games %}
+                    <a href="{{ url_for(game) }}">
+                        <div class="circle-page">
+                            <div class='img-wrapper'>
+                                <img src="{{ url_for('static', filename='imgs/' + game +'.png') }}">
+                                <div class='img-overlay'></div>
+                            </div>
+                            <h2>{{ game_info[game].title }}</h2>
                         </div>
-                        <h2>The First One</h2>
-                    </div>
-                </a>
-                <a href="{{ url_for('second_circle') }}">
-                    <div class="circle-page">
-                        <div class='img-wrapper'>                            
-                            <img src="{{ url_for('static', filename='imgs/secondCircle.png') }}">
-                            <div class='img-overlay'></div>
-                        </div>
-                        <h2>Gotta Move Quickly</h2>
-                    </div>
-                </a>
-                <a href="{{ url_for('disappearing_circle') }}">
-                    <div class="circle-page">
-                        <div class='img-wrapper'>
-                            <img src="{{ url_for('static', filename='imgs/disappearingCircle.png') }}">
-                            <div class='img-overlay'></div>
-                        </div>
-                        <h2>Disappearing Circles</h2>
-                    </div>
-                </a>
-                <a href="{{ url_for('disappearing_dot') }}">
-                    <div class="circle-page">
-                        <div class='img-wrapper'>
-                            <img src="{{ url_for('static', filename='imgs/disappearingDot.png') }}">
-                            <div class='img-overlay'></div>
-                        </div>
-                        <h2>Disappearing Dot</h2>
-                    </div>
-                </a>
-                <a href="{{ url_for('shrinking_circle') }}">
-                    <div class="circle-page">
-                        <div class='img-wrapper'>
-                            <img src="{{ url_for('static', filename='imgs/shrinkingCircle.png') }}">
-                            <div class='img-overlay'></div>
-                        </div>
-                        <h2>Shrinking Circles</h2>
-                    </div>
-                </a>
+                    </a>
+                {% endfor %}
             </div>
         </div>
     </body>

@@ -1,19 +1,16 @@
 from flask import render_template
+from services import get_games
+from services import get_game_info
 
 def home():
-    return render_template('index.html')
+    game_results = get_games()
+    return render_template('index.html', games=game_results[1][1], game_info=game_results[1][0])
 
-def first_circle():
-    return render_template('firstCircle.html')
+def game_view(game):
+    game_info = get_game_info(game)
+    if game_info['basic_circle_template']:
+        return basic_circle_template(game, game_info)
+    return render_template(f'{game}.html', game_info=game_info)
 
-def second_circle():
-    return render_template('secondCircle.html')
-
-def disappearing_circle():
-    return render_template('disappearingCircle.html')
-
-def disappearing_dot():
-    return render_template('disappearingDot.html')
-
-def shrinking_circle():
-    return render_template('shrinkingCircle.html')
+def basic_circle_template(game, game_info):
+    return render_template('basic_circle_template.html', game=game, game_info=game_info)

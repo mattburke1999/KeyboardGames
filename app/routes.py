@@ -1,10 +1,6 @@
 from flask import Flask
 from views import home as home_view
-from views import first_circle as first_circle_view
-from views import second_circle as second_circle_view
-from views import disappearing_circle as disappearing_circle_view
-from views import disappearing_dot as disappearing_dot_view
-from views import shrinking_circle as shrinking_circle_view
+from views import game_view
 
 app = Flask(__name__)
 
@@ -13,21 +9,21 @@ def home():
     return home_view()
 
 @app.route('/games/the-first-one', methods=['GET'])
-def first_circle():
-    return first_circle_view()
+def first_one():
+    return game_view('first_one')
 
-@app.route('/games/gotta-move-quickly', methods=['GET'])
-def second_circle():
-    return second_circle_view()
+@app.route('/games/gotta-move-fast', methods=['GET'])
+def gotta_move_fast():
+    return game_view('gotta_move_fast')
 
-@app.route('/games/disappearing-circle', methods=['GET'])
-def disappearing_circle():
-    return disappearing_circle_view()
+@app.route('/games/disappearing-circles', methods=['GET'])
+def disappearing_circles():
+    return game_view('disappearing_circles')
 
 @app.route('/games/disappearing-dot', methods=['GET'])
 def disappearing_dot():
-    return disappearing_dot_view()
+    return game_view('disappearing_dot')
 
-@app.route('/games/shrinking-circle', methods=['GET'])
-def shrinking_circle():
-    return shrinking_circle_view()
+@app.route('/games/shrinking-circles', methods=['GET'])
+def shrinking_circles():
+    return game_view('shrinking_circles')
