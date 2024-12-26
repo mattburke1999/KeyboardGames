@@ -14,3 +14,6 @@ def disappearing_circle():
 
 def disappearing_dot():
     return render_template('disappearingDot.html')
+
+def shrinking_circle():
+    return render_template('shrinkingCircle.html')

@@ -4,6 +4,7 @@ from views import first_circle as first_circle_view
 from views import second_circle as second_circle_view
 from views import disappearing_circle as disappearing_circle_view
 from views import disappearing_dot as disappearing_dot_view
+from views import shrinking_circle as shrinking_circle_view
 
 app = Flask(__name__)
 
@@ -26,3 +27,7 @@ def disappearing_circle():
 @app.route('/games/disappearing-dot', methods=['GET'])
 def disappearing_dot():
     return disappearing_dot_view()
+
+@app.route('/games/shrinking-circle', methods=['GET'])
+def shrinking_circle():
+    return shrinking_circle_view()
