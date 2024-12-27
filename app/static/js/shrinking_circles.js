@@ -2,7 +2,6 @@
 const storageName = 'dotGame-highScore-shrinkingCircle';
 
 function gameStarter() {
-    // startGame(copyCircle, shrinkCircle, 7000, 1000);
     startGame({
         intervalFunction: {
             function: clone_circle,
