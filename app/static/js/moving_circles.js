@@ -1,0 +1,1 @@
+const storageName = 'dotGame-highScore-movingCircles';

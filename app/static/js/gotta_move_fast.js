@@ -17,7 +17,13 @@ function createCircles() {
 }
 
 function gameStarter() {
-    startGame(game_action, null, null, 890);
+    startGame({
+        intervalFunction: {
+            function: display_circles,
+            inputs: {},
+        },
+        interval: 890
+    });
 }
 
 function randomAmplitude(upAndDown=false) {
@@ -32,7 +38,7 @@ function randomAmplitude(upAndDown=false) {
 }
 
 
-function game_action() {
+function display_circles() {
     //create a list of circles in allCircles but not in displayedCircles
     const hiddenCircles = allCircles.filter((circle) => !displayedCircles.includes(circle));
     console.log(displayedCircles.length)

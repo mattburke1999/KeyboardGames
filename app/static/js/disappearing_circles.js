@@ -2,7 +2,13 @@
 const storageName = 'dotGame-highScore-disappearingCircle';
 
 function gameStarter() {
-    startGame(game_action, 8000, setCircleDisappearingInterval, 1000);
+    startGame({
+        intervalFunction: {
+            function: clone_circle,
+            inputs: {timeout: 8000, extra_actions: setCircleDisappearingInterval},
+        },
+        interval: 1000
+    });
 }
 
 

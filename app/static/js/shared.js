@@ -109,8 +109,15 @@ function dotEnteredCircle($circle) {
     // Perform a specific action for this circle
     circleDone($circle, true);
 }
-
-function startGame(intervalFunc, intervalFuncInterval, intervalFuncActions, interval) {
+//intervalFunc, intervalFuncInterval, intervalFuncActions, interval
+// startGame({
+//     intervalFunction: {
+//         function: game_action,
+//         inputs: {interval: 4500, actions: null},
+//     },
+//     interval: 500
+// });
+function startGame({intervalFunction, interval}) {
     console.log('Starting game!');
     let countDown = 3;
     $('#instructions').css('display', 'none');
@@ -124,9 +131,9 @@ function startGame(intervalFunc, intervalFuncInterval, intervalFuncActions, inte
             clearInterval(countdownInterval);
             $('#starting').css('display', 'none');
             $('#score-card').css('display', 'flex');
-            intervalFunc(intervalFuncInterval, intervalFuncActions);
+            intervalFunction.function(intervalFunction.inputs);
             circleInterval = setInterval(function() {
-                intervalFunc(intervalFuncInterval, intervalFuncActions);
+                intervalFunction.function(intervalFunction.inputs);
             }, interval);
             startTimer();
         }
@@ -185,7 +192,7 @@ function circleDone($circle, hit) {
     }, 500);
 }
 
-function game_action(timeout, extra_actions) {
+function clone_circle({timeout, extra_actions}) {
     const $circleTemplate = $('#circle-template');
     const $circle = $circleTemplate.clone(true);
     // apply a random position on the screen
