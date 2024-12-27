@@ -124,7 +124,7 @@ function startGame(intervalFunc, intervalFuncInterval, intervalFuncActions, inte
             clearInterval(countdownInterval);
             $('#starting').css('display', 'none');
             $('#score-card').css('display', 'flex');
-            intervalFunc();
+            intervalFunc(intervalFuncInterval, intervalFuncActions);
             circleInterval = setInterval(function() {
                 intervalFunc(intervalFuncInterval, intervalFuncActions);
             }, interval);
