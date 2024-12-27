@@ -52,6 +52,21 @@ h1, p, h2 {
     border-radius: 50%;
     z-index: 10;
 }
+#dot.disappear {
+    animation: dotDisappear 2.5s infinite;
+}
+
+@keyframes dotDisappear {
+    0% {
+        background-color: black;
+    }
+    80% {
+        background-color: transparent;
+    }
+    100% {
+        background-color: black;
+    }    
+}
 button {
     font-family: 'Courier New', Courier, monospace;
     font-size: 1.25rem;
@@ -187,6 +202,21 @@ button:hover {
     text-align: center;
     font-weight: 900;
     font-size: 1.2rem;
+}
+.circle.disappear {
+    animation: disappearAnimation 1.5s infinite;
+}
+
+@keyframes disappearAnimation {
+    0% {
+        border-color: white;
+    }
+    66% {
+        border-color: transparent;
+    }
+    100% {
+        border-color: white;
+    }
 }
 
 
