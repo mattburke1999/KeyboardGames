@@ -17,3 +17,6 @@ def game_view(game):
 
 def basic_circle_template(game, game_info):
     return render_template('basic_circle_template.html', game=game, game_info=game_info)
+
+def login_view(page):
+    return render_template('login.html', page=page)

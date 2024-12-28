@@ -88,3 +88,13 @@ a {
     text-decoration: none;
     width: max(325px, 20%);
 }
+.auth-btns {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 20;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+}

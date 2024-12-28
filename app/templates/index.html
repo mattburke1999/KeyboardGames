@@ -2,11 +2,21 @@
 <html>
     <head>
         <title>Home</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="{{ url_for('static', filename='js/app.js')}}"></script>
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/button_style.css') }}">
     </head>
     <body>
         <div class="main">
+            <div class='auth-btns'>
+                {% if not logged_in %}
+                    <button onClick="window.location.href='/login'">Login</button>
+                    <button onClick="window.location.href='/register'">Register</button>
+                {% else %}
+                    <button onClick="logout()">Logout</button>
+                {% endif %}
+            </div>
             <h1>Home</h1>
             <div class="pages">
                 {% for game in games %}

@@ -1,0 +1,20 @@
+
+button {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.25rem;
+    font-weight: 800;
+    padding: 0.5rem 1rem;
+    border: 2px solid white;
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+    transition: transform 0.3s ease-in-out;
+    border-radius: 5px;
+}
+button:hover {
+    background-color: white;
+    color: black;
+    transform: scale(1.05);
+    box-shadow: 0 0 7.5px rgb(0 0 0 / 75%);
+}
