@@ -31,16 +31,20 @@ def enter_game_room(data):
     duration = float(duration_result[1])
     GAME_ROOMS[user_id] = {'game_id': game_id, 'duration': duration}
     join_room(user_id)
-    return {'success': True}
+    return {'success': True, 'duration': duration}
 
 def timer_for_game(user_id, game_id, duration, end_game_token):
+    global GAME_ROOMS
+    sleep(3) # 3 for start countdown
+    GAME_ROOMS[user_id]['game_started'] = True # points are only accepted if game has started
     sleep(duration)
     emit_end_game(user_id, game_id, end_game_token)
         
 def emit_end_game(user_id, game_id, end_game_token):
+    global GAME_ROOMS
+    GAME_ROOMS[user_id]['game_started'] = False
     emit('end_game', {'game_id': game_id, 'end_game_token': end_game_token}, room=user_id)    
     
-
 @socketio.on('start_game')
 def start_game(data):
     global GAME_ROOMS
