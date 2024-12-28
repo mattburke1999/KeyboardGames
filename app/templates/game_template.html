@@ -13,6 +13,8 @@
     {% block style %}{% endblock %}
 </head>
 <body>
+    <input type="hidden" id='start_game_token' value='' />
+    <input type="hidden" id='end_game_token' value='' />
     <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
     <div id="dot"></div>
     <div id="instructions">
@@ -59,4 +61,8 @@
     </div>
     {% block game_content %}{% endblock %}
 </body>
+<script>
+    const gameId = {{ game.id }};
+    const GAME_DURATION = {{ game.duration }};
+</script>
 </html>

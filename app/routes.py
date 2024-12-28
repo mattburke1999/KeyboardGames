@@ -7,6 +7,7 @@ from views import check_unique_register_input_view
 from views import register_view
 from views import login_view
 from views import logout_view
+from views import get_user_id_view
 
 app = Flask(__name__)
 
@@ -50,3 +51,7 @@ def unique_username():
 def unique_email():
     data = request.get_json()
     return check_unique_register_input_view('email', data['email'])
+
+@app.route('/current_user', methods=['GET'])
+def current_user():
+    return get_user_id_view()

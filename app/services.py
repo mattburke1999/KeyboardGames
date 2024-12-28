@@ -39,6 +39,12 @@ def get_games():
             }
     return (True, (GAME_INFO, GAMES))
 
+def get_user_id():
+    if 'logged_in' in session and session['logged_in'] and 'user_id' in session and session['user_id']:
+        return (True, {'logged_in': True, 'user_id': session['user_id']})
+    return (True, {'logged_in': False, 'user_id': None})
+    
+
 def create_user(first_name, last_name, username, email, password):
     register_result = db_create_user(first_name, last_name, username, email, password)
     if not register_result[0]:

@@ -23,15 +23,15 @@ GAME_ROOMS = {}
 @socketio.on('enter_game_room')
 def enter_game_room(data):
     global GAME_ROOMS
-    game_id = data['game_id']
-    user_id = data['user_id']
+    game_id = data['gameId']
+    user_id = data['userId']
     duration_result = get_game_duration(game_id)
     if not duration_result[0]:
         return {'success': False, 'message': 'Error getting game duration'}
     duration = float(duration_result[1])
     GAME_ROOMS[user_id] = {'game_id': game_id, 'duration': duration}
     join_room(user_id)
-    return {'success': True, 'duration': duration}
+    return {'success': True, 'message': 'Successfully entered game room'}
 
 def timer_for_game(user_id, game_id, duration, end_game_token):
     global GAME_ROOMS
@@ -43,7 +43,7 @@ def timer_for_game(user_id, game_id, duration, end_game_token):
 def emit_end_game(user_id, game_id, end_game_token):
     global GAME_ROOMS
     GAME_ROOMS[user_id]['game_started'] = False
-    emit('end_game', {'game_id': game_id, 'end_game_token': end_game_token}, room=user_id)    
+    emit('end_game', {'end_game_token': end_game_token}, room=user_id)    
     
 @socketio.on('start_game')
 def start_game(data):

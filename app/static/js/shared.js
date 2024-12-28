@@ -1,11 +1,58 @@
 const pressedKeys = {};
 let animationFrame;
-const GAME_DURATION = 60; // seconds
 
 const $dot = $('#dot');
 const dotWidth = parseInt($dot.outerWidth());
 const dotHeight = parseInt($dot.outerHeight());
 let circleInterval;
+let socket;
+let loggedIn = false;
+let enteredGameRoom = false;
+
+connectSocket();
+
+function getUserId() {
+    $.ajax({
+        url: '/current_user', 
+        type: 'GET',
+        contentType: 'application/json',
+        success: function(response) {
+            console.log(response);
+            return response;
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
+}
+
+
+function connectSocket() {
+    loggedIn, userId = getUserId();
+    if (!loggedIn) {
+        // notify user that they are not logged in
+        // if they want their scores to be saved, they need to log in
+        enteredGameRoom = false;
+        return;
+    }
+    localStorage.setItem('userId', userId);
+    console.log("Creating socket");
+    socket = io({transports: ['websocket']});
+    //emit 'enter_game_room' event and receieve response from same event
+    socket.emit('enter_game_room', {userId, gameId}, (response) => {
+        if (response.success) {
+            console.log(response.message);
+            enteredGameRoom = true;
+        } else {
+            console.error(response.message);
+            enteredGameRoom = false;
+            // Notify user that there was an error conneting to server, reload page to try again
+            // otherwise results will not be saved
+        }
+    });
+
+}
+
 
 function handleMovement() {
     let currentOffsetTop = parseInt($dot.css('top'));
@@ -61,8 +108,13 @@ function startTimer() {
         timeLeft--;
         $('#time').text(timeLeft);
         if (timeLeft === 0) {
-            finishGame(timer);
             clearInterval(timer);
+            if (enteredGameRoom) {
+                finishGame();
+            } else {
+                // socket listener will handle finishing the game
+                return;
+            }
         }
     }, 1000);
 }
@@ -110,9 +162,26 @@ function dotEnteredCircle($circle) {
     circleDone($circle, true);
 }
 
+async function startGameServer(userId) {
+    socket.emit('start_game', {userId, gameId}, (response) => {
+        if (!response.success) {
+            enteredGameRoom = false;
+            console.error(response.message);
+            // Notify user that there was an error starting the game
+        } else {
+            console.log(response.message);
+            $('#start_game_token').val(response.start_game_token);
+        }
+    });
+}
+
 function startGame({intervalFunction, interval}) {
     console.log('Starting game!');
     let countDown = 3;
+    if (enteredGameRoom) {
+        userId = localStorage.getItem('userId');
+        startGameServer(userId);
+    }s
     $('#instructions').css('display', 'none');
     $('#starting').css('display', 'flex');
     const countdownInterval = setInterval(function() {
@@ -154,8 +223,24 @@ function checkDotInsideCircle(event, $circle) {
     }
 }
 
-function finishGame(timer) {
-    clearInterval(timer);
+function endGameSocketListener(socket) {
+    socket.on('end_game', (response) => {
+        finishGameFromSocket(response.end_game_token);
+    });
+}
+
+function finishGameFromSocket(end_game_token) {
+    clearInterval(circleInterval);
+    $('#dot').css('display', 'none');
+    clearCircles();
+    $('#timer').css('display', 'none');
+    $('#end_game_token').val(end_game_token);
+    setHighScoreServer();
+}
+
+function setHighScoreServer() {}
+
+function finishGame() {
     clearInterval(circleInterval);
     $('#dot').css('display', 'none');
     clearCircles();

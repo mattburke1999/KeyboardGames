@@ -6,6 +6,7 @@ from services import check_unique_register_input
 from services import create_user
 from services import try_login
 from services import logout
+from services import get_user_id
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
@@ -44,3 +45,7 @@ def login_view(username, password):
 def logout_view():
     logout()
     return json_result((True, {}))
+
+def get_user_id_view():
+    result = get_user_id()
+    return json_result(result)
