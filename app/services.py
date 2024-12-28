@@ -1,5 +1,9 @@
 from db import get_games as db_get_games
+from db import check_unique_register_input as db_check_unique_register_input
+from db import create_user as db_create_user
+from db import check_user as db_check_user
 from flask import session
+import bcrypt
 
 
 GAME_INFO = {}
@@ -35,6 +39,32 @@ def get_games():
             }
     return (True, (GAME_INFO, GAMES))
 
+def create_user(first_name, last_name, username, email, password):
+    register_result = db_create_user(first_name, last_name, username, email, password)
+    if not register_result[0]:
+        session['logged_in'] = False
+        session['user_id'] = None
+        return (False, None)
+    session['logged_in'] = True
+    session['user_id'] = int(register_result[1])
+    return (True, {'registered': True})
+
+def try_login(username, password):
+    result = db_check_user(username)
+    if not result[0]:
+        return (False, None)
+    if result[1]:
+        user_id, hashed_password = result[1]
+        if bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)):
+            session['logged_in'] = True
+            session['user_id'] = user_id
+            return (True, {'logged_in': True})
+    return (True, {'logged_in': False})
+
+def logout():
+    session['logged_in'] = False
+    session['user_id'] = None
+
 def check_login():
     return 'logged_in' in session and session['logged_in']
 
@@ -59,3 +89,9 @@ def get_game_duration(game_id):
     if duration is None:
         return (False, None)
     return (True, duration)
+
+def check_unique_register_input(type, value):
+    result = db_check_unique_register_input(type, value)
+    if not result[0]:
+        return (False, None)
+    return (True, {'unique': result[1]})

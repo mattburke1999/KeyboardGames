@@ -19,19 +19,24 @@
             <form>
                 <input type='text' name='username' placeholder='Username'>
                 <input type='password' name='password' placeholder='Password'>
-                <button onClick="login()">Login</button>
+                <button onClick="login(event)">Login</button>
             </form>
             <h2>Don't have an account? <span onClick="showForm('register')">Register</span></h2>
         </div>
         <div class='auth-form' id='register-form'>
             <h1>Register</h1>
             <form>
-                <input type='text' name='username' placeholder='Username'>
-                <input type='email' name='email' placeholder='Email'>
+                <p class='invalid-input' id='username-unique'>Username already taken</p>
+                <input type='text' name='username' id='username' placeholder='Username'>
+                <p class='invalid-input' id='email-unique'>Email already taken</p>
+                <p class='invalid-input' id='email-invalid'>Invalid email</p>
+                <input type='email' name='email' id='email' placeholder='Email'>
                 <input type='text' name='first_name' placeholder='First Name'>
                 <input type='text' name='last_name' placeholder='Last Name'>
-                <input type='password' name='password' placeholder='Password'>
-                <button onClick="register()">Register</button>
+                <input type='password' name='password' id='password' placeholder='Password'>
+                <p class='invalid-input' id='password-mismatch'>Passwords do not match</p>
+                <input type='password' id='confirm-password' placeholder='Confirm Password'>
+                <button onClick="register(event)">Register</button>
             </form>
             <h2>Already have an account? <span onClick="showForm('login')">Login</span></h2>
         </div>

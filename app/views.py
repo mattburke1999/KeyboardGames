@@ -1,6 +1,14 @@
 from flask import render_template
+from flask import jsonify
 from services import get_home_page_data
 from services import get_game_info
+from services import check_unique_register_input
+from services import create_user
+from services import try_login
+from services import logout
+
+def json_result(result):
+        return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
 
 def home():
     home_page_results = get_home_page_data()
@@ -18,5 +26,21 @@ def game_view(game):
 def basic_circle_template(game, game_info):
     return render_template('basic_circle_template.html', game=game, game_info=game_info)
 
-def login_view(page):
+def auth_view(page):
     return render_template('login.html', page=page)
+
+def check_unique_register_input_view(type, value):
+    result = check_unique_register_input(type, value)
+    return json_result(result)
+
+def register_view(first_name, last_name, username, email, password):
+    result = create_user(first_name, last_name, username, email, password)
+    return json_result(result)
+
+def login_view(username, password):
+    result = try_login(username, password)
+    return json_result(result)
+
+def logout_view():
+    logout()
+    return json_result((True, {}))
