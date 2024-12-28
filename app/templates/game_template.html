@@ -6,7 +6,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ceviche+One&family=Fugaz+One&family=Itim&family=Monoton&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Special+Elite&display=swap" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="{{ url_for('static', filename='js/shared.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
     {% block script %}{% endblock %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/games.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/button_style.css') }}">
@@ -14,7 +14,6 @@
 </head>
 <body>
     <input type="hidden" id='start_game_token' value='' />
-    <input type="hidden" id='end_game_token' value='' />
     <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
     <div id="dot"></div>
     <div id="instructions">

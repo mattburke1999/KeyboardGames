@@ -234,11 +234,34 @@ function finishGameFromSocket(end_game_token) {
     $('#dot').css('display', 'none');
     clearCircles();
     $('#timer').css('display', 'none');
-    $('#end_game_token').val(end_game_token);
-    setHighScoreServer();
+    setHighScoreServer(end_game_token);
+    $('#game-over').css('display', 'flex');
+    $('#restart').on('click', function() {
+        window.location.reload();
+    });
 }
 
-function setHighScoreServer() {}
+function setHighScoreServer(end_game_token) {
+    const score = parseInt($('#score').text());
+    const start_game_token = $('#start_game_token').val();
+    $.ajax({
+        url: `/game/${gameId}/score_update`,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({start_game_token, end_game_token, score}),
+        success: function(response) {
+            console.log(response);
+            const highScoreList = $('#high-score ol');
+            response.high_scores.forEach(function(item) {
+                let styling = '';
+                highScoreList.append(`<li ${styling}>${item.username} - ${item.score} (${item.date})</li>`);
+            });
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
+}
 
 function finishGame() {
     clearInterval(circleInterval);

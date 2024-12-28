@@ -8,6 +8,7 @@ from views import register_view
 from views import login_view
 from views import logout_view
 from views import get_user_id_view
+from views import score_update_view
 
 app = Flask(__name__)
 
@@ -55,3 +56,8 @@ def unique_email():
 @app.route('/current_user', methods=['GET'])
 def current_user():
     return get_user_id_view()
+
+@app.route('/game/<game_id>/score_update', methods=['POST'])
+def score_update(game_id):
+    data = request.get_json()
+    return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'])

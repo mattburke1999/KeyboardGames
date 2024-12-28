@@ -2,8 +2,10 @@ from db import get_games as db_get_games
 from db import check_unique_register_input as db_check_unique_register_input
 from db import create_user as db_create_user
 from db import check_user as db_check_user
+from db import update_score as db_update_score
 from flask import session
 import bcrypt
+from sockets import GAME_ROOMS
 
 
 GAME_INFO = {}
@@ -101,3 +103,30 @@ def check_unique_register_input(type, value):
     if not result[0]:
         return (False, None)
     return (True, {'unique': result[1]})
+
+def validate_game(user_id, start_game_token, end_game_token):
+    global GAME_ROOMS
+    game = GAME_ROOMS.get(user_id, None)
+    if game is None or 'start_game_token' not in game or 'end_game_token' not in game:
+        return (False, {'error': 'No game found for user'})
+    return (game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token, None)
+
+def score_update(game_id, score, start_game_token, end_game_token):
+    user_id = session['user_id']
+    validation_result = validate_game(user_id, start_game_token, end_game_token)
+    if not validation_result[0]:
+        return (False, validation_result[1])
+    update_result = db_update_score(user_id, game_id, score)
+    if not update_result[0]:
+        return (False, update_result[1])
+    top10 = [{
+        'username': res[0],
+        'score': res[1],
+        'date': res[2]
+        } for res in update_result[1] if res[3] == 'top10']
+    top3 = [{
+        'score': res[1],
+        'date': res[2]
+        } for res in update_result[1] if res[3] == 'top3']
+    return (True, {'top10': top10, 'top3': top3})
+    
