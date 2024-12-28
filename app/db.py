@@ -19,4 +19,3 @@ def get_games():
     except:
         traceback.print_exc()
         return (False, None)
-            

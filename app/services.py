@@ -27,6 +27,7 @@ def get_games():
     return (True, (GAME_INFO, GAMES))
 
 def get_game_info(game):
+    global GAME_INFO
     if not GAME_INFO:
         games_result = get_games()
         if not games_result[0]:
@@ -34,3 +35,15 @@ def get_game_info(game):
     if game not in GAME_INFO:
         return (True, {'game_info': None})
     return (True, {'game_info': GAME_INFO[game]})
+
+def get_game_duration(game_id):
+    global GAME_INFO
+    if not GAME_INFO:
+        games_result = get_games()
+        if not games_result[0]:
+            return (False, None)
+    # find the set element with the matching id
+    duration = next((value['duration'] for _, value in GAME_INFO.items() if value['id'] == game_id), None)
+    if duration is None:
+        return (False, None)
+    return (True, duration)
