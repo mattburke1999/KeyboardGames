@@ -15,7 +15,8 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100%;
+    height: fit-content;
+    min-height: 100vh;
     width: 100%;
     background-color: #000;
     position: relative;
@@ -31,7 +32,8 @@ body {
     padding: 1rem;
     border: 2px solid #b4b4b4;
     border-radius: 10px;
-    background-color: #4c4c4c;;
+    background-color: #4c4c4c;
+    margin-bottom: 3rem;
 }
 form {
     display: flex;
@@ -67,16 +69,6 @@ input::placeholder {
     display: none;
 }
 
-.site-name {
-    font-family: "Fugaz One", serif;
-    color: #0075e2;
-    font-size: 3.5rem;
-    box-shadow: 0 0 7.5px rgb(255 255 255);
-    padding: .5rem .75rem;
-    border-radius: 5px;
-    text-shadow: 3px 3px rgb(0 255 242 / 75%);
-    background-color: #1d1d1d;
-}
 .back-btn {
     position: absolute;
     top: 10px;
