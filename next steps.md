@@ -1,4 +1,18 @@
-## 1. Game Start:
+## 1. User Clicks Game
+
+**Frontend:**
+- requests user_id through websocket
+    - if not logged in, show message saying scores won't be saved unless logged in
+    - otherwise skip everything else
+- Sends a 'enter_game_room' socket event to server to join game room
+    - includes user id and game id
+    - recieves duration to use for game timer
+
+**Server:**
+- Joins game room with user id and game id
+- responds with duration
+
+## 2. Game Start:
 
 **Frontend:**
 - Sends a game_start socket event to the server to initiate a new game session.
@@ -7,14 +21,14 @@
 - Creates a game session, starts a timer for the game duration, and issues a start game token.
 - Responds to the frontend with the start token, which the frontend stores for later use.
 
-## 2. Game Timer:
+## 3. Game Timer:
 
 **Server:**
 - Tracks the game duration with an internal timer.
 - Sends an end game token to the frontend when the game timer expires.
 - Prevents further points from being accepted after the timer ends.
 
-## 3. Point Events:
+## 4. Point Events:
 
 **Frontend:**
 - stores current timestamp for point
@@ -30,14 +44,14 @@
     - Stops the game by sending an end_game event to the frontend.
     - Flags the user account for review.
 
-## 4. Game End:
+## 5. Game End:
 
 **Frontend:**
 - Stores the end game token when received.
 - Sends a final HTTP request (or socket event) to submit the game result, including:
 - The start token, end token, and list of point tokens/timestamps.
 
-## 5. Score Validation and Update:
+## 6. Score Validation and Update:
 
 **Server:**
 - Validates:
