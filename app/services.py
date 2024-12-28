@@ -1,7 +1,16 @@
 from db import get_games as db_get_games
+from flask import session
+
 
 GAME_INFO = {}
 GAMES = []
+
+def get_home_page_data():
+    games_result = get_games()
+    if not games_result[0]:
+        return (False, None)
+    logged_in = check_login()
+    return (True, {'games': games_result[1][1], 'game_info': games_result[1][0], 'logged_in': logged_in})
 
 def get_games():
     global GAME_INFO
@@ -25,6 +34,9 @@ def get_games():
                 'basic_circle_template': game[9]
             }
     return (True, (GAME_INFO, GAMES))
+
+def check_login():
+    return 'logged_in' in session and session['logged_in']
 
 def get_game_info(game):
     global GAME_INFO

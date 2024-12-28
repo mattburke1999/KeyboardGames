@@ -1,10 +1,10 @@
 from flask import render_template
-from services import get_games
+from services import get_home_page_data
 from services import get_game_info
 
 def home():
-    game_results = get_games()
-    return render_template('index.html', games=game_results[1][1], game_info=game_results[1][0])
+    home_page_results = get_home_page_data()
+    return render_template('index.html', games=home_page_results[1]['games'], game_info=home_page_results[1]['game_info'], logged_in=home_page_results[1]['logged_in'])
 
 def game_view(game):
     game_info_results = get_game_info(game)
