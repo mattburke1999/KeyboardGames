@@ -21,8 +21,10 @@ def user_disconnects():
 GAME_ROOMS = {}
 
 @socketio.on('enter_game_room')
-def enter_game_room(user_id, game_id):
+def enter_game_room(data):
     global GAME_ROOMS
+    game_id = data['game_id']
+    user_id = data['user_id']
     duration_result = get_game_duration(game_id)
     if not duration_result[0]:
         return {'success': False, 'message': 'Error getting game duration'}
@@ -40,8 +42,10 @@ def emit_end_game(user_id, game_id, end_game_token):
     
 
 @socketio.on('start_game')
-def start_game(user_id, game_id):
+def start_game(data):
     global GAME_ROOMS
+    game_id = data['game_id']
+    user_id = data['user_id']
     if user_id not in GAME_ROOMS:
         return {'success': False, 'message': 'User not in game room'}
     if GAME_ROOMS[user_id]['game_id'] != game_id:
