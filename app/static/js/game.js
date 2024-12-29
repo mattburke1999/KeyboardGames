@@ -11,28 +11,44 @@ let enteredGameRoom = false;
 
 connectSocket();
 
-function getUserId() {
-    $.ajax({
-        url: '/current_user', 
-        type: 'GET',
-        contentType: 'application/json',
-        success: function(response) {
-            console.log(response);
-            return response;
-        },
-        error: function(error) {
-            console.log(error);
-        }
+function fetchUserId() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: '/current_user',
+            type: 'GET',
+            contentType: 'application/json',
+            success: function(response) {
+                resolve(response);
+            },
+            error: function(error) {
+                reject(error);
+            }
+        });
     });
 }
 
+// Usage with async/await
+async function getUserId() {
+    try {
+        let response = await fetchUserId();
+        console.log(response);
+        return {logged_in: response.logged_in, userId: response.user_id};
+    } catch (error) {
+        console.error(error);
+        return false, null;
+    }
+}
 
-function connectSocket() {
-    loggedIn, userId = getUserId();
+
+async function connectSocket() {
+    let { logged_in, userId } = await getUserId();
+    loggedIn = logged_in;
+    console.log(loggedIn, userId);
     if (!loggedIn) {
         // notify user that they are not logged in
         // if they want their scores to be saved, they need to log in
         enteredGameRoom = false;
+        console.log("User not logged in");
         return;
     }
     localStorage.setItem('userId', userId);
@@ -163,7 +179,7 @@ function dotEnteredCircle($circle) {
 }
 
 async function startGameServer(userId) {
-    socket.emit('start_game', {userId, gameId}, (response) => {
+    socket.emit('start_game', {user_id: userId, game_id: gameId}, (response) => {
         if (!response.success) {
             enteredGameRoom = false;
             console.error(response.message);
@@ -181,7 +197,7 @@ function startGame({intervalFunction, interval}) {
     if (enteredGameRoom) {
         userId = localStorage.getItem('userId');
         startGameServer(userId);
-    }s
+    }
     $('#instructions').css('display', 'none');
     $('#starting').css('display', 'flex');
     const countdownInterval = setInterval(function() {
