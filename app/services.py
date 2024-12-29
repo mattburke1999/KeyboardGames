@@ -5,8 +5,10 @@ from db import check_user as db_check_user
 from db import update_score as db_update_score
 from flask import session
 import bcrypt
+from threading import Lock
 
 GAME_ROOMS = {}
+GAME_ROOMS_LOCK = Lock()
 GAME_INFO = {}
 GAMES = []
 
@@ -105,7 +107,8 @@ def check_unique_register_input(type, value):
 
 def validate_game(user_id, start_game_token, end_game_token):
     global GAME_ROOMS
-    game = GAME_ROOMS.get(str(user_id), None)
+    with GAME_ROOMS_LOCK:
+        game = GAME_ROOMS.get(str(user_id), None)
     if game is None or 'start_game_token' not in game or 'end_game_token' not in game:
         return (False, {'error': 'No game found for user'})
     return (game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token, None)
