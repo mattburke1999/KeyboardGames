@@ -96,7 +96,7 @@ BEGIN
         LIMIT 3)
     ) AS s
     JOIN accounts a ON a.id = s.account_id
-    ORDER BY s.score DESC;
+    ORDER BY s.score DESC, s.score_date deSC;
 
 END;
 $BODY$;
