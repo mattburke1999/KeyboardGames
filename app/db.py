@@ -37,7 +37,7 @@ def get_games():
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute('SELECT id, title, title_style, title_color, bg_rot, bg_color1, bg_color2, abbrev_name, duration, basic_circle_template from games')
+                cur.execute('SELECT id, title, title_style, title_color, bg_rot, bg_color1, bg_color2, abbrev_name, duration, basic_circle_template from games order by id')
                 return (True, cur.fetchall())
     except:
         traceback.print_exc()
