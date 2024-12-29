@@ -83,7 +83,7 @@ BEGIN
         (SELECT s.id, s.score, s.score_date, s.account_id, 'top10'::character varying AS score_type
         FROM scores s
         WHERE s.game_id = _game_id
-        ORDER BY s.score asc
+        ORDER BY s.score desc
         LIMIT 10)
 
         UNION ALL
@@ -92,10 +92,11 @@ BEGIN
         FROM scores s
         WHERE s.game_id = _game_id
           AND s.account_id = _account_id
-        ORDER BY s.score asc
+        ORDER BY s.score desc
         LIMIT 3)
     ) AS s
-    JOIN accounts a ON a.id = s.account_id;
+    JOIN accounts a ON a.id = s.account_id
+    ORDER BY s.score DESC;
 
 END;
 $BODY$;
