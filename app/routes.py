@@ -40,7 +40,6 @@ def register():
 @app.route('/register', methods=['POST'])
 def register_post():
     data = request.get_json()['formData']
-    print(data)
     return register_view(data['first_name'], data['last_name'], data['username'], data['email'], data['password'])
 
 @app.route('/unique_username', methods=['POST'])

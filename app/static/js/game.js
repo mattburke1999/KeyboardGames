@@ -1,6 +1,6 @@
 const pressedKeys = {};
 let animationFrame;
-
+const dbVersion = 1;
 const $dot = $('#dot');
 const dotWidth = parseInt($dot.outerWidth());
 const dotHeight = parseInt($dot.outerHeight());
@@ -73,7 +73,6 @@ async function connectSocket() {
             // otherwise results will not be saved
         }
     });
-
 }
 
 
@@ -136,9 +135,9 @@ function startTimer() {
                 console.log('Finshing game on client side');
                 finishGame();
             } else {
-                // socket listener will handle finishing the game
+                // socket listener handles finishing the game
                 console.log('Finishing game on server side');
-                // TODO: add a loading screen here later
+                // add a 3 second timer, if the server does not finish the game, finish it manually on client side
                 return;
             }
         }
@@ -176,18 +175,44 @@ function setHighScore(score) {
 }
 
 async function addPointToServer() {
-    let {logged_in, userId} = await getUserId();
+    let { logged_in, userId } = await getUserId();
     if (!logged_in) {
         enteredGameRoom = false;
         loggedIn = false;
         return;
     }
     console.log('Adding point to server');
-    socket.emit('point_added', {user_id: userId, game_id: gameId}, (response) => {
+    
+    socket.emit('point_added', { user_id: userId, game_id: gameId }, (response) => {
         console.log(response);
-        let pointList = JSON.parse(localStorage.getItem('pointList'));
-        pointList.push({pointToken: response.point_token, point_time: new Date().toISOString()});
-        localStorage.setItem('keyboard-games-pointList', JSON.stringify(pointList));
+
+        // Open IndexedDB and add the point
+        const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
+
+        dbRequest.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction('points', 'readwrite');
+            const store = transaction.objectStore('points');
+
+            // Add the new point to IndexedDB
+            const point = {
+                point_token: response.point_token,
+                point_time: new Date().toISOString(),
+            };
+            const addRequest = store.put(point);
+
+            addRequest.onsuccess = () => {
+                console.log('Point successfully added to IndexedDB:', point);
+            };
+
+            addRequest.onerror = (error) => {
+                console.error('Failed to add point to IndexedDB:', error);
+            };
+        };
+
+        dbRequest.onerror = (event) => {
+            console.error('Failed to open IndexedDB:', event.target.error);
+        };
     });
 }
 
@@ -207,6 +232,39 @@ function dotEnteredCircle($circle) {
     circleDone($circle, true);
 }
 
+function resetPointListInDB() {
+    const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
+
+    dbRequest.onupgradeneeded = (event) => {
+        const db = event.target.result;
+    
+        // Check if the object store exists
+        if (!db.objectStoreNames.contains('points')) {
+            db.createObjectStore('points', { keyPath: 'point_token' });
+            console.log('Created "points" object store in IndexedDB.');
+        }
+    };
+
+    dbRequest.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction('points', 'readwrite');
+        const store = transaction.objectStore('points');
+
+        // Clear the existing point list
+        const clearRequest = store.clear();
+        clearRequest.onsuccess = () => {
+            console.log('Point list reset in IndexedDB.');
+        };
+        clearRequest.onerror = () => {
+            console.error('Failed to reset point list in IndexedDB.');
+        };
+    };
+
+    dbRequest.onerror = (event) => {
+        console.error('Failed to open IndexedDB:', event.target.error);
+    };
+}
+
 async function startGameServer(userId) {
     socket.emit('start_game', {user_id: userId, game_id: gameId}, (response) => {
         if (!response.success) {
@@ -217,7 +275,7 @@ async function startGameServer(userId) {
             console.log(response.message);
             $('#start_game_token').val(response.start_game_token);
             // create a new list for point tokens to be added to
-            localStorage.setItem('pointList', JSON.stringify([]));
+            resetPointListInDB();
         }
     });
 }
@@ -283,13 +341,41 @@ function finishGameFromSocket(end_game_token) {
     $('#dot').css('display', 'none');
     clearCircles();
     $('#timer').css('display', 'none');
+    // TODO: add a loading screen here later
     setHighScoreServer(end_game_token);
 }
 
-function setHighScoreServer(end_game_token) {
+async function getFinalPointListFromDB() {
+    return new Promise((resolve, reject) => {
+        const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
+
+        dbRequest.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction('points', 'readonly');
+            const store = transaction.objectStore('points');
+
+            const getAllRequest = store.getAll();
+
+            getAllRequest.onsuccess = () => {
+                resolve(getAllRequest.result); // Returns the list of points
+            };
+
+            getAllRequest.onerror = (error) => {
+                reject(error); // Handles any errors during retrieval
+            };
+        };
+
+        dbRequest.onerror = (event) => {
+            reject(event.target.error); // Handles errors opening the database
+        };
+    });
+}
+
+async function setHighScoreServer(end_game_token) {
     const score = parseInt($('#score').text());
     const start_game_token = $('#start_game_token').val();
-    const pointList = JSON.parse(localStorage.getItem('keyboard-games-pointList'));
+    const pointList = await getFinalPointListFromDB();
+    console.log(pointList);
     $.ajax({
         url: `/game/${gameId}/score_update`,
         type: 'POST',
@@ -315,6 +401,7 @@ function setHighScoreServer(end_game_token) {
         },
         error: function(error) {
             console.log(error);
+            // add some error message to the user
         }
     });
 }

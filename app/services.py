@@ -6,6 +6,8 @@ from db import update_score as db_update_score
 from flask import session
 import bcrypt
 from threading import Lock
+from datetime import datetime
+from datetime import timedelta
 
 GAME_ROOMS = {}
 GAME_ROOMS_LOCK = Lock()
@@ -24,7 +26,6 @@ def get_games():
     global GAMES
     if len(GAMES) == 0:
         game_results = db_get_games()
-        print(game_results)
         if not game_results[0]:
             return (False, None)
         for game in game_results[1]:
@@ -106,16 +107,28 @@ def check_unique_register_input(type, value):
     return (True, {'unique': result[1]})
 
 def validate_points(server_point_list, client_point_list, score):
+    print('Server points:')
+    print(server_point_list)
+    print('Client points:')
+    print(client_point_list)
+    print(f'Score: {score}')
+    latency_tolerance = timedelta(seconds=0.25)
     if len(server_point_list) < len(client_point_list) or score > len(server_point_list) or score > len(client_point_list):
         return (False, {'error': 'Too many points submitted'})
     for point in client_point_list:
         # point: {'point_token': point_token, 'point_time': point_time}
-        if not any(p['point_token'] == point['point_token'] 
-                # TODO: add checking the point time, but will need to add some buffer for latency
-                # for now we will just validate the token
-                #    and p['point_time'] == point['point_time']
-                   for p in server_point_list):
+        server_matching_point = next((p for p in server_point_list if p['point_token'] == point['point_token']), None)
+        if not server_matching_point:
             return (False, {'error': 'Invalid point submitted'})
+        try:
+            server_time = datetime.fromisoformat(server_matching_point['point_time'])
+            client_time = datetime.fromisoformat(point['point_time'])
+        except ValueError:
+            return (False, {'error': 'Invalid time format submitted'})
+
+        # Validate time difference within latency tolerance
+        if abs(server_time - client_time) > latency_tolerance:
+            return (False, {'error': 'Invalid point time submitted'})
     return (True, {'points': len(server_point_list)})       
 
 def validate_game(user_id, start_game_token, end_game_token, score, point_list):

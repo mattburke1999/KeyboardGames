@@ -8,6 +8,7 @@ from services import GAME_ROOMS_LOCK
 import threading
 import uuid
 from datetime import datetime
+from datetime import timezone
 
 socketio = SocketIO()
 
@@ -92,6 +93,6 @@ def point_added(data):
             print(f'Game ended for user {user_id}')
             return {'success': False, 'message': 'Game ended'}
         point_token = str(uuid.uuid4())
-        point_time = datetime.now().isoformat()
+        point_time = datetime.now(timezone.utc).isoformat()
         GAME_ROOMS[str(user_id)]['point_list'].append({'point_token': point_token, 'point_time': point_time})
     return {'success': True, 'point_token': point_token, 'message': 'Point added'}
