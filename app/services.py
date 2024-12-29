@@ -123,11 +123,13 @@ def score_update(game_id, score, start_game_token, end_game_token):
     top10 = [{
         'username': res[0],
         'score': res[1],
-        'date': res[2].strftime('%m/%d/%Y')
+        'date': res[2].strftime('%m/%d/%Y'),
+        'current_score': res[4]
         } for res in update_result[1] if res[3] == 'top10']
     top3 = [{
         'score': res[1],
-        'date': res[2].strftime('%m/%d/%Y')
+        'date': res[2].strftime('%m/%d/%Y'),
+        'current_score': res[4]
         } for res in update_result[1] if res[3] == 'top3']
     return (True, {'top10': top10, 'top3': top3})
     

@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION update_scores(
 	_account_id integer,
 	_game_id integer,
 	_score integer)
-    RETURNS TABLE(username character varying, score integer, score_date date, score_type character varying) 
+    RETURNS TABLE(username character varying, score integer, score_date date, score_type character varying, current_score boolean) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -47,6 +47,7 @@ CREATE OR REPLACE FUNCTION update_scores(
 AS $BODY$
 DECLARE
     _save_score BOOLEAN;
+    _inserted_score_id INTEGER;
 BEGIN
     -- 1. Check if the score qualifies for saving
     SELECT 
@@ -71,14 +72,15 @@ BEGIN
     -- 2. Save the score if it qualifies
     IF _save_score THEN
         INSERT INTO scores (account_id, game_id, score)
-        VALUES (_account_id, _game_id, _score);
+        VALUES (_account_id, _game_id, _score)
+        RETURNING id INTO _inserted_score_id;
     END IF;
 
     -- 3. Return the results
     RETURN QUERY
-    SELECT a.username, s.score, s.score_date::date, s.score_type
+    SELECT a.username, s.score, s.score_date::date, s.score_type, s.id = _inserted_score_id AS current_score
     FROM (
-        (SELECT s.score, s.score_date, s.account_id, 'top10'::character varying AS score_type
+        (SELECT s.id, s.score, s.score_date, s.account_id, 'top10'::character varying AS score_type
         FROM scores s
         WHERE s.game_id = _game_id
         ORDER BY s.score asc
@@ -86,7 +88,7 @@ BEGIN
 
         UNION ALL
 
-        (SELECT s.score, s.score_date, s.account_id, 'top3'::character varying AS score_type
+        (SELECT s.id, s.score, s.score_date, s.account_id, 'top3'::character varying AS score_type
         FROM scores s
         WHERE s.game_id = _game_id
           AND s.account_id = _account_id
