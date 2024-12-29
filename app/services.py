@@ -105,7 +105,7 @@ def check_unique_register_input(type, value):
 
 def validate_game(user_id, start_game_token, end_game_token):
     global GAME_ROOMS
-    game = GAME_ROOMS.get(user_id, None)
+    game = GAME_ROOMS.get(str(user_id), None)
     if game is None or 'start_game_token' not in game or 'end_game_token' not in game:
         return (False, {'error': 'No game found for user'})
     return (game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token, None)
@@ -115,17 +115,19 @@ def score_update(game_id, score, start_game_token, end_game_token):
     validation_result = validate_game(user_id, start_game_token, end_game_token)
     if not validation_result[0]:
         return (False, validation_result[1])
+    print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
     update_result = db_update_score(user_id, game_id, score)
     if not update_result[0]:
         return (False, update_result[1])
+    # format date as mm/dd/yyyy
     top10 = [{
         'username': res[0],
         'score': res[1],
-        'date': res[2]
+        'date': res[2].strftime('%m/%d/%Y')
         } for res in update_result[1] if res[3] == 'top10']
     top3 = [{
         'score': res[1],
-        'date': res[2]
+        'date': res[2].strftime('%m/%d/%Y')
         } for res in update_result[1] if res[3] == 'top3']
     return (True, {'top10': top10, 'top3': top3})
     
