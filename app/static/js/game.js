@@ -156,7 +156,7 @@ function setHighScore(score) {
             localStorage.setItem(storageName, JSON.stringify(highScores));
         }
     }
-    const highScoreList = $('#high-score ol');
+    const highScoreList = $('#high-score-offline ol');
     let currentAdded = false;
     highScores.forEach(function(item) {
         let styling = '';
@@ -268,11 +268,16 @@ function setHighScoreServer(end_game_token) {
         data: JSON.stringify({start_game_token, end_game_token, score}),
         success: function(response) {
             console.log(response);
-            const highScoreList = $('#high-score ol');
+            const highScoreListTop10 = $('#top10');
             response.top10.forEach(function(item) {
                 let styling = '';
-                highScoreList.append(`<li ${styling}>${item.username} - ${item.score} (${item.date})</li>`);
+                highScoreListTop10.append(`<li ${styling}>${item.username} - ${item.score} (${item.date})</li>`);
             });
+            const highScoreListTop3 = $('#top3');
+            response.top3.forEach(function(item) {
+                highScoreListTop3.append(`<li>${item.score} (${item.date})</li>`);
+            });
+            $('#high-score-online').css('display', 'flex');
             $('#game-over').css('display', 'flex');
             $('#restart').on('click', function() {
                 window.location.reload();

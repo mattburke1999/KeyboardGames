@@ -53,9 +53,16 @@
     <div id="game-over">
         <h1>Game Over</h1>
         <p>Final Score: <span id="final-score">0</span></p>
-        <div id="high-score">
+        <div class='high-score' id="high-score-offline">
             <h2>High Scores</h2>
             <ol></ol>
+        </div>
+        <div class='high-score' id="high-score-online">
+            <h2>All High Scores</h2>
+            <ol id='top10'></ol>
+            <div class='line-break'></div>
+            <h2>Personal High Scores</h2>
+            <ol id='top3'></ol>
         </div>
         <button id="restart">Restart</button>
     </div>
