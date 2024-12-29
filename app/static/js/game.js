@@ -197,10 +197,6 @@ async function startGameServer(userId) {
 function startGame({intervalFunction, interval}) {
     console.log('Starting game!');
     let countDown = 3;
-    if (enteredGameRoom) {
-        userId = localStorage.getItem('userId');
-        startGameServer(userId);
-    }
     $('#instructions').css('display', 'none');
     $('#starting').css('display', 'flex');
     const countdownInterval = setInterval(function() {
@@ -217,6 +213,10 @@ function startGame({intervalFunction, interval}) {
                 intervalFunction.function(intervalFunction.inputs);
             }, interval);
             startTimer();
+            if (enteredGameRoom) {
+                userId = localStorage.getItem('userId');
+                startGameServer(userId);
+            }
         }
     }, 1000);
 }
@@ -270,12 +270,13 @@ function setHighScoreServer(end_game_token) {
             console.log(response);
             const highScoreListTop10 = $('#top10');
             response.top10.forEach(function(item) {
-                let styling = '';
+                let styling = item.current_score ? 'style="color: white; font-weight: bold;"' : '';
                 highScoreListTop10.append(`<li ${styling}>${item.username} - ${item.score} (${item.date})</li>`);
             });
             const highScoreListTop3 = $('#top3');
             response.top3.forEach(function(item) {
-                highScoreListTop3.append(`<li>${item.score} (${item.date})</li>`);
+                let styling = item.current_score ? 'style="color: white; font-weight: bold;"' : '';
+                highScoreListTop3.append(`<li ${styling}>${item.score} (${item.date})</li>`);
             });
             $('#high-score-online').css('display', 'flex');
             $('#game-over').css('display', 'flex');

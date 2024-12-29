@@ -34,7 +34,6 @@ def enter_game_room(data):
 
 def timer_for_game(user_id, game_id, duration, end_game_token):
     global GAME_ROOMS
-    socketio.sleep(5) # 3 for start countdown + loading time
     GAME_ROOMS[str(user_id)]['game_started'] = True # points are only accepted if game has started
     print(f'Starting timer for user {user_id} in game {game_id}')
     socketio.sleep(duration)
