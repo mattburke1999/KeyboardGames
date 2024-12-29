@@ -7,6 +7,7 @@ from services import GAME_ROOMS
 from services import GAME_ROOMS_LOCK
 import threading
 import uuid
+from datetime import datetime
 
 socketio = SocketIO()
 
@@ -37,11 +38,12 @@ def enter_game_room(data):
 def timer_for_game(user_id, game_id, duration, end_game_token):
     global GAME_ROOMS
     with GAME_ROOMS_LOCK:
-        GAME_ROOMS[str(user_id)]['game_started'] = True # points are only accepted if game has started
+        GAME_ROOMS[str(user_id)]['game_running'] = True # points are only accepted if game has started
+        GAME_ROOMS[str(user_id)]['point_list'] = []
     print(f'Starting timer for user {user_id} in game {game_id}')
     socketio.sleep(duration)
     with GAME_ROOMS_LOCK:
-        GAME_ROOMS[str(user_id)]['game_started'] = False
+        GAME_ROOMS[str(user_id)]['game_running'] = False
     emit_end_game(user_id, game_id, end_game_token)
         
 def emit_end_game(user_id, game_id, end_game_token):
@@ -69,3 +71,27 @@ def start_game(data):
     print('Starting timer thread')
     threading.Thread(target=timer_for_game, args=(user_id, game_id, GAME_ROOMS[str(user_id)]['duration'], GAME_ROOMS[str(user_id)]['end_game_token'])).start()
     return {'success': True, 'start_game_token': start_game_token, 'message': 'Game started'}
+
+@socketio.on('point_added')
+def point_added(data):
+    global GAME_ROOMS
+    game_id = data['game_id']
+    user_id = data['user_id']
+    print(f'Adding point for user {user_id} in game {game_id}')
+    with GAME_ROOMS_LOCK:
+        if str(user_id) not in GAME_ROOMS.keys():
+            print(f'User {user_id} not in game room')
+            return {'success': False, 'message': 'User not in game room'}
+        if GAME_ROOMS[str(user_id)]['game_id'] != game_id:
+            print(f'Incorrect game room for user {user_id}')
+            return {'success': False, 'message': 'Incorrect game room'}
+        if 'point_list' not in GAME_ROOMS[str(user_id)] or 'game_running' not in GAME_ROOMS[str(user_id)]:
+            print(f'Game not started for user {user_id}')
+            return {'success': False, 'message': 'Game not started'}
+        if 'game_running' in GAME_ROOMS[str(user_id)] and not GAME_ROOMS[str(user_id)]['game_running']:
+            print(f'Game ended for user {user_id}')
+            return {'success': False, 'message': 'Game ended'}
+        point_token = str(uuid.uuid4())
+        point_time = datetime.now().isoformat()
+        GAME_ROOMS[str(user_id)]['point_list'].append({'point_token': point_token, 'point_time': point_time})
+    return {'success': True, 'point_token': point_token, 'message': 'Point added'}

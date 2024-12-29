@@ -60,4 +60,4 @@ def current_user():
 @app.route('/game/<game_id>/score_update', methods=['POST'])
 def score_update(game_id):
     data = request.get_json()
-    return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'])
+    return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'], data['pointList'])

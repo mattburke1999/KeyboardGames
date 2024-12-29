@@ -29,14 +29,20 @@ function fetchUserId() {
 
 // Usage with async/await
 async function getUserId() {
-    try {
-        let response = await fetchUserId();
-        console.log(response);
-        return {logged_in: response.logged_in, userId: response.user_id};
-    } catch (error) {
-        console.error(error);
-        return false, null;
+    let userId = localStorage.getItem('keyboard-games-userId');
+    if (!loggedIn || !userId) {
+        try {
+            let response = await fetchUserId();
+            console.log(response);
+            localStorage.setItem('keyboard-games-userId', response.user_id);
+            loggedIn = response.logged_in;
+            return {logged_in: response.logged_in, userId: response.user_id};
+        } catch (error) {
+            console.error(error);
+            return false, null;
+        }
     }
+    return {logged_in: true, userId};
 }
 
 
@@ -132,6 +138,7 @@ function startTimer() {
             } else {
                 // socket listener will handle finishing the game
                 console.log('Finishing game on server side');
+                // TODO: add a loading screen here later
                 return;
             }
         }
@@ -168,12 +175,31 @@ function setHighScore(score) {
     });
 }
 
+async function addPointToServer() {
+    let {logged_in, userId} = await getUserId();
+    if (!logged_in) {
+        enteredGameRoom = false;
+        loggedIn = false;
+        return;
+    }
+    console.log('Adding point to server');
+    socket.emit('point_added', {user_id: userId, game_id: gameId}, (response) => {
+        console.log(response);
+        let pointList = JSON.parse(localStorage.getItem('pointList'));
+        pointList.push({pointToken: response.point_token, point_time: new Date().toISOString()});
+        localStorage.setItem('keyboard-games-pointList', JSON.stringify(pointList));
+    });
+}
+
 function dotEnteredCircle($circle) {
     console.log('Dot entered this circle!');
     if ($circle.data('pointAdded') === 'true') {
         return;
     }
     $circle.data('pointAdded', 'true');
+    if (enteredGameRoom) {
+        addPointToServer();
+    }
     let currentScore = parseInt($('#score').text());
     $('#score').text(currentScore + 1);
     $('#final-score').text(currentScore + 1);
@@ -190,6 +216,8 @@ async function startGameServer(userId) {
         } else {
             console.log(response.message);
             $('#start_game_token').val(response.start_game_token);
+            // create a new list for point tokens to be added to
+            localStorage.setItem('pointList', JSON.stringify([]));
         }
     });
 }
@@ -261,11 +289,12 @@ function finishGameFromSocket(end_game_token) {
 function setHighScoreServer(end_game_token) {
     const score = parseInt($('#score').text());
     const start_game_token = $('#start_game_token').val();
+    const pointList = JSON.parse(localStorage.getItem('keyboard-games-pointList'));
     $.ajax({
         url: `/game/${gameId}/score_update`,
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({start_game_token, end_game_token, score}),
+        data: JSON.stringify({start_game_token, end_game_token, score, pointList}),
         success: function(response) {
             console.log(response);
             const highScoreListTop10 = $('#top10');

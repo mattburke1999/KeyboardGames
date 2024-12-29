@@ -51,6 +51,6 @@ def get_user_id_view():
     result = get_user_id()
     return json_result(result)
 
-def score_update_view(game_id, score, start_game_token, end_game_token):
-    result = score_update(game_id, score, start_game_token, end_game_token)
+def score_update_view(game_id, score, start_game_token, end_game_token, point_list):
+    result = score_update(game_id, score, start_game_token, end_game_token, point_list)
     return json_result(result)

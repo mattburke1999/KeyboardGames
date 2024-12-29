@@ -105,19 +105,38 @@ def check_unique_register_input(type, value):
         return (False, None)
     return (True, {'unique': result[1]})
 
-def validate_game(user_id, start_game_token, end_game_token):
+def validate_points(server_point_list, client_point_list, score):
+    if len(server_point_list) < len(client_point_list) or score > len(server_point_list) or score > len(client_point_list):
+        return (False, {'error': 'Too many points submitted'})
+    for point in client_point_list:
+        # point: {'point_token': point_token, 'point_time': point_time}
+        if not any(p['point_token'] == point['point_token'] 
+                # TODO: add checking the point time, but will need to add some buffer for latency
+                # for now we will just validate the token
+                #    and p['point_time'] == point['point_time']
+                   for p in server_point_list):
+            return (False, {'error': 'Invalid point submitted'})
+    return (True, {'points': len(server_point_list)})       
+
+def validate_game(user_id, start_game_token, end_game_token, score, point_list):
     global GAME_ROOMS
     with GAME_ROOMS_LOCK:
         game = GAME_ROOMS.get(str(user_id), None)
     if game is None or 'start_game_token' not in game or 'end_game_token' not in game:
         return (False, {'error': 'No game found for user'})
-    return (game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token, None)
+    if not game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token:
+        return (False, {'error': 'Invalid start and end tokens'})
+    point_validation_result = validate_points(game['point_list'], point_list, score)
+    if not point_validation_result[0]:
+        return (False, point_validation_result[1])
+    return (True, point_validation_result[1])
 
-def score_update(game_id, score, start_game_token, end_game_token):
+def score_update(game_id, score, start_game_token, end_game_token, point_list):
     user_id = session['user_id']
-    validation_result = validate_game(user_id, start_game_token, end_game_token)
+    validation_result = validate_game(user_id, start_game_token, end_game_token, score, point_list)
     if not validation_result[0]:
         return (False, validation_result[1])
+    score = validation_result[1]['points']
     print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
     update_result = db_update_score(user_id, game_id, score)
     if not update_result[0]:
