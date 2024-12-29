@@ -35,19 +35,22 @@ create table IF NOT EXISTS scores (
 )
 
 CREATE OR REPLACE FUNCTION update_scores(
-    _account_id INT,
-    _game_id INT,
-    _score INT
-)
-RETURNS TABLE(username CHARACTER VARYING, score INT, score_date TIMESTAMP WITHOUT TIME ZONE, score_type CHARACTER VARYING)
-LANGUAGE plpgsql
+	_account_id integer,
+	_game_id integer,
+	_score integer)
+    RETURNS TABLE(username character varying, score integer, score_date date, score_type character varying) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
 AS $BODY$
 DECLARE
     _save_score BOOLEAN;
 BEGIN
     -- 1. Check if the score qualifies for saving
     SELECT 
-        _score > COALESCE(MIN(top10.score), 0) OR _score > COALESCE(MIN(top3.score), 0)
+        count(top10.score) < 10 or _score > COALESCE(MIN(top10.score), 0) OR count(top3.score) < 3 or _score > COALESCE(MIN(top3.score), 0)
     INTO _save_score
     FROM (
         SELECT s.score
@@ -73,12 +76,12 @@ BEGIN
 
     -- 3. Return the results
     RETURN QUERY
-    SELECT a.username, s.score, s.score_date, s.score_type
+    SELECT a.username, s.score, s.score_date::date, s.score_type
     FROM (
         (SELECT s.score, s.score_date, s.account_id, 'top10'::character varying AS score_type
         FROM scores s
         WHERE s.game_id = _game_id
-        ORDER BY s.score DESC
+        ORDER BY s.score asc
         LIMIT 10)
 
         UNION ALL
@@ -87,7 +90,7 @@ BEGIN
         FROM scores s
         WHERE s.game_id = _game_id
           AND s.account_id = _account_id
-        ORDER BY s.score DESC
+        ORDER BY s.score asc
         LIMIT 3)
     ) AS s
     JOIN accounts a ON a.id = s.account_id;
