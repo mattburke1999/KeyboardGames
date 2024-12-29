@@ -59,6 +59,7 @@ async function connectSocket() {
         if (response.success) {
             console.log(response.message);
             enteredGameRoom = true;
+            endGameSocketListener(socket);
         } else {
             console.error(response.message);
             enteredGameRoom = false;
@@ -125,10 +126,12 @@ function startTimer() {
         $('#time').text(timeLeft);
         if (timeLeft === 0) {
             clearInterval(timer);
-            if (enteredGameRoom) {
+            if (!enteredGameRoom) {
+                console.log('Finshing game on client side');
                 finishGame();
             } else {
                 // socket listener will handle finishing the game
+                console.log('Finishing game on server side');
                 return;
             }
         }
@@ -240,7 +243,9 @@ function checkDotInsideCircle(event, $circle) {
 }
 
 function endGameSocketListener(socket) {
+    console.log('setting socket listener for end_game');
     socket.on('end_game', (response) => {
+        console.log(response);
         finishGameFromSocket(response.end_game_token);
     });
 }
@@ -251,10 +256,6 @@ function finishGameFromSocket(end_game_token) {
     clearCircles();
     $('#timer').css('display', 'none');
     setHighScoreServer(end_game_token);
-    $('#game-over').css('display', 'flex');
-    $('#restart').on('click', function() {
-        window.location.reload();
-    });
 }
 
 function setHighScoreServer(end_game_token) {
@@ -268,9 +269,13 @@ function setHighScoreServer(end_game_token) {
         success: function(response) {
             console.log(response);
             const highScoreList = $('#high-score ol');
-            response.high_scores.forEach(function(item) {
+            response.top10.forEach(function(item) {
                 let styling = '';
                 highScoreList.append(`<li ${styling}>${item.username} - ${item.score} (${item.date})</li>`);
+            });
+            $('#game-over').css('display', 'flex');
+            $('#restart').on('click', function() {
+                window.location.reload();
             });
         },
         error: function(error) {
