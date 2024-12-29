@@ -5,9 +5,8 @@ from db import check_user as db_check_user
 from db import update_score as db_update_score
 from flask import session
 import bcrypt
-from sockets import GAME_ROOMS
 
-
+GAME_ROOMS = {}
 GAME_INFO = {}
 GAMES = []
 
