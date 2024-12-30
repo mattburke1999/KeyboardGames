@@ -8,6 +8,7 @@ let circleInterval;
 let socket;
 let loggedIn = false;
 let enteredGameRoom = false;
+let loadingInterval;
 
 connectSocket();
 
@@ -336,12 +337,32 @@ function endGameSocketListener(socket) {
     });
 }
 
+async function startLoadingScreen() {
+    $('#loading-screen').css('display', 'flex');
+    let loadingCount = 1;
+    loadingInterval = setInterval(function() {
+        if (loadingCount > 3) {
+            $('.loading-dot').css('color', 'transparent');
+            loadingCount = 1;
+        } else {
+            $(`#loading-dot${loadingCount}`).css('color', 'black');
+            loadingCount++;
+        }
+    });
+}
+
+function clearLoadingScreen() {
+    clearInterval(loadingInterval);
+    $('#loading-screen').css('display', 'none');
+}
+
+
 function finishGameFromSocket(end_game_token) {
     clearInterval(circleInterval);
     $('#dot').css('display', 'none');
     clearCircles();
     $('#timer').css('display', 'none');
-    // TODO: add a loading screen here later
+    startLoadingScreen();
     setHighScoreServer(end_game_token);
 }
 
@@ -393,6 +414,7 @@ async function setHighScoreServer(end_game_token) {
                 let styling = item.current_score ? 'style="color: white; font-weight: bold;"' : '';
                 highScoreListTop3.append(`<li ${styling}>${item.score} (${item.date})</li>`);
             });
+            clearLoadingScreen();
             $('#high-score-online').css('display', 'flex');
             $('#game-over').css('display', 'flex');
             $('#restart').on('click', function() {
