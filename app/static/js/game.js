@@ -345,10 +345,10 @@ async function startLoadingScreen() {
             $('.loading-dot').css('color', 'transparent');
             loadingCount = 1;
         } else {
-            $(`#loading-dot${loadingCount}`).css('color', 'black');
+            $(`#loading-dot${loadingCount}`).css('color', 'white');
             loadingCount++;
         }
-    });
+    }, 1000);
 }
 
 function clearLoadingScreen() {
