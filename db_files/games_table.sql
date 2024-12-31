@@ -43,12 +43,6 @@ create table point_updates (
     game_id int not null,
     current_game_rank integer NOT NULL,
     update_time timestamp without time zone NOT NULL DEFAULT now(),
-    FOREIGN KEY (game_id)
-        REFERENCES public.games (id)
-        ON UPDATE CASCADE
-        ON DELETE NO ACTION,
-    foreign key (score_id) references scores(id)
-    on update cascade on delete no action,
     foreign key (account_id) references accounts(id)
     on update cascade on delete cascade
 );
