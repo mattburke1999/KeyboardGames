@@ -138,7 +138,7 @@ def validate_points(server_point_list, client_point_list, score):
 def validate_game(user_id, start_game_token, end_game_token, score, point_list):
     global GAME_ROOMS
     with GAME_ROOMS_LOCK:
-        game = GAME_ROOMS.get(str(user_id), None)
+        game = GAME_ROOMS.pop(str(user_id), None)
     if game is None or 'start_game_token' not in game or 'end_game_token' not in game:
         return (False, {'error': 'No game found for user'})
     if not game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token:
