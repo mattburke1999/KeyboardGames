@@ -3,6 +3,7 @@ from db import check_unique_register_input as db_check_unique_register_input
 from db import create_user as db_create_user
 from db import check_user as db_check_user
 from db import update_score as db_update_score
+from db import get_profile as db_get_profile
 from flask import session
 import bcrypt
 from threading import Lock
@@ -145,6 +146,8 @@ def validate_game(user_id, start_game_token, end_game_token, score, point_list):
     return (True, point_validation_result[1])
 
 def score_update(game_id, score, start_game_token, end_game_token, point_list):
+    if not check_login():
+        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     validation_result = validate_game(user_id, start_game_token, end_game_token, score, point_list)
     if not validation_result[0]:
@@ -167,4 +170,21 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         'current_score': res[4]
         } for res in update_result[1] if res[3] == 'top3']
     return (True, {'top10': top10, 'top3': top3})
-    
+
+def get_profile():
+    if not check_login():
+        print('Not logged in')
+        return (False, {'error': 'Not logged in'})
+    user_id = session['user_id']
+    profile_result = db_get_profile(user_id)
+    if not profile_result[0]:
+        print('Error getting profile')
+        return (False, profile_result[1])
+    # ranks: [{'score': score, 'rank': rank, 'game_name': game_name}], sort by rank, then game_name
+    print(type(profile_result[1][3]))
+    return (True, {
+        'username': profile_result[1][0],
+        'created_time': profile_result[1][1].strftime('%m/%d/%Y'),
+        'num_top10': profile_result[1][2],
+        'ranks': sorted(profile_result[1][3], key=lambda x: (x['rank'], x['game_name']))
+    })

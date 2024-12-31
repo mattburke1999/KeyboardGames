@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import request
-from views import home as home_view
+from views import home_view
 from views import game_view
 from views import auth_view
 from views import check_unique_register_input_view
@@ -9,6 +9,7 @@ from views import login_view
 from views import logout_view
 from views import get_user_id_view
 from views import score_update_view
+from views import profile_view
 
 app = Flask(__name__)
 
@@ -60,3 +61,7 @@ def current_user():
 def score_update(game_id):
     data = request.get_json()
     return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'], data['pointList'])
+
+@app.route('/profile', methods=['GET'])
+def profile():
+    return profile_view()

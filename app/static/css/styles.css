@@ -101,3 +101,15 @@ a {
 .site-name {
     margin-top: 1.5rem;
 }
+
+#modal-backdrop {
+    height: 100vh;
+    display: none;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+}

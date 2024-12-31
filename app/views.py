@@ -8,11 +8,12 @@ from services import try_login
 from services import logout
 from services import get_user_id
 from services import score_update
+from services import get_profile
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
 
-def home():
+def home_view():
     home_page_results = get_home_page_data()
     return render_template('index.html', games=home_page_results[1]['games'], game_info=home_page_results[1]['game_info'], logged_in=home_page_results[1]['logged_in'])
 
@@ -53,4 +54,8 @@ def get_user_id_view():
 
 def score_update_view(game_id, score, start_game_token, end_game_token, point_list):
     result = score_update(game_id, score, start_game_token, end_game_token, point_list)
+    return json_result(result)
+
+def profile_view():
+    result = get_profile()
     return json_result(result)

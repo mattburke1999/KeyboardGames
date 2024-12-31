@@ -1,0 +1,69 @@
+
+.profile-header, .profile-modal, .profile-top3 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.profile-scores {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+.profile-header, body, .profile-scores, .profile-top3, .profile-top3 div {
+    width: 100%;
+}
+
+.profile-modal {
+    display: none;
+    z-index: 20;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: fit-content;
+    padding: 2rem;
+    border-radius: 10px;
+    background-color: rgb(53, 53, 53);
+    z-index: 20;
+    gap: 1rem;
+}
+.profile-modal h1, .profile-modal h2, .profile-modal p {
+    color: white;
+}
+.profile-close-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+}
+
+.line-break {
+    margin: 0;
+    width: 100%;
+    border-bottom: 1px dashed;
+}
+
+.profile-top3 h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-decoration: underline;
+}
+.rank-first {
+    color: gold;
+}
+.rank-second {
+    color: #81eff7;
+}
+.rank-third {
+    color: #cd7f32;
+}
+.profile-header h2, #profile-top10 {
+    color: black;
+}
+#profile-top10 {
+    font-size: 2rem;
+    margin-top: .1rem;
+}

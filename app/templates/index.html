@@ -10,6 +10,7 @@
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/button_style.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/logo_style.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/profile.css') }}">
     </head>
     <body>
         <div class="main">
@@ -19,8 +20,25 @@
                     <button onClick="window.location.href='/register'">Register</button>
                 {% else %}
                     <button onClick="logout()">Logout</button>
-                    <button onClick="window.location.href='/profile'">Profile</button>
+                    <button onClick="get_profile()">Profile</button>
                 {% endif %}
+            </div>
+            <div id='modal-backdrop'></div>
+            <div class='profile-modal' id='profile-modal'>
+                <button class='profile-close-btn' onClick='close_profile_modal()'>&times;</button>
+                <div class='profile-header'>
+                    <h1 id='profile-username'></h1>
+                    <h2>Joined <span id='profile-created'></span></h2>
+                </div>
+                <div class="line-break"></div>
+                <div class='profile-scores'>
+                    <h2>Number of Top 10 Scores:&nbsp;</h2><h2 id='profile-top10'></h2>
+                </div>
+                <div class="line-break"></div>
+                <div class='profile-top3'>
+                    <h2>Top 3 Scores</h2>
+                    <div id='profile-top3'></div>
+                </div>
             </div>
             <h1 class='site-name'>Keyboard Games</h1>
             <div class="pages">
