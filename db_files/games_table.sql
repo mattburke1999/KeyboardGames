@@ -96,19 +96,25 @@ BEGIN
         VALUES (_account_id, _game_id, _score)
         RETURNING id INTO _inserted_score_id;
 
+        drop table if exists top10scores;
+
+        create temp table top10scores AS
+        SELECT id, score, score_date, account_id, 'top10'::character varying AS score_type
+        FROM scores s
+        WHERE game_id = _game_id
+        ORDER BY score desc, score_date desc
+        LIMIT 10;
+
         select points into _points_added
         from 
         (
-            SELECT id, row_number() over(partition by game_id order by score, score_date) as points
-            FROM scores
-            WHERE game_id = _game_id
-            order by score desc, score_date desc 
-            limit 10
+            SELECT id, row_number() over(order by score, score_date) as points
+            from top10scores
         ) p
         where id = _inserted_score_id;
 
         select 11 - _points_added into _score_rank;
-        
+
         -- if they get the top score, award 15 points instead of 10
         select case when _points_added = 10 then 15 else _points_added into _points_added end;
 
@@ -130,11 +136,7 @@ BEGIN
         ) high_scores, 
         _points_added as points_added, _score_rank as score_rank
     FROM (
-        (SELECT s.id, s.score, s.score_date, s.account_id, 'top10'::character varying AS score_type
-        FROM scores s
-        WHERE s.game_id = _game_id
-        ORDER BY s.score desc
-        LIMIT 10)
+        (SELECT * from top10scores)
 
         UNION ALL
 
