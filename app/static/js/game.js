@@ -415,6 +415,12 @@ async function setHighScoreServer(end_game_token) {
                 highScoreListTop3.append(`<li ${styling}>${item.score} (${item.date})</li>`);
             });
             clearLoadingScreen();
+            if (response.points_added && response.points_added !== 'None') {
+                $('#score-rank').text(response.score_rank);
+                $('#score-points').text(response.points_added);
+            } else {
+                $('.score-ranking').css('display', 'none');
+            }
             $('#high-score-online').css('display', 'flex');
             $('#game-over').css('display', 'flex');
             $('#restart').on('click', function() {
