@@ -113,7 +113,7 @@ def validate_points(server_point_list, client_point_list, score):
     print('Client points:')
     print(client_point_list)
     print(f'Score: {score}')
-    latency_tolerance = timedelta(seconds=0.25)
+    latency_tolerance = timedelta(seconds=0.75)
     if len(server_point_list) < len(client_point_list) or score > len(server_point_list) or score > len(client_point_list):
         return (False, {'error': 'Too many points submitted'})
     for point in client_point_list:
@@ -126,11 +126,14 @@ def validate_points(server_point_list, client_point_list, score):
             client_time = datetime.fromisoformat(point['point_time'])
         except ValueError:
             return (False, {'error': 'Invalid time format submitted'})
-
+        actual_latency = abs(server_time - client_time)
         # Validate time difference within latency tolerance
-        if abs(server_time - client_time) > latency_tolerance:
+        if actual_latency > latency_tolerance:
+            print(f'Server time: {server_time}')
+            print(f'Client time: {client_time}')
+            print(f'Actual latency: {actual_latency}')
             return (False, {'error': 'Invalid point time submitted'})
-    return (True, {'points': len(server_point_list)})       
+    return (False, {'points': len(server_point_list)})       
 
 def validate_game(user_id, start_game_token, end_game_token, score, point_list):
     global GAME_ROOMS
