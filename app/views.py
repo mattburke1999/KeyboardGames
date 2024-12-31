@@ -19,15 +19,15 @@ def home_view():
 
 def game_view(game):
     game_info_results = get_game_info(game)
-    game_info = game_info_results[1]['game_info']
-    if not game_info:
+    if not game_info_results[0]:
         return render_template('404.html'), 404
+    game_info = game_info_results[1]['game_info']
     if game_info['basic_circle_template']:
-        return basic_circle_template(game, game_info)
-    return render_template(f'{game}.html', game_info=game_info)
+        return basic_circle_template(game, game_info, logged_in=game_info_results[1]['logged_in'])
+    return render_template(f'{game}.html', game_info=game_info, logged_in=game_info_results[1]['logged_in'])
 
-def basic_circle_template(game, game_info):
-    return render_template('basic_circle_template.html', game=game, game_info=game_info)
+def basic_circle_template(game, game_info, logged_in):
+    return render_template('basic_circle_template.html', game=game, game_info=game_info, logged_in=logged_in)
 
 def auth_view(page):
     return render_template('login.html', page=page)

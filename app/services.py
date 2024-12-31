@@ -84,10 +84,10 @@ def get_game_info(game):
     if not GAME_INFO:
         games_result = get_games()
         if not games_result[0]:
-            return (False, None)
+            return (False, {'error': 'No games found'})
     if game not in GAME_INFO:
-        return (True, {'game_info': None})
-    return (True, {'game_info': GAME_INFO[game]})
+        return (False, {'error': 'Game not found'})
+    return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login()})
 
 def get_game_duration(game_id):
     global GAME_INFO
@@ -133,7 +133,7 @@ def validate_points(server_point_list, client_point_list, score):
             print(f'Client time: {client_time}')
             print(f'Actual latency: {actual_latency}')
             return (False, {'error': 'Invalid point time submitted'})
-    return (False, {'points': len(server_point_list)})       
+    return (True, {'points': len(server_point_list)})       
 
 def validate_game(user_id, start_game_token, end_game_token, score, point_list):
     global GAME_ROOMS
@@ -158,21 +158,21 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
     score = validation_result[1]['points']
     print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
     update_result = db_update_score(user_id, game_id, score)
+    print(update_result[1])
     if not update_result[0]:
         return (False, update_result[1])
     high_scores, points_added, score_rank = update_result[1]
     # format date as mm/dd/yyyy
     top10 = [{
-        'username': res[0],
-        'score': res[1],
-        'date': res[2].strftime('%m/%d/%Y'),
-        'current_score': res[4]
-        } for res in high_scores if res[3] == 'top10']
+        **hs,
+        'date': datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'),
+        'current_score': hs['current_score']
+        } for hs in high_scores if hs['score_type'] == 'top10']
     top3 = [{
-        'score': res[1],
-        'date': res[2].strftime('%m/%d/%Y'),
-        'current_score': res[4]
-        } for res in high_scores if res[3] == 'top3']
+        'score': hs['score'],
+        'date': datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'),
+        'current_score': hs['current_score']
+        } for hs in high_scores if hs['score_type'] == 'top3']
     return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
 
 def get_profile():

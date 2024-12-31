@@ -57,13 +57,17 @@
             <h2>High Scores</h2>
             <ol></ol>
         </div>
-        <div class='high-score' id="high-score-online">
-            <h2>All High Scores</h2>
-            <ol id='top10'></ol>
-            <div class='line-break'></div>
-            <h2>Personal High Scores</h2>
-            <ol id='top3'></ol>
-        </div>
+        {% if logged_in %}
+            <p class='score-ranking'>Rank: <span id='score-rank'></span></p>
+            <p class='score-ranking'>Points Awarded: <span id='score-points'></span></p>
+            <div class='high-score' id="high-score-online">
+                <h2>All High Scores</h2>
+                <ol id='top10'></ol>
+                <div class='line-break'></div>
+                <h2>Personal High Scores</h2>
+                <ol id='top3'></ol>
+            </div>
+        {% endif %}
         <button id="restart">Restart</button>
     </div>
     <div id='loading-screen'>
