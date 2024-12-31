@@ -160,19 +160,20 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
     update_result = db_update_score(user_id, game_id, score)
     if not update_result[0]:
         return (False, update_result[1])
+    high_scores, points_added, score_rank = update_result[1]
     # format date as mm/dd/yyyy
     top10 = [{
         'username': res[0],
         'score': res[1],
         'date': res[2].strftime('%m/%d/%Y'),
         'current_score': res[4]
-        } for res in update_result[1] if res[3] == 'top10']
+        } for res in high_scores if res[3] == 'top10']
     top3 = [{
         'score': res[1],
         'date': res[2].strftime('%m/%d/%Y'),
         'current_score': res[4]
-        } for res in update_result[1] if res[3] == 'top3']
-    return (True, {'top10': top10, 'top3': top3})
+        } for res in high_scores if res[3] == 'top3']
+    return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
 
 def get_profile():
     if not check_login():

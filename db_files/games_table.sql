@@ -20,6 +20,7 @@ create table IF NOT EXISTS accounts (
 	password bytea NOT NULL,
 	first_name character varying not null,
 	last_name character varying not null,
+    points int not null default 0,
     created_time timestamp without time zone NOT NULL DEFAULT now(),
 	last_updated_time timestamp without time zone NOT NULL DEFAULT now()
 );
@@ -32,13 +33,31 @@ create table IF NOT EXISTS scores (
 	score_date timestamp without time zone not null default now(),
 	foreign key (game_id) references games(id) on update cascade on delete cascade,
 	foreign key (account_id) references accounts(id) on update cascade on delete cascade
-)
+);
+
+create table point_updates (
+    id serial primary key,
+    account_id integer NOT NULL,
+    point_amount integer NOT NULL,
+    score_id int not null,
+    game_id int not null,
+    current_game_rank integer NOT NULL,
+    update_time timestamp without time zone NOT NULL DEFAULT now(),
+    FOREIGN KEY (game_id)
+        REFERENCES public.games (id)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION,
+    foreign key (score_id) references scores(id)
+    on update cascade on delete no action,
+    foreign key (account_id) references accounts(id)
+    on update cascade on delete cascade
+);
 
 CREATE OR REPLACE FUNCTION update_scores(
 	_account_id integer,
 	_game_id integer,
 	_score integer)
-    RETURNS TABLE(username character varying, score integer, score_date date, score_type character varying, current_score boolean) 
+    RETURNS TABLE(high_scores json, points_added integer, score_rank integer) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -48,6 +67,8 @@ AS $BODY$
 DECLARE
     _save_score BOOLEAN;
     _inserted_score_id INTEGER;
+    _points_added integer;
+    _score_rank integer;
 BEGIN
     -- 1. Check if the score qualifies for saving
     SELECT 
@@ -69,16 +90,45 @@ BEGIN
         LIMIT 3
     ) AS top3;
 
-    -- 2. Save the score if it qualifies
+    -- 2. Save the score if it qualifies and update account points
     IF _save_score THEN
         INSERT INTO scores (account_id, game_id, score)
         VALUES (_account_id, _game_id, _score)
         RETURNING id INTO _inserted_score_id;
+
+        select points into _points_added
+        from 
+        (
+            SELECT id, row_number() over(partition by game_id order by score, score_date) as points
+            FROM scores
+            WHERE game_id = _game_id
+            order by score desc, score_date desc 
+            limit 10
+        ) p
+        where id = _inserted_score_id;
+
+        select 11 - _points_added into _score_rank;
+        
+        -- if they get the top score, award 15 points instead of 10
+        select case when _points_added = 10 then 15 else _points_added into _points_added end;
+
+        update accounts 
+        set points = points + _points_added,
+            last_updated_time = now()
+        where id = _account_id;
+
+
+        insert into point_updates (point_amount, account_id, score_id, game_id, current_game_rank)
+        values (_points_added, _account_id, _inserted_score_id, _game_id, _score_rank);
     END IF;
 
     -- 3. Return the results
     RETURN QUERY
-    SELECT a.username, s.score, s.score_date::date, s.score_type, s.id = _inserted_score_id AS current_score
+    SELECT json_agg(
+            json_build_object('username', a.username, 'score', s.score, 'score_date', s.score_date::date, 'score_type', s.score_type, 'current_score', s.id = _inserted_score_id)
+            ORDER BY s.score DESC, s.score_date deSC
+        ) high_scores, 
+        _points_added as points_added, _score_rank as score_rank
     FROM (
         (SELECT s.id, s.score, s.score_date, s.account_id, 'top10'::character varying AS score_type
         FROM scores s
@@ -95,8 +145,7 @@ BEGIN
         ORDER BY s.score desc
         LIMIT 3)
     ) AS s
-    JOIN accounts a ON a.id = s.account_id
-    ORDER BY s.score DESC, s.score_date deSC;
+    JOIN accounts a ON a.id = s.account_id;
 
 END;
 $BODY$;
