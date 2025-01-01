@@ -187,33 +187,37 @@ async function addPointToServer() {
     socket.emit('point_added', { user_id: userId, game_id: gameId }, (response) => {
         console.log(response);
 
-        // Open IndexedDB and add the point
-        const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
+        if (response.success) {
+            // Open IndexedDB and add the point
+            const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
 
-        dbRequest.onsuccess = (event) => {
-            const db = event.target.result;
-            const transaction = db.transaction('points', 'readwrite');
-            const store = transaction.objectStore('points');
+            dbRequest.onsuccess = (event) => {
+                const db = event.target.result;
+                const transaction = db.transaction('points', 'readwrite');
+                const store = transaction.objectStore('points');
 
-            // Add the new point to IndexedDB
-            const point = {
-                point_token: response.point_token,
-                point_time: new Date().toISOString(),
+                // Add the new point to IndexedDB
+                const point = {
+                    point_token: response.point_token,
+                    point_time: new Date().toISOString(),
+                };
+                const addRequest = store.put(point);
+
+                addRequest.onsuccess = () => {
+                    console.log('Point successfully added to IndexedDB:', point);
+                };
+
+                addRequest.onerror = (error) => {
+                    console.error('Failed to add point to IndexedDB:', error);
+                };
             };
-            const addRequest = store.put(point);
 
-            addRequest.onsuccess = () => {
-                console.log('Point successfully added to IndexedDB:', point);
+            dbRequest.onerror = (event) => {
+                console.error('Failed to open IndexedDB:', event.target.error);
             };
-
-            addRequest.onerror = (error) => {
-                console.error('Failed to add point to IndexedDB:', error);
-            };
-        };
-
-        dbRequest.onerror = (event) => {
-            console.error('Failed to open IndexedDB:', event.target.error);
-        };
+        } else {
+            console.error(response.message);
+        }
     });
 }
 
