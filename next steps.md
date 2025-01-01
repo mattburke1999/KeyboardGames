@@ -25,6 +25,8 @@
 
 # SKINS
 - points awarded from games
+    - possibly make place a multiplier times points scored = profile points
+- possible add login bonus
 - skins will be unlockable with points
 
 # NEW GAMES
@@ -36,6 +38,7 @@
 - ### categories
     - existing ones will be timed
     - new: untimed/complete the steps
+        - time is score
 
 # ADs
 - localstorage will hold 2 values: currentPage, and adHasRun
