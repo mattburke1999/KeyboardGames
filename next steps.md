@@ -8,10 +8,6 @@
 
 ## 4. Point Events:
 
-**Frontend:**
-- stores current timestamp for point
-- Emits a point socket event each time the player scores a point.
-
 **Server:**
 - Receives the point event, validates it against:
     - **Burst Threshold**: Tracks the number of points per second to detect excessive scoring (using a deque or similar structure).
@@ -26,6 +22,20 @@
 - If validation fails:
     - Rejects the submission.
     - Flags the user account for review (e.g., logging the event for manual or automated analysis).
+
+# SKINS
+- points awarded from games
+- skins will be unlockable with points
+
+# NEW GAMES
+- stay on the path
+    - screen will have a cross on it, the path which the dot can travel
+- shaky dot
+    - the dot will shake around a few pixels 
+
+- ### categories
+    - existing ones will be timed
+    - new: untimed/complete the steps
 
 # ADs
 - localstorage will hold 2 values: currentPage, and adHasRun
