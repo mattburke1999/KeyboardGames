@@ -79,7 +79,7 @@ def get_profile(user_id):
                             row_number() over (partition by game_id order by score desc, score_date desc) "rank"
                         from scores
                     )
-                    select username, created_time, num_top10, json_agg(json_build_object('score', score, 'rank', s.rank, 'game_name', g.title)) as ranks
+                    select username, created_time, points, num_top10, json_agg(json_build_object('score', score, 'rank', s.rank, 'game_name', g.title)) as ranks
                     from (
                         select min(rank) "rank", game_id, account_id
                         from score_ranks s
@@ -97,7 +97,7 @@ def get_profile(user_id):
                     ) s2 on s.account_id = s2.account_id
                     join accounts a on a.id = s.account_id
                     where a.id = %s
-                    group by username, created_time, num_top10
+                    group by username, created_time, num_top10, points
                 ''', (user_id, user_id))
                 return (True, cur.fetchone())
     except:

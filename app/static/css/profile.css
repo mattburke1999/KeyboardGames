@@ -60,10 +60,10 @@
 .rank-third {
     color: #cd7f32;
 }
-.profile-header h2, #profile-top10 {
+.profile-header h2, #profile-top10, #profile-points {
     color: black;
 }
-#profile-top10 {
+#profile-top10, #profile-points {
     font-size: 2rem;
     margin-top: .1rem;
 }

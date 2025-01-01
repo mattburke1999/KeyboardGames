@@ -184,11 +184,10 @@ def get_profile():
     if not profile_result[0]:
         print('Error getting profile')
         return (False, profile_result[1])
-    # ranks: [{'score': score, 'rank': rank, 'game_name': game_name}], sort by rank, then game_name
-    print(type(profile_result[1][3]))
     return (True, {
         'username': profile_result[1][0],
         'created_time': profile_result[1][1].strftime('%m/%d/%Y'),
-        'num_top10': profile_result[1][2],
-        'ranks': sorted(profile_result[1][3], key=lambda x: (x['rank'], x['game_name']))
+        'points': profile_result[1][2],
+        'num_top10': profile_result[1][3],
+        'ranks': sorted(profile_result[1][4], key=lambda x: (x['rank'], x['game_name']))
     })

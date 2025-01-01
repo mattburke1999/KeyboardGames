@@ -49,12 +49,13 @@ function populate_profile_modal(user) {
     $('#profile-username').text(user.username);
     $('#profile-created').text(user.created_time);
     $('#profile-top10').text(user.num_top10);
+    $('#profile-points').text(user.points);
     const top3Div = $('#profile-top3');
     top3Div.empty();
     user.ranks.forEach(item => {
         const rank = item.rank === 1 ? '1st' : item.rank === 2 ? '2nd' : '3rd' + ' Place';
         const rankCSS = item.rank === 1 ? 'first' : item.rank === 2 ? 'second' : 'third';
-        top3Div.append(`<h3><span class='rank-${rankCSS}'>${rank}</span>: ${item.score} - ${item.game_name}</h3>`);
+        top3Div.append(`<h3><span class='rank-${rankCSS}'>${rank}: </span>${item.score} - ${item.game_name}</h3>`);
     });
     show_profile_modal();
 }
