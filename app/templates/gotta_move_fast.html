@@ -13,11 +13,11 @@
         }
         .game-title {
             color: {{ game_info.title_color }};
-            text-emphasis-style: {{ game_info.title_style }};
+            text-emphasis-style: {{ game_info.title_style | safe }};
         }
         .game-title::after {
             content: ' {{ game_info.title }}';
-            text-emphasis-style: {{ game_info.title_style }};
+            text-emphasis-style: {{ game_info.title_style | safe }};
         }
         
 
@@ -76,7 +76,7 @@
 
     </style>        
 {% endblock %}
-{% block game_title %}Gotta Move Quickly{% endblock %}
+{% block game_title %}Gotta Move Fast{% endblock %}
 {% block game_content %}
     <div id="circle-grid">
         <div class="circle-wrapper" id="circle-1"><div class='circle'></div></div>
