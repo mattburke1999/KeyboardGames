@@ -6,4 +6,4 @@ values
 ('Disappearing Dot', 'dot', '#8ff8da', '#64ff45', '#e90bfd', 145, 'disappearing_dot', True),
 ('Shrinking Circles', 'double-circle open', '#84dcff', '#b06ffa', '#4a69f7', 115, 'shrinking_circles', True),
 ('Moving Circles', 'triangle open', '#f7a3ff','#fff435', '#006eff', 80, 'moving_circles', True),
-('Stay On The Path', "+", '#f7a3ff','#fff435', '#006eff', 80, 'stay_on_path', True)
+('Stay On The Path', "+", "#00bcd4", "#ffeb3b", "#9c27b0", 160, 'stay_on_path', True)
