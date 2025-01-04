@@ -1,0 +1,5 @@
+
+
+function handleMovement() {
+    handleMovementCrossPath();
+}

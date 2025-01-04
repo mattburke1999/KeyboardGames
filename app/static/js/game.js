@@ -4,6 +4,11 @@ const dbVersion = 1;
 const $dot = $('#dot');
 const dotWidth = parseInt($dot.outerWidth());
 const dotHeight = parseInt($dot.outerHeight());
+const pathTolerance = 10;
+const centerX = Math.round(window.innerWidth / 2);
+const centerXRange = [centerX - pathTolerance, centerX + pathTolerance];
+const centerY = Math.round(window.innerHeight / 2);
+const centerYRange = [centerY - pathTolerance, centerY + pathTolerance];
 let circleInterval;
 let socket;
 let loggedIn = false;
@@ -76,31 +81,69 @@ async function connectSocket() {
     });
 }
 
+function getDotPosition() {
+    return {top: parseInt($dot.css('top')), left: parseInt($dot.css('left'))};
+}
 
 function handleMovement() {
-    let currentOffsetTop = parseInt($dot.css('top'));
-    let currentOffsetLeft = parseInt($dot.css('left'));
+    let dotPosition = getDotPosition();
     if (pressedKeys['ArrowUp']) {
-        if (currentOffsetTop > dotHeight) {
-            $dot.css('top', currentOffsetTop - 10 + 'px');
+        if (dotPosition.top > dotHeight) {
+            $dot.css('top', dotPosition.top - 10 + 'px');
         }
     }
     if (pressedKeys['ArrowDown']) {
-        if (currentOffsetTop < window.innerHeight - dotHeight) {
-            $dot.css('top', currentOffsetTop + 10 + 'px');
+        if (dotPosition.top < window.innerHeight - dotHeight) {
+            $dot.css('top', dotPosition.top + 10 + 'px');
         }
     }
     if (pressedKeys['ArrowLeft']) {
-        if (currentOffsetLeft > dotWidth) {
-            $dot.css('left', currentOffsetLeft - 10 + 'px');
+        if (dotPosition.left > dotWidth) {
+            $dot.css('left', dotPosition.left - 10 + 'px');
         }
     }
     if (pressedKeys['ArrowRight']) {
-        if (currentOffsetLeft < window.innerWidth - dotWidth) {
-            $dot.css('left', currentOffsetLeft + 10 + 'px');
+        if (dotPosition.left < window.innerWidth - dotWidth) {
+            $dot.css('left', dotPosition.left + 10 + 'px');
         }
     }
     animationFrame = requestAnimationFrame(handleMovement);
+}
+
+function handleMovementCrossPath() {
+    let dotPosition = getDotPosition();
+    // Get the center positions of the screen
+    if (!(dotPosition.left < centerXRange[1] && dotPosition.left > centerXRange[0]) && !(dotPosition.top < centerYRange[1] && dotPosition.top > centerYRange[0])) {
+        // reset the dot to the center of the screen
+        $dot.css('left', centerX + 'px');
+        $dot.css('top', centerY + 'px');
+    }
+
+    if (pressedKeys['ArrowUp']) {
+        // Only allow vertical movement if the dot is aligned horizontally at the center
+        if (dotPosition.left < centerXRange[1] && dotPosition.left > centerXRange[0] && dotPosition.top > dotHeight) {
+            $dot.css('top', dotPosition.top - 10 + 'px');
+        }
+    }
+    if (pressedKeys['ArrowDown']) {
+        // Only allow vertical movement if the dot is aligned horizontally at the center
+        if (dotPosition.left < centerXRange[1] && dotPosition.left > centerXRange[0] && dotPosition.top < window.innerHeight - dotHeight) {
+            $dot.css('top', dotPosition.top + 10 + 'px');
+        }
+    }
+    if (pressedKeys['ArrowLeft']) {
+        // Only allow horizontal movement if the dot is aligned vertically at the center
+        if (dotPosition.top < centerYRange[1] && dotPosition.top > centerYRange[0] && dotPosition.left > dotWidth) {
+            $dot.css('left', dotPosition.left - 10 + 'px');
+        }
+    }
+    if (pressedKeys['ArrowRight']) {
+        // Only allow horizontal movement if the dot is aligned vertically at the center
+        if (dotPosition.top < centerYRange[1] && dotPosition.top > centerYRange[0] && dotPosition.left < window.innerWidth - dotWidth) {
+            $dot.css('left', dotPosition.left + 10 + 'px');
+        }
+    }
+    animationFrame = requestAnimationFrame(handleMovementCrossPath);
 }
 
 document.addEventListener('keydown', (event) => {
@@ -110,7 +153,7 @@ document.addEventListener('keydown', (event) => {
 
     // Start movement loop if not already running
     if (!animationFrame) {
-        handleMovement();
+        animationFrame = requestAnimationFrame(handleMovement);
     }
 });
 
