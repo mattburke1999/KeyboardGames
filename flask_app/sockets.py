@@ -1,5 +1,4 @@
 from flask_socketio import SocketIO
-from flask_socketio import emit
 from flask_socketio import disconnect
 from flask_socketio import join_room
 from services import get_game_duration

@@ -24,5 +24,9 @@ async fn main() -> Result<(), sqlx::Error> {
 
     println!("{:?}", state.game_durations.lock().unwrap());
 
+    let ws_route = warp::path("ws").and(warp::ws()).map(move |ws| {
+        sockets::handle_ws(ws, state.clone())
+    });
+
     Ok(())
 }
