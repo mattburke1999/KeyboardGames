@@ -1,0 +1,2 @@
+[dependencies]
+dotenv = "0.15"
