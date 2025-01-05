@@ -1,4 +1,41 @@
 *.bat
 .env
+
+# Python
 venv/
 __pycache__/
+
+# Rust build artifacts
+/target/
+
+# Generated files by Cargo
+**/*.rs.bk
+
+# Cargo's local config
+/cargo-config.toml
+
+# Build directory (sometimes the build folder is named differently)
+target/
+
+# Rust binaries
+*.rlib
+*.d
+
+# Coverage and debug files
+*.gcno
+*.gcda
+*.profraw
+
+# VSCode workspace settings
+.vscode/
+
+# IntelliJ IDEA project files
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# System-specific files
+*.swp
+*~

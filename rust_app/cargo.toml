@@ -1,2 +1,10 @@
+[package]
+name = "rust_app"  # Replace with your project name
+version = "0.1.0"
+edition = "2021"
+
 [dependencies]
+warp = "0.3"
+tokio = { version = "1", features = ["full"] }
 dotenv = "0.15"
+sqlx = { version = "0.6", features = ["postgres", "runtime-tokio-native-tls"] }
