@@ -7,7 +7,7 @@ use warp::Filter;
 use sqlx::PgPool;
 use dotenv::dotenv;
 use std::env;
-use crate::db::load_game_metadata;
+use crate::db::load_game_durations;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -20,9 +20,9 @@ async fn main() -> Result<(), sqlx::Error> {
     // Initialize shared state
     let state = state::AppState::new();
 
-    load_game_metadata(&pool, state.game_metadata.clone()).await?;
+    load_game_durations(&pool, state.game_durations.clone()).await?;
 
-    println!("{:?}", state.game_metadata.lock().unwrap());
+    println!("{:?}", state.game_durations.lock().unwrap());
 
     Ok(())
 }
