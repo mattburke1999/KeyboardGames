@@ -8,7 +8,7 @@ pub enum GameRoomValue {
     Bool(bool),
     String(String),
     List(Vec<String>),
-    Sender(WsSender), // Add support for WebSocket senders
+    Sender(WsSender),
     Float(f64),
     Int(i32),
 }

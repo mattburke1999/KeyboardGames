@@ -3,6 +3,7 @@ use serde::Deserialize;
 use warp::ws::WebSocket;
 use warp::ws::WsSender;
 use crate::state::AppState;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct Event {
@@ -15,6 +16,7 @@ pub async fn handle_event(event: Event, tx: &mut warp::ws::WsSender, state: AppS
         "connect" => connect(event.data, tx).await,
         "disconnect" => disconnect(event.data, tx).await,
         "enter_game_room" => enter_game_room(event.data, tx, state).await,
+        "start_game" => start_game(event.data, tx, state).await,
         _ => {
             let _ = tx.send(Message::text("Unknown event")).await;
         }
@@ -62,7 +64,6 @@ async fn enter_game_room(data: serde_json::Value, tx: &mut WsSender, state: AppS
             "success": true,
             "message": "Entered game room"
         });
-        let _ = tx.send(Message::text(response.to_string())).await;
     } else {
         // If the game ID does not exist, send an error message
         println("Game: {}, does not exist", game_id);
@@ -70,7 +71,46 @@ async fn enter_game_room(data: serde_json::Value, tx: &mut WsSender, state: AppS
             "success": false,
             "message": "Game does not exist"
         });
-        let _ = tx.send(Message::text(response.to_string())).await;
     }
+    let _ = tx.send(Message::text(response.to_string())).await;
+}
 
+async fn timer(user_id: String, game_id: i32, tx: WsSender, duration: f64, end_game_token: String) {
+    // TODO: Implement the timer logic
+}
+
+async fn start_game(data: serde_json::Value, tx: &mut WsSender, state: AppState) {
+    let game_id = data["gameId"].as_i32().unwrap();
+    let user_id = data["userId"].unwrap();
+
+    let mut game_rooms = state.game_rooms.lock().unwrap();
+    if let Some(room_data) = game_rooms.get_mut(&user_id) {
+        if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
+            if room_game_id == game_id {
+                let start_game_token = Uuid::new_v4().to_string();
+                let end_game_token = Uuid::new_v4().to_string();
+                let response = json!({
+                    "success": true,
+                    "message": "Game started",
+                    "start_game_token": start_game_token
+                });
+            } else {
+                let response = json!({
+                    "success": false,
+                    "message": "Incorrect game room for user {}", user_id
+                });
+            }
+        } else {
+            let response = json!({
+                "success": false,
+                "message": "User {} is not in a game room", user_id
+            });
+        }
+    } else {
+        let response = json!({
+            "success": false,
+            "message": "User {} is not in a game room", user_id
+        });
+    }
+    let _ = tx.send(Message::text(response.to_string())).await;
 }
