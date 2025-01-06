@@ -14,6 +14,7 @@ let socket;
 let loggedIn = false;
 let enteredGameRoom = false;
 let loadingInterval;
+const socketServer = 'ws://127.0.0.1:3030/ws';
 
 connectSocket();
 
@@ -65,20 +66,48 @@ async function connectSocket() {
     }
     localStorage.setItem('userId', userId);
     console.log("Creating socket");
-    socket = io({transports: ['websocket']});
-    //emit 'enter_game_room' event and receieve response from same event
-    socket.emit('enter_game_room', {userId, gameId}, (response) => {
-        if (response.success) {
-            console.log(response.message);
-            enteredGameRoom = true;
-            endGameSocketListener(socket);
-        } else {
-            console.error(response.message);
-            enteredGameRoom = false;
-            // Notify user that there was an error conneting to server, reload page to try again
-            // otherwise results will not be saved
-        }
-    });
+    socket = new WebSocket(socketServer);
+    socket.onopen = () => {
+        console.log('Connected to WebSocket server.');
+        //emit 'enter_game_room' event and receieve response from same event
+        const message = JSON.stringify({
+            event: 'enter_game_room', // Define the action
+            data: { userId, gameId },  // Your payload
+        });
+        socket.send(message);
+        // set up event listners
+        socket.onmessage = (event) => {
+            const response = JSON.parse(event.data);
+            console.log(response);
+            switch (response.event) {
+                case 'entered_game_room_response':
+                    entered_game_room_response_Socketlistener(response);
+                    break;
+                case 'end_game':
+                    endGameSocketListener(response);
+                    break;
+                case 'point_added_response':
+                    point_added_response_Socketlistener(response);
+                    break;
+                case 'start_game_response':
+                    start_game_response_Socketlistener(response);
+                    break;
+            }
+        };
+    }
+}
+
+function entered_game_room_response_Socketlistener(response) {
+    if (response.success) {
+        enteredGameRoom = true;
+        console.log('Entered game room');
+    } else {
+        console.error(response.message);
+        enteredGameRoom = false;
+
+        // Notify user and provide next steps
+        alert('Error connecting to the server. Please reload the page to try again.');
+    }
 }
 
 function getDotPosition() {
@@ -218,6 +247,40 @@ function setHighScore(score) {
     });
 }
 
+function point_added_response_Socketlistener(response) {
+    if (response.success) {
+        // Open IndexedDB and add the point
+        const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
+
+        dbRequest.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction('points', 'readwrite');
+            const store = transaction.objectStore('points');
+
+            // Add the new point to IndexedDB
+            const point = {
+                point_token: response.point_token,
+                point_time: new Date().toISOString(),
+            };
+            const addRequest = store.put(point);
+
+            addRequest.onsuccess = () => {
+                console.log('Point successfully added to IndexedDB:', point);
+            };
+
+            addRequest.onerror = (error) => {
+                console.error('Failed to add point to IndexedDB:', error);
+            };
+        };
+
+        dbRequest.onerror = (event) => {
+            console.error('Failed to open IndexedDB:', event.target.error);
+        };
+    } else {
+        console.error(response.message);
+    }
+}
+
 async function addPointToServer() {
     let { logged_in, userId } = await getUserId();
     if (!logged_in) {
@@ -227,41 +290,11 @@ async function addPointToServer() {
     }
     console.log('Adding point to server');
     
-    socket.emit('point_added', { user_id: userId, game_id: gameId }, (response) => {
-        console.log(response);
-
-        if (response.success) {
-            // Open IndexedDB and add the point
-            const dbRequest = indexedDB.open('KeyboardGamesDB', dbVersion);
-
-            dbRequest.onsuccess = (event) => {
-                const db = event.target.result;
-                const transaction = db.transaction('points', 'readwrite');
-                const store = transaction.objectStore('points');
-
-                // Add the new point to IndexedDB
-                const point = {
-                    point_token: response.point_token,
-                    point_time: new Date().toISOString(),
-                };
-                const addRequest = store.put(point);
-
-                addRequest.onsuccess = () => {
-                    console.log('Point successfully added to IndexedDB:', point);
-                };
-
-                addRequest.onerror = (error) => {
-                    console.error('Failed to add point to IndexedDB:', error);
-                };
-            };
-
-            dbRequest.onerror = (event) => {
-                console.error('Failed to open IndexedDB:', event.target.error);
-            };
-        } else {
-            console.error(response.message);
-        }
+    const message = JSON.stringify({
+        event: 'point_added', // Define the action
+        data: { userId, gameId },  // Your payload
     });
+    socket.send(message);
 }
 
 function dotEnteredCircle($circle) {
@@ -313,19 +346,25 @@ function resetPointListInDB() {
     };
 }
 
+function start_game_response_Socketlistener(response) {
+    if (!response.success) {
+        enteredGameRoom = false;
+        console.error(response.message);
+        // Notify user that there was an error starting the game
+    } else {
+        console.log(response.message);
+        $('#start_game_token').val(response.start_game_token);
+        // create a new list for point tokens to be added to
+        resetPointListInDB();
+    }
+}
+
 async function startGameServer(userId) {
-    socket.emit('start_game', {user_id: userId, game_id: gameId}, (response) => {
-        if (!response.success) {
-            enteredGameRoom = false;
-            console.error(response.message);
-            // Notify user that there was an error starting the game
-        } else {
-            console.log(response.message);
-            $('#start_game_token').val(response.start_game_token);
-            // create a new list for point tokens to be added to
-            resetPointListInDB();
-        }
+    const message = JSON.stringify({
+        event: 'start_game', // Define the action
+        data: { userId, gameId },  // Your payload
     });
+    socket.send(message);
 }
 
 function startGame({intervalFunction, interval}) {
@@ -376,12 +415,8 @@ function checkDotInsideCircle(event, $circle) {
     }
 }
 
-function endGameSocketListener(socket) {
-    console.log('setting socket listener for end_game');
-    socket.on('end_game', (response) => {
-        console.log(response);
-        finishGameFromSocket(response.end_game_token);
-    });
+function endGameSocketListener(response) {
+    finishGameFromSocket(response.end_game_token);
 }
 
 async function startLoadingScreen() {
@@ -445,7 +480,8 @@ async function setHighScoreServer(end_game_token) {
     const pointList = await getFinalPointListFromDB();
     console.log(pointList);
     $.ajax({
-        url: `/game/${gameId}/score_update`,
+        // TODO: SETUP http endpoint in rust server, and change url to the correct endpoint url
+        url: `${socketServer}/game/${gameId}/score_update`,
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({start_game_token, end_game_token, score, pointList}),

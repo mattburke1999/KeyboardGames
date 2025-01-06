@@ -49,6 +49,7 @@ async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, st
 
     let game_durations = state.game_durations.lock().await;
     let response;
+    let response_event = "entered_game_room_response";
     if let Some(&duration) = game_durations.get(&game_id) {
         let mut game_rooms = state.game_rooms.lock().await;
     
@@ -66,6 +67,7 @@ async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, st
         println!("User {} entered game room {}", user_id.to_string(), game_id.to_string());
         // Notify the client that they entered the game room successfully
         response = json!({
+            "event": response_event,
             "success": true,
             "message": "Entered game room"
         });
@@ -73,6 +75,7 @@ async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, st
         // If the game ID does not exist, send an error message
         println!("Game: {}, does not exist", game_id.to_string());
         response = json!({
+            "event": response_event,
             "success": false,
             "message": "Game does not exist"
         });
@@ -118,6 +121,7 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
     let user_id = data["userId"].as_i64().unwrap() as i32;
 
     let response;
+    let response_event = "start_game_response";
     let mut start_game_token = String::new();
     let mut end_game_token = String::new();
     {
@@ -130,6 +134,7 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
                     room_data.insert("start_game_token".to_string(), GameRoomValue::String(start_game_token.clone()));
                     room_data.insert("end_game_token".to_string(), GameRoomValue::String(end_game_token.clone()));
                     response = json!({
+                        "event": response_event,
                         "success": true,
                         "message": "Game started",
                         "start_game_token": start_game_token
@@ -137,18 +142,21 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
                     
                 } else {
                     response = json!({
+                        "event": response_event,
                         "success": false,
                         "message": format!("Incorrect game room for user {}", user_id)
                     });
                 }
             } else {
                 response = json!({
+                    "event": response_event,
                     "success": false,
                     "message": format!("User {} is not in a game room", user_id.to_string())
                 });
             }
         } else {
             response = json!({
+                "event": response_event,
                 "success": false,
                 "message": format!("User {} is not in a game room", user_id.to_string())
             });
