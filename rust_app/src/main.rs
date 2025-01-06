@@ -1,5 +1,5 @@
-// mod sockets;
-// mod routes;
+//mod routes;
+mod sockets;
 mod state;
 mod db;
 
@@ -22,11 +22,32 @@ async fn main() -> Result<(), sqlx::Error> {
 
     load_game_durations(&pool, state.game_durations.clone()).await?;
 
-    println!("{:?}", state.game_durations.lock().unwrap());
+    println!("{:?}", state.game_durations.lock().await);
 
-    let ws_route = warp::path("ws").and(warp::ws()).map(move |ws| {
-        sockets::handle_ws(ws, state.clone())
-    });
+    // Define the WebSocket route
+    let ws_route = warp::path("ws")
+        .and(warp::ws())
+        .and(with_state(state.clone()))
+        .map(|ws: warp::ws::Ws, state| {
+            ws.on_upgrade(move |socket| sockets::handle_ws(socket, state))
+        });
+
+    // Combine routes with other possible routes (e.g., static file serving, API, etc.)
+    let routes = ws_route.with(warp::cors().allow_any_origin());
+
+    // Start the Warp server
+    let port = env::var("PORT").unwrap_or_else(|_| "3030".to_string()).parse::<u16>().unwrap();
+    println!("Server running on port {}", port);
+
+    warp::serve(routes)
+        .run(([127, 0, 0, 1], port))
+        .await;
 
     Ok(())
+}
+
+fn with_state(
+    state: state::AppState,
+) -> impl Filter<Extract = (state::AppState,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || state.clone())
 }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use warp::ws::WsSender;
+use std::sync::Arc;
+use tokio::sync::{Mutex, mpsc};
+use warp::ws::Message;
 
 // Define a custom enum for the values in the inner HashMap
 #[derive(Clone, Debug)]
@@ -8,7 +9,7 @@ pub enum GameRoomValue {
     Bool(bool),
     String(String),
     List(Vec<String>),
-    Sender(WsSender),
+    Sender(mpsc::Sender<Message>),
     Float(f64),
     Int(i32),
 }

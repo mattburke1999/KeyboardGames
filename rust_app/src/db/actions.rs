@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub async fn load_game_durations(
     pool: &PgPool,
@@ -10,7 +11,7 @@ pub async fn load_game_durations(
         .fetch_all(pool)
         .await?;
     
-    let mut durations_map = game_durations.lock().unwrap();
+    let mut durations_map = game_durations.lock().await;
     for row in rows {
         let id: Option<i32> = Some(row.id.clone());
         if id.is_some() {
