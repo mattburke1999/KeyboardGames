@@ -2,6 +2,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use serde_json::Value;
 
 pub async fn load_game_durations(
     pool: &PgPool,
@@ -23,17 +24,18 @@ pub async fn load_game_durations(
     }
     Ok(())
 }
+
 pub async fn update_score (
     pool: &PgPool,
-    user_id: i32,
-    score: i32,
-    game_id: i32
-) -> Result<(Vec<i32>, i32, i32), sqlx::Error> {
+    user_id: u32,
+    score: u32,
+    game_id: u32
+) -> Result<(Vec<Value>, i32, i32), sqlx::Error> {
     let row = sqlx::query!(
         "SELECT high_scores, points_added, score_rank from update_scores($1, $2, $3)",
-        user_id,
-        game_id,
-        score
+        user_id as i32,
+        game_id as i32,
+        score as i32
     )
     .fetch_one(pool)
     .await?;

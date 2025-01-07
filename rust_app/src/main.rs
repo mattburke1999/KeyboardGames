@@ -7,7 +7,12 @@ use warp::Filter;
 use sqlx::PgPool;
 use dotenv::dotenv;
 use std::env;
+use tokio::sync::Mutex;
+use std::sync::Arc;
 use crate::db::load_game_durations;
+use crate::routes::endpoints::handle_endpoints;
+use crate::state::PoolValue;
+use crate::state::AppState;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -18,8 +23,8 @@ async fn main() -> Result<(), sqlx::Error> {
 
     // Initialize shared state
     let state = state::AppState::new();
-    // add pool to state
-    state.set_pool(pool.clone());
+    // set "pg_pool" to pool
+    state.pg_pool = Arc::new(Mutex::new(state::PoolValue::Pool(pool)));
 
     load_game_durations(&pool, state.game_durations.clone()).await?;
 
@@ -34,7 +39,7 @@ async fn main() -> Result<(), sqlx::Error> {
         });
 
     // Import and define the API routes from `routes::endpoints`
-    let api_routes = routes::endpoints::endpoints(state.clone());
+    let api_routes = handle_endpoints(state.clone());
 
     // Combine WebSocket and API routes
     let routes = ws_route

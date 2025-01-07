@@ -3,10 +3,12 @@ use warp::ws::Message;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 use serde_json::json;
-use crate::state::AppState;
 use tokio::time::Duration;
 use std::collections::HashMap;
 use futures::SinkExt;
+use chrono::DateTime;
+
+use crate::state::AppState;
 use crate::state::GameRoomValue;
 
 #[derive(Deserialize)]
@@ -46,7 +48,7 @@ async fn disconnect(_data: serde_json::Value, tx: &mpsc::Sender<Message>) {
 
 async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().unwrap() as i32;
+    let user_id = data["userId"].as_i64().unwrap() as u32;
 
     let game_durations = state.game_durations.lock().await;
     let response;
@@ -84,7 +86,7 @@ async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, st
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn game_timer(user_id: i32, game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String) {
+async fn game_timer(user_id: u32, game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String) {
     // TODO: Implement the timer logic
     let duration;
     {
@@ -96,6 +98,7 @@ async fn game_timer(user_id: i32, game_id: i32, tx: mpsc::Sender<Message>, state
             _ => 60.0 as f64,
         };
         room_data.insert("game_running".to_string(), GameRoomValue::Bool(true));
+        // add empty point list which will hold json obj
         room_data.insert("point_list".to_string(), GameRoomValue::List(Vec::new()));
     }
     tokio::time::sleep(Duration::from_secs_f64(duration)).await;
@@ -107,7 +110,7 @@ async fn game_timer(user_id: i32, game_id: i32, tx: mpsc::Sender<Message>, state
     emit_end_game(user_id, game_id, end_game_token, tx).await;
 }
 
-async fn emit_end_game(user_id: i32, game_id: i32, end_game_token: String, tx: mpsc::Sender<Message>) {
+async fn emit_end_game(user_id: u32, game_id: i32, end_game_token: String, tx: mpsc::Sender<Message>) {
     println!("Ending game for user {} in game {}", user_id, game_id);
     let response = json!({
         "event": "end_game",
@@ -118,7 +121,7 @@ async fn emit_end_game(user_id: i32, game_id: i32, end_game_token: String, tx: m
 
 async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().unwrap() as i32;
+    let user_id = data["userId"].as_i64().unwrap() as u32;
 
     let response;
     let response_event = "start_game_response";
@@ -170,7 +173,7 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
 
 async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().unwrap() as i32;
+    let user_id = data["userId"].as_i64().unwrap() as u32;
     let response;
     let response_event = "point_added_response";
     let game_not_started_response = json!({
