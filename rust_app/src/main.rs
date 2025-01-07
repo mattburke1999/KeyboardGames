@@ -9,10 +9,20 @@ use dotenv::dotenv;
 use std::env;
 use tokio::sync::Mutex;
 use std::sync::Arc;
+
 use crate::db::load_game_durations;
 use crate::routes::endpoints::handle_endpoints;
-use crate::state::PoolValue;
-use crate::state::AppState;
+
+
+fn cors_config() -> warp::cors::Cors {
+    warp::cors()
+        .allow_origin("http://localhost:5000") // Allow localhost
+        .allow_origin("http://127.0.0.1:5000") // Allow 127.0.0.1
+        .allow_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"]) // Allow specific HTTP methods
+        .allow_headers(vec!["Content-Type", "Authorization"]) // Allow specific headers
+        .build()
+}
+
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -22,9 +32,9 @@ async fn main() -> Result<(), sqlx::Error> {
     let pool = PgPool::connect(&database_url).await?;
 
     // Initialize shared state
-    let state = state::AppState::new();
+    let mut state = state::AppState::new();
     // set "pg_pool" to pool
-    state.pg_pool = Arc::new(Mutex::new(state::PoolValue::Pool(pool)));
+    state.pg_pool = Arc::new(Mutex::new(state::PoolValue::Pool(pool.clone())));
 
     load_game_durations(&pool, state.game_durations.clone()).await?;
 
@@ -44,7 +54,7 @@ async fn main() -> Result<(), sqlx::Error> {
     // Combine WebSocket and API routes
     let routes = ws_route
         .or(api_routes)
-        .with(warp::cors().allow_any_origin());
+        .with(cors_config()); // Apply CORS configuration
 
     // Start the Warp server
     let port = env::var("PORT").unwrap_or_else(|_| "3030".to_string()).parse::<u16>().unwrap();
