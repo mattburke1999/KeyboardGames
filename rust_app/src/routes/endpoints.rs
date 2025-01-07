@@ -24,26 +24,59 @@ fn with_state(
 ) -> impl Filter<Extract = (AppState,), Error = Infallible> + Clone {
     warp::any().map(move || state.clone())
 }
+async fn validate_points(
+    server_point_list: Vec<u32>,
+    client_point_list: Vec<u32>,
+    score: u32,
+) -> bool {
+    // compare point tokens from server list vs client list
+    // set some latency threshold and compare point_times from server list vs client list with latency
+    // if tokens match and point_times are within latency, return true
+}
+
+// def validate_game(user_id, start_game_token, end_game_token, score, point_list):
+async validate_game(
+    user_id: u32,
+    start_game_token: str,
+    end_game_token: str,
+    score: u32,
+    point_list: Vec<u32>,
+) -> bool {
+    // compare start and end game tokens against server state
+    // if tokens match, validate points
+    // validate_points(server_point_list, point_list, score)
+}
 
 async fn handle_score_update(
     game_id: u32,
     state: AppState,
     body: serde_json::Value, // Adjust the type based on your expected payload
 ) -> Result<impl Reply, Rejection> {
-    // Extract and process data from `body`
-    // Example: updating a score in the database
-    let score = body.get("score").and_then(|s| s.as_u64()).unwrap_or(0);
-    println!("Received score update for game {}: {}", game_id, score);
+    // validate the game
+    // if valid, insert the score into the database using pg function, which returns a list of top10 scores and top3 personal scores
+    // respond with the list of top10 scores and top3 personal scores
 
     // Perform operations using `state` or `game_id`
     Ok(warp::reply::json(&serde_json::json!({ "status": "success" })))
 }
 
+async fn refresh_games(
+    state: AppState,
+) {
+    // Logic to refresh game data
+    // refresh games
+    println!("Refreshing games...");
+}
+
 async fn handle_refresh_games(
     state: AppState,
 ) -> Result<impl Reply, Rejection> {
-    // Logic to refresh game data
-    println!("Refreshing games...");
+    // this endpoint is called as part of the flask 'refresh_games' endpoint
+    // the flask app and this rust app share a .env with a shared secret key
+    // that key will be sent to this endpoint to verify the request
+    // if the key is not present or incorrect, return an error
+    // refresh game in background, respond immediately
+    tokio::spawn(refresh_games(state.clone()));
     
-    Ok(warp::reply::json(&serde_json::json!({ "status": "games refreshed" })))
+    Ok(warp::reply::json(&serde_json::json!({ "status": "refreshing games" })))
 }
