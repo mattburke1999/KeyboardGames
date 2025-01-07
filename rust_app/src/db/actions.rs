@@ -39,5 +39,11 @@ pub async fn update_score (
     )
     .fetch_one(pool)
     .await?;
-    Ok((row.high_scores, row.points_added, row.score_rank))
+    if let (Some(high_scores), Some(points_added), Some(score_rank)) = (row.high_scores, row.points_added, row.score_rank) {
+        let high_scores: Vec<Value> = serde_json::from_value(high_scores)
+            .map_err(|err| sqlx::Error::Decode(Box::new(err)))?;
+        return Ok((high_scores, points_added, score_rank));
+    } else {
+        return Err(sqlx::Error::RowNotFound);
+    }
 }
