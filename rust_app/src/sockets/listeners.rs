@@ -5,8 +5,6 @@ use uuid::Uuid;
 use serde_json::json;
 use tokio::time::Duration;
 use std::collections::HashMap;
-use futures::SinkExt;
-use chrono::DateTime;
 
 use crate::state::AppState;
 use crate::state::GameRoomValue;
@@ -121,7 +119,10 @@ async fn emit_end_game(user_id: u32, game_id: i32, end_game_token: String, tx: m
 
 async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().unwrap() as u32;
+    let user_id = data["userId"].as_i64().or_else(|| data["userId"].as_str()?.parse::<i64>().ok())
+    .unwrap_or_else(|| {
+        panic!("userId is missing, not an integer, or not a parseable string: {:?}", data["userId"]);
+    }) as u32;
 
     let response;
     let response_event = "start_game_response";
@@ -173,7 +174,10 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
 
 async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().unwrap() as u32;
+    let user_id = data["userId"].as_i64().or_else(|| data["userId"].as_str()?.parse::<i64>().ok())
+    .unwrap_or_else(|| {
+        panic!("userId is missing, not an integer, or not a parseable string: {:?}", data["userId"]);
+    }) as u32;
     let response;
     let response_event = "point_added_response";
     let game_not_started_response = json!({
