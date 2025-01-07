@@ -2,13 +2,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc};
 use warp::ws::Message;
+use serde_json::Value;
 
 // Define a custom enum for the values in the inner HashMap
 #[derive(Clone, Debug)]
 pub enum GameRoomValue {
     Bool(bool),
     String(String),
-    List(Vec<String>),
+    List(Vec<Value>),
     Sender(mpsc::Sender<Message>),
     Float(f64),
     Int(i32),
