@@ -2,16 +2,10 @@ from db import get_games as db_get_games
 from db import check_unique_register_input as db_check_unique_register_input
 from db import create_user as db_create_user
 from db import check_user as db_check_user
-from db import update_score as db_update_score
 from db import get_profile as db_get_profile
 from flask import session
 import bcrypt
-from threading import Lock
-from datetime import datetime
-from datetime import timedelta
 
-GAME_ROOMS = {}
-GAME_ROOMS_LOCK = Lock()
 GAME_INFO = {}
 GAMES = []
 
@@ -89,91 +83,11 @@ def get_game_info(game):
         return (False, {'error': 'Game not found'})
     return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login()})
 
-def get_game_duration(game_id):
-    global GAME_INFO
-    if not GAME_INFO:
-        games_result = get_games()
-        if not games_result[0]:
-            return (False, None)
-    # find the set element with the matching id
-    duration = next((value['duration'] for _, value in GAME_INFO.items() if value['id'] == game_id), None)
-    if duration is None:
-        return (False, None)
-    return (True, duration)
-
 def check_unique_register_input(type, value):
     result = db_check_unique_register_input(type, value)
     if not result[0]:
         return (False, None)
     return (True, {'unique': result[1]})
-
-def validate_points(server_point_list, client_point_list, score):
-    print('Server points:')
-    print(server_point_list)
-    print('Client points:')
-    print(client_point_list)
-    print(f'Score: {score}')
-    latency_tolerance = timedelta(seconds=0.75)
-    if len(server_point_list) < len(client_point_list) or score > len(server_point_list) or score > len(client_point_list):
-        return (False, {'error': 'Too many points submitted'})
-    for point in client_point_list:
-        # point: {'point_token': point_token, 'point_time': point_time}
-        server_matching_point = next((p for p in server_point_list if p['point_token'] == point['point_token']), None)
-        if not server_matching_point:
-            return (False, {'error': 'Invalid point submitted'})
-        try:
-            server_time = datetime.fromisoformat(server_matching_point['point_time'])
-            client_time = datetime.fromisoformat(point['point_time'])
-        except ValueError:
-            return (False, {'error': 'Invalid time format submitted'})
-        actual_latency = abs(server_time - client_time)
-        # Validate time difference within latency tolerance
-        if actual_latency > latency_tolerance:
-            print(f'Server time: {server_time}')
-            print(f'Client time: {client_time}')
-            print(f'Actual latency: {actual_latency}')
-            return (False, {'error': 'Invalid point time submitted'})
-    return (True, {'points': len(server_point_list)})       
-
-def validate_game(user_id, start_game_token, end_game_token, score, point_list):
-    global GAME_ROOMS
-    with GAME_ROOMS_LOCK:
-        game = GAME_ROOMS.pop(str(user_id), None)
-    if game is None or 'start_game_token' not in game or 'end_game_token' not in game:
-        return (False, {'error': 'No game found for user'})
-    if not game['start_game_token'] == start_game_token and game['end_game_token'] == end_game_token:
-        return (False, {'error': 'Invalid start and end tokens'})
-    point_validation_result = validate_points(game['point_list'], point_list, score)
-    if not point_validation_result[0]:
-        return (False, point_validation_result[1])
-    return (True, point_validation_result[1])
-
-def score_update(game_id, score, start_game_token, end_game_token, point_list):
-    if not check_login():
-        return (False, {'error': 'Not logged in'})
-    user_id = session['user_id']
-    validation_result = validate_game(user_id, start_game_token, end_game_token, score, point_list)
-    if not validation_result[0]:
-        return (False, validation_result[1])
-    score = validation_result[1]['points']
-    print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
-    update_result = db_update_score(user_id, game_id, score)
-    print(update_result[1])
-    if not update_result[0]:
-        return (False, update_result[1])
-    high_scores, points_added, score_rank = update_result[1]
-    # format date as mm/dd/yyyy
-    top10 = [{
-        **hs,
-        'date': datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'),
-        'current_score': hs['current_score']
-        } for hs in high_scores if hs['score_type'] == 'top10']
-    top3 = [{
-        'score': hs['score'],
-        'date': datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'),
-        'current_score': hs['current_score']
-        } for hs in high_scores if hs['score_type'] == 'top3']
-    return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
 
 def get_profile():
     if not check_login():

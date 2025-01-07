@@ -7,7 +7,6 @@ from services import create_user
 from services import try_login
 from services import logout
 from services import get_user_id
-from services import score_update
 from services import get_profile
 
 def json_result(result):
@@ -50,10 +49,6 @@ def logout_view():
 
 def get_user_id_view():
     result = get_user_id()
-    return json_result(result)
-
-def score_update_view(game_id, score, start_game_token, end_game_token, point_list):
-    result = score_update(game_id, score, start_game_token, end_game_token, point_list)
     return json_result(result)
 
 def profile_view():

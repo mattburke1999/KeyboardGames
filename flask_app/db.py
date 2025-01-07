@@ -55,18 +55,6 @@ def check_unique_register_input(type, value):
         traceback.print_exc()
         return (False, None)
     
-def update_score(user_id, game_id, score):
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('select high_scores, points_added, score_rank from update_scores(%s, %s, %s)', (user_id, game_id, score))
-                results = cur.fetchone()
-                conn.commit()
-                return (True, results)
-    except:
-        traceback.print_exc()
-        return (False, None)
-    
 def get_profile(user_id):
     try:
         with connect_db() as conn:
