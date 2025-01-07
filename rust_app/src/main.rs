@@ -1,4 +1,4 @@
-//mod routes;
+mod routes; // Enable routes module
 mod sockets;
 mod state;
 mod db;
@@ -11,7 +11,6 @@ use crate::db::load_game_durations;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
-
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -32,8 +31,13 @@ async fn main() -> Result<(), sqlx::Error> {
             ws.on_upgrade(move |socket| sockets::handle_ws(socket, state))
         });
 
-    // Combine routes with other possible routes (e.g., static file serving, API, etc.)
-    let routes = ws_route.with(warp::cors().allow_any_origin());
+    // Import and define the API routes from `routes::endpoints`
+    let api_routes = routes::endpoints::endpoints(state.clone());
+
+    // Combine WebSocket and API routes
+    let routes = ws_route
+        .or(api_routes)
+        .with(warp::cors().allow_any_origin());
 
     // Start the Warp server
     let port = env::var("PORT").unwrap_or_else(|_| "3030".to_string()).parse::<u16>().unwrap();

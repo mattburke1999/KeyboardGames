@@ -15,6 +15,7 @@ let loggedIn = false;
 let enteredGameRoom = false;
 let loadingInterval;
 const socketServer = 'ws://127.0.0.1:3030/ws';
+const baseUrl = 'http://127.0.0.1:3030';
 
 connectSocket();
 
@@ -481,7 +482,7 @@ async function setHighScoreServer(end_game_token) {
     console.log(pointList);
     $.ajax({
         // TODO: SETUP http endpoint in rust server, and change url to the correct endpoint url
-        url: `${socketServer}/game/${gameId}/score_update`,
+        url: `${baseUrl}/game/${gameId}/score_update`,
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({start_game_token, end_game_token, score, pointList}),

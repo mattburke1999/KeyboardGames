@@ -116,7 +116,6 @@ async fn emit_end_game(user_id: i32, game_id: i32, end_game_token: String, tx: m
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-
 async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
     let user_id = data["userId"].as_i64().unwrap() as i32;
