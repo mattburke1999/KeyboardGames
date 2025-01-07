@@ -18,6 +18,8 @@ async fn main() -> Result<(), sqlx::Error> {
 
     // Initialize shared state
     let state = state::AppState::new();
+    // add pool to state
+    state.set_pool(pool.clone());
 
     load_game_durations(&pool, state.game_durations.clone()).await?;
 
