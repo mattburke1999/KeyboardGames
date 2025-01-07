@@ -21,6 +21,7 @@ pub async fn handle_event(event: Event, tx: &mpsc::Sender<Message>, state: AppSt
         "disconnect" => disconnect(event.data, tx).await,
         "enter_game_room" => enter_game_room(event.data, tx, state).await,
         "start_game" => start_game(event.data, tx, state).await,
+        "point_added" => point_added(event.data, tx, state).await,
         _ => {
             let _ = tx.send(Message::text("Unknown event")).await;
         }
@@ -164,6 +165,77 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
     }
     if response["success"].as_bool().unwrap_or(false) {
         tokio::spawn(game_timer(user_id, game_id, tx.clone(), state, end_game_token.clone())); // don't await
+    }
+    let _ = tx.send(Message::text(response.to_string())).await;
+}
+
+async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
+    let game_id = data["gameId"].as_i64().unwrap() as i32;
+    let user_id = data["userId"].as_i64().unwrap() as i32;
+    let response;
+    let response_event = "point_added_response";
+    let game_not_started_response = json!({
+        "event": response_event,
+        "success": false,
+        "message": "Game not started"
+    });
+    let no_game_room_response = json!({
+        "event": response_event,
+        "success": false,
+        "message": format!("User {} is not in a game room", user_id.to_string())
+    });
+    let mut game_rooms = state.game_rooms.lock().await;
+    if let Some(room_data) = game_rooms.get_mut(&user_id) {
+        if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
+            if room_game_id == game_id {
+                if let Some(&GameRoomValue::Bool(game_running)) = room_data.get("game_running") {
+                    if game_running {
+                        if let Some(&mut GameRoomValue::List(ref mut point_list)) = room_data.get_mut("point_list") {
+                            let point_token = Uuid::new_v4().to_string();
+                            // set point time to current time in iso8601 format that will match format of new Date().toISOString(),
+                            let point_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+                            // append {'point_token': point_token, 'point_time': point_time} to point_list
+                            point_list.push(json!({
+                                "point_token": point_token,
+                                "point_time": point_time
+                            }));
+                            response = json!({
+                                "event": response_event,
+                                "success": true,
+                                "point_token": point_token,
+                                "message": "Point added"
+                            });
+                        } else {
+                            response = game_not_started_response;
+                            println!("Game not started for user {}", user_id.to_string());
+                        }
+                    } else {
+                        response = json!({
+                            "event": response_event,
+                            "success": false,
+                            "message": "Game ended already"
+                        });
+                        println!("Game ended already for user {}", user_id.to_string());
+                    }
+                } else {
+                    response = game_not_started_response;
+                    println!("Game not started for user {}", user_id.to_string());
+                }
+            } else {
+                response = json!({
+                    "event": response_event,
+                    "success": false,
+                    "message": format!("Incorrect game room for user {}", user_id)
+                });
+                println!("Incorrect game room for user {}", user_id.to_string());
+            }
+        } else {
+            response = no_game_room_response;
+            println!("User {} is not in a game room", user_id.to_string());
+        }
+    } else {
+        response = no_game_room_response;
+        println!("User {} is not in a game room", user_id.to_string());
     }
     let _ = tx.send(Message::text(response.to_string())).await;
 }
