@@ -111,7 +111,7 @@ async fn validate_game(
         // check if start and end token are in room_data
         if let Some(&GameRoomValue::String(start_game_token_server)) = room_data.get("start_game_token") {
             if let Some(&GameRoomValue::String(end_game_token_server)) = room_data.get("end_game_token") {
-                if let Some(&GameRoomValue::List(point_list_server)) = room_data.get("point_list").as_object() {
+                if let Some(&GameRoomValue::List(point_list_server)) = room_data.get("point_list") {
                     if start_game_token_server == start_game_token && end_game_token_server == end_game_token{
                         // validate points
                         return validate_points(point_list_server.clone(), point_list, score).await;
