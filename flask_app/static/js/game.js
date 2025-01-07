@@ -388,7 +388,8 @@ function startGame({intervalFunction, interval}) {
             }, interval);
             startTimer();
             if (enteredGameRoom) {
-                userId = localStorage.getItem('userId');
+                userId = localStorage.getItem('keyboard-games-userId');
+                console.log(`UserId starting game: ${userId}`);
                 startGameServer(userId);
             }
         }
@@ -479,13 +480,14 @@ async function setHighScoreServer(end_game_token) {
     const score = parseInt($('#score').text());
     const start_game_token = $('#start_game_token').val();
     const pointList = await getFinalPointListFromDB();
+    const userId = localStorage.getItem('keyboard-games-userId');
     console.log(pointList);
     $.ajax({
         // TODO: SETUP http endpoint in rust server, and change url to the correct endpoint url
         url: `${baseUrl}/game/${gameId}/score_update`,
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({start_game_token, end_game_token, score, pointList}),
+        data: JSON.stringify({start_game_token, end_game_token, score, pointList, userId}),
         success: function(response) {
             console.log(response);
             const highScoreListTop10 = $('#top10');
