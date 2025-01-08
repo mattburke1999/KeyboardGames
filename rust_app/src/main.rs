@@ -1,4 +1,4 @@
-mod routes; // Enable routes module
+mod routes;
 mod sockets;
 mod state;
 mod db;

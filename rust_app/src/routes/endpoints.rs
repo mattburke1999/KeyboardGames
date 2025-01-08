@@ -8,6 +8,7 @@ use crate::state::AppState;
 use crate::state::GameRoomValue;
 use crate::db::update_score;
 use crate::db::load_game_durations;
+use crate::utils::convert_jwt_to_user_id;
 
 pub fn handle_endpoints(
     state: AppState,
@@ -146,10 +147,8 @@ async fn handle_score_update(
     let score = body["score"].as_u64().unwrap() as u32;
     let start_game_token = body["start_game_token"].as_str().unwrap();
     let end_game_token = body["end_game_token"].as_str().unwrap();
-    let user_id = body["user_id"].as_u64().or_else(|| body["userId"].as_str()?.parse::<u64>().ok())
-    .unwrap_or_else(|| {
-        panic!("userId is missing, not an integer, or not a parseable string: {:?}", body["userId"]);
-    }) as u32;
+    let user_jwt = body["user_jwt"].unwrap();
+    let user_id = convert_jwt_to_user_id(&user_jwt, state).await.unwrap();
     let point_list = body["pointList"].as_array().unwrap();
     let game_validation_result = validate_game(state.clone(), user_id, start_game_token, end_game_token, score, point_list).await;
     if !game_validation_result.0 {
@@ -168,7 +167,6 @@ async fn handle_score_update(
 
     if let PoolValue::Pool(ref pg_pool) = *pool {
         (high_scores, points_added, score_rank) = update_score(pg_pool, user_id, score, game_id).await.unwrap();
-        // Use high_scores, points_added, and score_rank here
     } else {
         // Handle the case where the PoolValue is not a PgPool
         return Err(warp::reject::custom(InvalidPoolType));

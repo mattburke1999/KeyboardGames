@@ -40,3 +40,6 @@ Thumbs.db
 # System-specific files
 *.swp
 *~
+
+# ignore test_rust/
+test_rust/

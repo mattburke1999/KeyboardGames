@@ -4,7 +4,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use serde_json::Value;
 
-pub async fn load_game_durations(
+pub async fn load_game_durations (
     pool: &PgPool,
     game_durations: Arc<Mutex<HashMap<i32, f64>>>,
 ) -> Result<(), sqlx::Error> {
@@ -43,6 +43,23 @@ pub async fn update_score (
         let high_scores: Vec<Value> = serde_json::from_value(high_scores)
             .map_err(|err| sqlx::Error::Decode(Box::new(err)))?;
         return Ok((high_scores, points_added, score_rank));
+    } else {
+        return Err(sqlx::Error::RowNotFound);
+    }
+}
+
+pub async fn verify_session_and_get_userid (
+    pool: &PgPool,
+    session_id: &str,
+) -> Result<i32, sqlx::Error> {
+    let row = sqlx::query!(
+        "SELECT user_id from user_sessions where session_id = $1",
+        session_id
+    )
+    .fetch_one(pool)
+    .await?;
+    if let Some(user_id) = row.user_id {
+        return Ok(user_id);
     } else {
         return Err(sqlx::Error::RowNotFound);
     }

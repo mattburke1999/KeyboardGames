@@ -10,6 +10,7 @@ dotenv = "0.15"
 sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "postgres", "json"] }
 uuid = { version = "1.3", features = ["v4"] }
 serde = { version = "1.0", features = ["derive"] }
+jsonwebtoken = "8.1.1"
 serde_json = "1.0"
 futures = "0.3"
 chrono = "0.4"

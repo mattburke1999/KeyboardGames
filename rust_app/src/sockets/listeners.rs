@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 use crate::state::AppState;
 use crate::state::GameRoomValue;
+use crate::utils::verify_session;
 
 #[derive(Deserialize)]
 pub struct Event {
@@ -42,55 +43,67 @@ async fn disconnect(_data: serde_json::Value, tx: &mpsc::Sender<Message>) {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     println!("Client disconnected");
-}
+}    
 
 async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().unwrap() as u32;
-
-    let game_durations = state.game_durations.lock().await;
+    let user_jwt = data["userJWT"].unwrap();
     let response;
     let response_event = "entered_game_room_response";
-    if let Some(&duration) = game_durations.get(&game_id) {
-        let mut game_rooms = state.game_rooms.lock().await;
-    
-        // Insert the user into the game room with all relevant data
-        game_rooms.insert(
-            user_id,
-            {
-                let mut room_data = HashMap::new();
-                room_data.insert("game_id".to_string(), GameRoomValue::Int(game_id)); // game_id as i32
-                room_data.insert("duration".to_string(), GameRoomValue::Float(duration)); // duration as f64
-                room_data.insert("client".to_string(), GameRoomValue::Sender(tx.clone())); // WebSocket sender
-                room_data
-            },
-        );
-        println!("User {} entered game room {}", user_id.to_string(), game_id.to_string());
-        // Notify the client that they entered the game room successfully
-        response = json!({
-            "event": response_event,
-            "success": true,
-            "message": "Entered game room"
-        });
-    } else {
-        // If the game ID does not exist, send an error message
-        println!("Game: {}, does not exist", game_id.to_string());
+
+    let valid_session = verify_session(&user_jwt.to_string(), state).await;
+
+    if !valid_session {
         response = json!({
             "event": response_event,
             "success": false,
-            "message": "Game does not exist"
+            "message": "Invalid session"
         });
+    } else {
+        let game_durations = state.game_durations.lock().await;
+        let response;
+        let response_event = "entered_game_room_response";
+        if let Some(&duration) = game_durations.get(&game_id) {
+            let mut game_rooms = state.game_rooms.lock().await;
+        
+            // Insert the user into the game room with all relevant data
+            game_rooms.insert(
+                tx.clone(),
+                {
+                    let mut room_data = HashMap::new();
+                    room_data.insert("game_id".to_string(), GameRoomValue::Int(game_id)); // game_id as i32
+                    room_data.insert("duration".to_string(), GameRoomValue::Float(duration)); // duration as f64
+                    room_data.insert("userId".to_string(), GameRoomValue::Int(user_id)); // user_id as i32
+                    room_data
+                },
+            );
+            println!("User {} entered game room {}", user_id.to_string(), game_id.to_string());
+            // Notify the client that they entered the game room successfully
+            response = json!({
+                "event": response_event,
+                "success": true,
+                "message": "Entered game room"
+            });
+        } else {
+            // If the game ID does not exist, send an error message
+            println!("Game: {}, does not exist", game_id.to_string());
+            response = json!({
+                "event": response_event,
+                "success": false,
+                "message": "Game does not exist"
+            });
+        }
     }
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn game_timer(user_id: u32, game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String) {
+async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String) {
     // TODO: Implement the timer logic
     let duration;
     {
         let mut game_rooms = state.game_rooms.lock().await;
         // no need to check if room exists, as it was checked before spawning the task
-        let room_data = game_rooms.get_mut(&user_id).unwrap(); 
+        let room_data = game_rooms.get_mut(&tx).unwrap(); 
         duration = match room_data.get("duration") {
             Some(GameRoomValue::Float(duration)) => duration.clone(),
             _ => 60.0 as f64,
@@ -102,14 +115,14 @@ async fn game_timer(user_id: u32, game_id: i32, tx: mpsc::Sender<Message>, state
     tokio::time::sleep(Duration::from_secs_f64(duration)).await;
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        let room_data = game_rooms.get_mut(&user_id).unwrap();
+        let room_data = game_rooms.get_mut(&tx).unwrap();
         room_data.insert("game_running".to_string(), GameRoomValue::Bool(false));
     }
-    emit_end_game(user_id, game_id, end_game_token, tx).await;
+    emit_end_game(game_id, end_game_token, tx).await;
 }
 
-async fn emit_end_game(user_id: u32, game_id: i32, end_game_token: String, tx: mpsc::Sender<Message>) {
-    println!("Ending game for user {} in game {}", user_id, game_id);
+async fn emit_end_game(game_id: i32, end_game_token: String, tx: mpsc::Sender<Message>) {
+    println!("Ending game for in game {}", game_id);
     let response = json!({
         "event": "end_game",
         "end_game_token": end_game_token
@@ -119,10 +132,6 @@ async fn emit_end_game(user_id: u32, game_id: i32, end_game_token: String, tx: m
 
 async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().or_else(|| data["userId"].as_str()?.parse::<i64>().ok())
-    .unwrap_or_else(|| {
-        panic!("userId is missing, not an integer, or not a parseable string: {:?}", data["userId"]);
-    }) as u32;
 
     let response;
     let response_event = "start_game_response";
@@ -130,7 +139,7 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
     let mut end_game_token = String::new();
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        if let Some(room_data) = game_rooms.get_mut(&user_id) {
+        if let Some(room_data) = game_rooms.get_mut(&tx) {
             if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
                 if room_game_id == game_id {
                     start_game_token = Uuid::new_v4().to_string();
@@ -167,17 +176,13 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
         }
     }
     if response["success"].as_bool().unwrap_or(false) {
-        tokio::spawn(game_timer(user_id, game_id, tx.clone(), state, end_game_token.clone())); // don't await
+        tokio::spawn(game_timer(game_id, tx.clone(), state, end_game_token.clone())); // don't await
     }
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
 async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_id = data["userId"].as_i64().or_else(|| data["userId"].as_str()?.parse::<i64>().ok())
-    .unwrap_or_else(|| {
-        panic!("userId is missing, not an integer, or not a parseable string: {:?}", data["userId"]);
-    }) as u32;
     let response;
     let response_event = "point_added_response";
     let game_not_started_response = json!({
@@ -188,10 +193,10 @@ async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state:
     let no_game_room_response = json!({
         "event": response_event,
         "success": false,
-        "message": format!("User {} is not in a game room", user_id.to_string())
+        "message": format!("User is not in a game room")
     });
     let mut game_rooms = state.game_rooms.lock().await;
-    if let Some(room_data) = game_rooms.get_mut(&user_id) {
+    if let Some(room_data) = game_rooms.get_mut(&tx) {
         if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
             if room_game_id == game_id {
                 if let Some(&GameRoomValue::Bool(game_running)) = room_data.get("game_running") {
@@ -213,7 +218,7 @@ async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state:
                             });
                         } else {
                             response = game_not_started_response;
-                            println!("Game not started for user {}", user_id.to_string());
+                            println!("Game not started for user");
                         }
                     } else {
                         response = json!({
@@ -221,23 +226,23 @@ async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state:
                             "success": false,
                             "message": "Game ended already"
                         });
-                        println!("Game ended already for user {}", user_id.to_string());
+                        println!("Game ended already for user");
                     }
                 } else {
                     response = game_not_started_response;
-                    println!("Game not started for user {}", user_id.to_string());
+                    println!("Game not started for user");
                 }
             } else {
                 response = json!({
                     "event": response_event,
                     "success": false,
-                    "message": format!("Incorrect game room for user {}", user_id)
+                    "message": format!("Incorrect game room for user")
                 });
-                println!("Incorrect game room for user {}", user_id.to_string());
+                println!("Incorrect game room for user");
             }
         } else {
             response = no_game_room_response;
-            println!("User {} is not in a game room", user_id.to_string());
+            println!("User {} is not in a game room");
         }
     } else {
         response = no_game_room_response;

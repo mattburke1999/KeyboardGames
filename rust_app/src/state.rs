@@ -10,7 +10,6 @@ pub enum GameRoomValue {
     Bool(bool),
     String(String),
     List(Vec<Value>),
-    Sender(mpsc::Sender<Message>),
     Float(f64),
     Int(i32),
 }
@@ -21,7 +20,7 @@ pub enum PoolValue {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub game_rooms: Arc<Mutex<HashMap<u32, HashMap<String, GameRoomValue>>>>, // Shared game rooms
+    pub game_rooms: Arc<Mutex<HashMap<mpsc::Sender<Message>, HashMap<String, GameRoomValue>>>>, // Shared game rooms
     pub game_durations: Arc<Mutex<HashMap<i32, f64>>>, // Cached game metadata
     pub pg_pool: Arc<Mutex<PoolValue>>, // Shared database pool
 }

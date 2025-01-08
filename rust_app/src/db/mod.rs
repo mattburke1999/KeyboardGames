@@ -4,3 +4,5 @@ pub mod actions;
 pub use actions::load_game_durations;
 
 pub use actions::update_score;
+
+pub use actions::verify_session_and_get_userid;
