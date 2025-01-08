@@ -126,8 +126,6 @@ CREATE TABLE user_sessions (
     ```
     DELETE FROM user_sessions WHERE session_id = ?;
     ```
-- Periodic Cleanup:
-Remove expired sessions using a background task or cron job:
-    ```
-    DELETE FROM user_sessions WHERE session_expires_at < NOW();
-    ```
+- Sockets/heartbeat
+    - flask will have a single socket listener for heartbeat, checking logged in users
+        - if the user has not sent a heartbeat within a certain period, clear their session data
