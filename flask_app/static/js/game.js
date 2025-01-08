@@ -19,7 +19,7 @@ const baseUrl = 'http://127.0.0.1:3030';
 
 connectSocket();
 
-function fetchUserId() {
+function fetchUserJWT() {
     return new Promise((resolve, reject) => {
         $.ajax({
             url: '/current_user',
@@ -36,28 +36,29 @@ function fetchUserId() {
 }
 
 // Usage with async/await
-async function getUserId() {
-    let userId = localStorage.getItem('keyboard-games-userId');
-    if (!loggedIn || !userId) {
+async function getUserJWT() {
+    let userJWT = localStorage.getItem('keyboard-games-userJWT');
+    if (!loggedIn || !userJWT) {
         try {
-            let response = await fetchUserId();
+            let response = await fetchUserJWT();
             console.log(response);
-            localStorage.setItem('keyboard-games-userId', response.user_id);
+            localStorage.setItem('keyboard-games-userJWT', response.user_jwt);
             loggedIn = response.logged_in;
-            return {logged_in: response.logged_in, userId: response.user_id};
+            return {logged_in: response.logged_in, userJWT: response.user_jwt};
         } catch (error) {
             console.error(error);
             return false, null;
         }
     }
-    return {logged_in: true, userId};
+    return {logged_in: true, userJWT};
 }
 
 
 async function connectSocket() {
-    let { logged_in, userId } = await getUserId();
+    let { logged_in, userJWT } = await getUserJWT();
     loggedIn = logged_in;
-    console.log(loggedIn, userId);
+    user = userJWT ? 1 : 0;
+    console.log(loggedIn, user);
     if (!loggedIn) {
         // notify user that they are not logged in
         // if they want their scores to be saved, they need to log in
@@ -65,7 +66,6 @@ async function connectSocket() {
         console.log("User not logged in");
         return;
     }
-    localStorage.setItem('userId', userId);
     console.log("Creating socket");
     socket = new WebSocket(socketServer);
     socket.onopen = () => {
@@ -73,7 +73,7 @@ async function connectSocket() {
         //emit 'enter_game_room' event and receieve response from same event
         const message = JSON.stringify({
             event: 'enter_game_room', // Define the action
-            data: { userId, gameId },  // Your payload
+            data: { userJWT, gameId },  // Your payload
         });
         socket.send(message);
         // set up event listners
@@ -283,7 +283,7 @@ function point_added_response_Socketlistener(response) {
 }
 
 async function addPointToServer() {
-    let { logged_in, userId } = await getUserId();
+    let { logged_in, userJWT } = await getUserJWT();
     if (!logged_in) {
         enteredGameRoom = false;
         loggedIn = false;
@@ -293,7 +293,7 @@ async function addPointToServer() {
     
     const message = JSON.stringify({
         event: 'point_added', // Define the action
-        data: { userId, gameId },  // Your payload
+        data: { userJWT, gameId },  // Your payload
     });
     socket.send(message);
 }
@@ -360,10 +360,10 @@ function start_game_response_Socketlistener(response) {
     }
 }
 
-async function startGameServer(userId) {
+async function startGameServer(userJWT) {
     const message = JSON.stringify({
         event: 'start_game', // Define the action
-        data: { userId, gameId },  // Your payload
+        data: { userJWT, gameId },  // Your payload
     });
     socket.send(message);
 }
@@ -388,9 +388,9 @@ function startGame({intervalFunction, interval}) {
             }, interval);
             startTimer();
             if (enteredGameRoom) {
-                userId = localStorage.getItem('keyboard-games-userId');
-                console.log(`UserId starting game: ${userId}`);
-                startGameServer(userId);
+                userJWT = localStorage.getItem('keyboard-games-userJWT');
+                console.log(`UserId starting game: ${userJWT}`);
+                startGameServer(userJWT);
             }
         }
     }, 1000);
