@@ -6,7 +6,7 @@ from services import check_unique_register_input
 from services import create_user
 from services import try_login
 from services import logout
-from services import get_user_id
+from services import get_user_jwt
 from services import get_profile
 
 def json_result(result):
@@ -47,8 +47,8 @@ def logout_view():
     logout()
     return json_result((True, {}))
 
-def get_user_id_view():
-    result = get_user_id()
+def get_user_jwt_view():
+    result = get_user_jwt()
     return json_result(result)
 
 def profile_view():

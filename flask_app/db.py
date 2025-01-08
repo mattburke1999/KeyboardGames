@@ -55,6 +55,26 @@ def check_unique_register_input(type, value):
         traceback.print_exc()
         return (False, None)
     
+def create_user_session(user_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('insert into user_sessions (account_id) values (%s) returning session_id', (user_id,))
+                return (True, cur.fetchone()[0])
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
+def clear_user_sessions(session_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('delete from user_sessions where session_id = %s', (session_id,))
+                return (True, None)
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
 def get_profile(user_id):
     try:
         with connect_db() as conn:

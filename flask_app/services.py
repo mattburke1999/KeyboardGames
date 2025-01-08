@@ -3,8 +3,13 @@ from db import check_unique_register_input as db_check_unique_register_input
 from db import create_user as db_create_user
 from db import check_user as db_check_user
 from db import get_profile as db_get_profile
+from db import create_user_session as db_create_user_session
+from db import clear_user_sessions as db_clear_user_sessions
 from flask import session
 import bcrypt
+import jwt
+import os
+
 
 GAME_INFO = {}
 GAMES = []
@@ -38,20 +43,30 @@ def get_games():
             }
     return (True, (GAME_INFO, GAMES))
 
-def get_user_id():
-    if 'logged_in' in session and session['logged_in'] and 'user_id' in session and session['user_id']:
-        return (True, {'logged_in': True, 'user_id': session['user_id']})
-    return (True, {'logged_in': False, 'user_id': None})
-    
+def get_user_jwt():
+    if 'logged_in' in session and session['logged_in'] and 'user_jwt' in session and session['user_jwt']:
+        return (True, {'logged_in': True, 'user_jwt': session['user_jwt']})
+    return (True, {'logged_in': False, 'user_jwt': None})
+
+def create_user_jwt(user_id):
+    secret_key = os.getenv('SHARED_SECRET_KEY')
+    session_result = db_create_user_session(user_id)
+    if not session_result[0]:
+        return (False, None)
+    jwt = jwt.encode({'session_id': session_result[0]}, secret_key, algorithm='HS256')
+    return (True, jwt)
 
 def create_user(first_name, last_name, username, email, password):
     register_result = db_create_user(first_name, last_name, username, email, password)
     if not register_result[0]:
         session['logged_in'] = False
-        session['user_id'] = None
+        session['user_jwt'] = None
         return (False, None)
     session['logged_in'] = True
-    session['user_id'] = int(register_result[1])
+    jwt_result = create_user_jwt(register_result[1])
+    if not jwt_result[0]:
+        return (False, None)
+    session['user_jwt'] = jwt_result[1]
     return (True, {'registered': True})
 
 def try_login(username, password):
@@ -62,13 +77,21 @@ def try_login(username, password):
         user_id, hashed_password = result[1]
         if bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)):
             session['logged_in'] = True
-            session['user_id'] = user_id
+            jwt_result = create_user_jwt(user_id)
+            if not jwt_result[0]:
+                return (False, None)
+            session['user_jwt'] = jwt_result[1]
             return (True, {'logged_in': True})
     return (True, {'logged_in': False})
 
 def logout():
     session['logged_in'] = False
-    session['user_id'] = None
+    if 'user_jwt' in session and session['user_jwt']:
+        secret_key = os.getenv('SHARED_SECRET_KEY')
+        decoded = jwt.decode(session['user_jwt'], secret_key, algorithms=['HS256'])
+        session_id = decoded['session_id']
+        db_clear_user_sessions(session_id)
+    
 
 def check_login():
     return 'logged_in' in session and session['logged_in']

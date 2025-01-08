@@ -26,7 +26,7 @@ create table IF NOT EXISTS accounts (
 );
 
 create table IF NOT EXISTS scores (
-	id serial primary key,
+	id serial primary key, -- change this to bigserial
 	game_id int not null,
 	account_id int not null,
 	score int not null,
@@ -36,7 +36,7 @@ create table IF NOT EXISTS scores (
 );
 
 create table point_updates (
-    id serial primary key,
+    id serial primary key, -- change this to bigserial
     account_id integer NOT NULL,
     point_amount integer NOT NULL,
     score_id int not null,
@@ -45,6 +45,15 @@ create table point_updates (
     update_time timestamp without time zone NOT NULL DEFAULT now(),
     foreign key (account_id) references accounts(id)
     on update cascade on delete cascade
+);
+
+create table user_sessions (
+	session_id uuid DEFAULT gen_random_uuid() primary key,
+	account_id int,
+	login_time timestamp without time zone not null default now(),
+	foreign key (account_id) references accounts(id)
+	on update cascade
+	on delete cascade
 );
 
 CREATE OR REPLACE FUNCTION update_scores(

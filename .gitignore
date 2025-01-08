@@ -4,6 +4,7 @@
 # Python
 venv/
 __pycache__/
+*.ipynb
 
 # Rust build artifacts
 /target/
