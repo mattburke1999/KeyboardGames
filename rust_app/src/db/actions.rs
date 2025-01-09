@@ -51,15 +51,15 @@ pub async fn update_score (
 pub async fn verify_session_and_get_userid (
     pool: &PgPool,
     session_id: &str,
-) -> Result<i32, sqlx::Error> {
+) -> Result<u32, sqlx::Error> {
     let row = sqlx::query!(
-        "SELECT user_id from user_sessions where session_id = $1",
-        session_id
+        "SELECT account_id from user_sessions where session_id = $1",
+        uuid::Uuid::parse_str(session_id).map_err(|err| sqlx::Error::Decode(Box::new(err)))?
     )
     .fetch_one(pool)
     .await?;
-    if let Some(user_id) = row.user_id {
-        return Ok(user_id);
+    if let Some(user_id) = row.account_id {
+        return Ok(user_id as u32);
     } else {
         return Err(sqlx::Error::RowNotFound);
     }

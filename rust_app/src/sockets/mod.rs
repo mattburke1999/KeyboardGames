@@ -27,7 +27,7 @@ pub async fn handle_ws(ws: WebSocket, state: AppState) {
         if msg.is_text() {
             let text = msg.to_str().unwrap();
             if let Ok(event) = serde_json::from_str::<listeners::Event>(text) {
-                listeners::handle_event(event, &tx, state.clone()).await;
+                listeners::handle_event(event, tx.clone(), state.clone()).await;
             }
         }
     }

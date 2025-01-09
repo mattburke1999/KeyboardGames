@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use warp::ws::Message;
 use tokio::sync::mpsc;
+use std::sync::Arc;
 use uuid::Uuid;
 use serde_json::json;
 use tokio::time::Duration;
@@ -8,17 +9,20 @@ use std::collections::HashMap;
 
 use crate::state::AppState;
 use crate::state::GameRoomValue;
+use crate::state::SenderWrapper;
 use crate::utils::verify_session;
+
+
+
 
 #[derive(Deserialize)]
 pub struct Event {
     pub event: String,
     pub data: serde_json::Value,
 }
-
-pub async fn handle_event(event: Event, tx: &mpsc::Sender<Message>, state: AppState) {
+pub async fn handle_event(event: Event, tx: mpsc::Sender<Message>, state: AppState) {
     match event.event.as_str() {
-        "connect" => connect(event.data, tx).await,
+        "connect" => connect(event.data, &tx).await,
         "disconnect" => disconnect(event.data, tx).await,
         "enter_game_room" => enter_game_room(event.data, tx, state).await,
         "start_game" => start_game(event.data, tx, state).await,
@@ -28,12 +32,12 @@ pub async fn handle_event(event: Event, tx: &mpsc::Sender<Message>, state: AppSt
         }
     }
 }
+
 async fn connect(_data: serde_json::Value, _tx: &mpsc::Sender<Message>) {
     // don't return anything, but print message to console
     println!("Client connected");
 }
-
-async fn disconnect(_data: serde_json::Value, tx: &mpsc::Sender<Message>) {
+async fn disconnect(_data: serde_json::Value, tx: mpsc::Sender<Message>) {
     // Send a close frame to the client
     if let Err(e) = tx.send(Message::close()).await {
         eprintln!("Failed to send close message: {}", e);
@@ -43,17 +47,20 @@ async fn disconnect(_data: serde_json::Value, tx: &mpsc::Sender<Message>) {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     println!("Client disconnected");
-}    
+}  
 
-async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
+async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let user_jwt = data["userJWT"].unwrap();
-    let response;
+    let user_jwt = data["userJWT"].as_str().unwrap();
+    let response: serde_json::Value;
     let response_event = "entered_game_room_response";
+    let wrapped_sender = SenderWrapper {
+        sender: Arc::new(tx.clone()),
+    };
 
-    let valid_session = verify_session(&user_jwt.to_string(), state).await;
-
-    if !valid_session {
+    let session_id = verify_session(&user_jwt.to_string(), &state).await;
+    let response;
+    if let Err(_) = session_id {
         response = json!({
             "event": response_event,
             "success": false,
@@ -61,23 +68,22 @@ async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, st
         });
     } else {
         let game_durations = state.game_durations.lock().await;
-        let response;
         let response_event = "entered_game_room_response";
         if let Some(&duration) = game_durations.get(&game_id) {
             let mut game_rooms = state.game_rooms.lock().await;
         
             // Insert the user into the game room with all relevant data
             game_rooms.insert(
-                tx.clone(),
+                wrapped_sender,
                 {
                     let mut room_data = HashMap::new();
                     room_data.insert("game_id".to_string(), GameRoomValue::Int(game_id)); // game_id as i32
                     room_data.insert("duration".to_string(), GameRoomValue::Float(duration)); // duration as f64
-                    room_data.insert("userId".to_string(), GameRoomValue::Int(user_id)); // user_id as i32
+                    room_data.insert("session_id".to_string(), GameRoomValue::String(session_id.unwrap())); // session_id as String
                     room_data
                 },
             );
-            println!("User {} entered game room {}", user_id.to_string(), game_id.to_string());
+            println!("User entered game room {}", game_id.to_string());
             // Notify the client that they entered the game room successfully
             response = json!({
                 "event": response_event,
@@ -100,10 +106,12 @@ async fn enter_game_room(data: serde_json::Value, tx: &mpsc::Sender<Message>, st
 async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String) {
     // TODO: Implement the timer logic
     let duration;
+    let wrapped_sender = SenderWrapper {
+        sender: Arc::new(tx.clone()),
+    };
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        // no need to check if room exists, as it was checked before spawning the task
-        let room_data = game_rooms.get_mut(&tx).unwrap(); 
+        let room_data = game_rooms.get_mut(&wrapped_sender).unwrap(); 
         duration = match room_data.get("duration") {
             Some(GameRoomValue::Float(duration)) => duration.clone(),
             _ => 60.0 as f64,
@@ -115,7 +123,7 @@ async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, en
     tokio::time::sleep(Duration::from_secs_f64(duration)).await;
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        let room_data = game_rooms.get_mut(&tx).unwrap();
+        let room_data = game_rooms.get_mut(&wrapped_sender).unwrap();
         room_data.insert("game_running".to_string(), GameRoomValue::Bool(false));
     }
     emit_end_game(game_id, end_game_token, tx).await;
@@ -130,16 +138,19 @@ async fn emit_end_game(game_id: i32, end_game_token: String, tx: mpsc::Sender<Me
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
+async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
 
     let response;
     let response_event = "start_game_response";
     let mut start_game_token = String::new();
     let mut end_game_token = String::new();
+    let wrapped_sender = SenderWrapper {
+        sender: Arc::new(tx.clone()),
+    };
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        if let Some(room_data) = game_rooms.get_mut(&tx) {
+        if let Some(room_data) = game_rooms.get_mut(&wrapped_sender) {
             if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
                 if room_game_id == game_id {
                     start_game_token = Uuid::new_v4().to_string();
@@ -157,21 +168,21 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
                     response = json!({
                         "event": response_event,
                         "success": false,
-                        "message": format!("Incorrect game room for user {}", user_id)
+                        "message": format!("Incorrect game room for user")
                     });
                 }
             } else {
                 response = json!({
                     "event": response_event,
                     "success": false,
-                    "message": format!("User {} is not in a game room", user_id.to_string())
+                    "message": format!("User is not in a game room")
                 });
             }
         } else {
             response = json!({
                 "event": response_event,
                 "success": false,
-                "message": format!("User {} is not in a game room", user_id.to_string())
+                "message": format!("User is not in a game room")
             });
         }
     }
@@ -181,7 +192,7 @@ async fn start_game(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: 
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state: AppState) {
+async fn point_added(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
     let response;
     let response_event = "point_added_response";
@@ -195,8 +206,11 @@ async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state:
         "success": false,
         "message": format!("User is not in a game room")
     });
+    let wrapped_sender = SenderWrapper {
+        sender: Arc::new(tx.clone()),
+    };
     let mut game_rooms = state.game_rooms.lock().await;
-    if let Some(room_data) = game_rooms.get_mut(&tx) {
+    if let Some(room_data) = game_rooms.get_mut(&wrapped_sender) {
         if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
             if room_game_id == game_id {
                 if let Some(&GameRoomValue::Bool(game_running)) = room_data.get("game_running") {
@@ -242,11 +256,11 @@ async fn point_added(data: serde_json::Value, tx: &mpsc::Sender<Message>, state:
             }
         } else {
             response = no_game_room_response;
-            println!("User {} is not in a game room");
+            println!("User is not in a game room");
         }
     } else {
         response = no_game_room_response;
-        println!("User {} is not in a game room", user_id.to_string());
+        println!("User is not in a game room");
     }
     let _ = tx.send(Message::text(response.to_string())).await;
 }

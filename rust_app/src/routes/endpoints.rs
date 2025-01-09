@@ -9,6 +9,11 @@ use crate::state::GameRoomValue;
 use crate::db::update_score;
 use crate::db::load_game_durations;
 use crate::utils::convert_jwt_to_user_id;
+use crate::utils::InvalidPoolType;
+use crate::utils::UtilError;
+
+
+
 
 pub fn handle_endpoints(
     state: AppState,
@@ -87,7 +92,7 @@ async fn validate_points(
 // def validate_game(user_id, start_game_token, end_game_token, score, point_list):
 async fn validate_game(
     state: AppState,
-    user_id: u32,
+    session_id: String,
     start_game_token: &str,
     end_game_token: &str,
     score: u32,
@@ -96,9 +101,18 @@ async fn validate_game(
     // compare start and end game tokens against server state
     // if tokens match, validate points
     // validate_points(server_point_list, point_list, score)
-    let mut game_rooms = state.game_rooms.lock().await;
+    let game_rooms = state.game_rooms.lock().await;
     let no_game_room_response = (false, json!({"error": "No game found for user"}));
-    if let Some(room_data) = game_rooms.get_mut(&user_id) {
+    let room_data = game_rooms.iter().find(|(_, room_data)| {
+        room_data.get("session_id").map(|v| {
+            if let GameRoomValue::String(ref s) = v {
+                s == &session_id
+            } else {
+                false
+            }
+        }).unwrap_or(false)
+    });
+    if let Some((_, room_data)) = room_data {
         // check if start and end token are in room_data
         if let Some(&GameRoomValue::String(ref start_game_token_server)) = room_data.get("start_game_token") {
             if let Some(&GameRoomValue::String(ref end_game_token_server)) = room_data.get("end_game_token") {
@@ -123,13 +137,10 @@ async fn validate_game(
     }
 }
 
-#[derive(Debug)]
-pub struct InvalidPoolType;
 
-impl reject::Reject for InvalidPoolType {}
 
 async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
-    if let Some(_) = err.find::<InvalidPoolType>() {
+    if let Some(_) = err.find::<UtilError>() {
         Ok(warp::reply::with_status(
             "Invalid pool type".to_string(),
             warp::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -147,58 +158,65 @@ async fn handle_score_update(
     let score = body["score"].as_u64().unwrap() as u32;
     let start_game_token = body["start_game_token"].as_str().unwrap();
     let end_game_token = body["end_game_token"].as_str().unwrap();
-    let user_jwt = body["user_jwt"].unwrap();
-    let user_id = convert_jwt_to_user_id(&user_jwt, state).await.unwrap();
-    let point_list = body["pointList"].as_array().unwrap();
-    let game_validation_result = validate_game(state.clone(), user_id, start_game_token, end_game_token, score, point_list).await;
-    if !game_validation_result.0 {
-        return Ok(warp::reply::json(&serde_json::json!(game_validation_result.1)));
-    }
-    println!("Score was validated");
-    let score = game_validation_result.1["points"].as_u64().unwrap() as u32;
-    // validate the game
-    // if valid, insert the score into the database using pg function, which returns a list of top10 scores and top3 personal scores
-    // respond with the list of top10 scores and top3 personal scores
-    let high_scores;
-    let points_added;
-    let score_rank;
-    let pg_pool = state.pg_pool.clone();
-    let pool = pg_pool.lock().await;
-
-    if let PoolValue::Pool(ref pg_pool) = *pool {
-        (high_scores, points_added, score_rank) = update_score(pg_pool, user_id, score, game_id).await.unwrap();
+    let user_jwt = body["user_jwt"].as_str().unwrap();
+    let user_data = convert_jwt_to_user_id(&user_jwt, state.clone()).await;
+    if user_data.is_err() {
+        return Ok(warp::reply::json(&serde_json::json!({"error": "Invalid user"})));
     } else {
-        // Handle the case where the PoolValue is not a PgPool
-        return Err(warp::reject::custom(InvalidPoolType));
-    }
-    let mut top10 = Vec::with_capacity(10);
-    let mut top3 = Vec::with_capacity(3);
-    for i in 0..high_scores.len() {
-        let hs = high_scores[i].as_object().unwrap();
-        let date = hs["score_date"].clone();
-        let current_score = hs["current_score"].clone();
-        let score = hs["score"].clone();
-        if hs["score_type"] == "top10" {
-            top10.push(json!({
-                "username": hs["username"],
-                "score": score,
-                "date": date,
-                "current_score": current_score
-            }));
-        } else if hs["score_type"] == "top3" {
-            top3.push(json!({
-                "score": score,
-                "date": date,
-                "current_score": current_score
-            }));
+        let user_data = user_data.unwrap();
+        let user_id = user_data.user_id;
+        let session_id = user_data.session_id;
+        let point_list = body["pointList"].as_array().unwrap();
+        let game_validation_result = validate_game(state.clone(), session_id, start_game_token, end_game_token, score, point_list).await;
+        if !game_validation_result.0 {
+            return Ok(warp::reply::json(&serde_json::json!(game_validation_result.1)));
         }
+        println!("Score was validated");
+        let score = game_validation_result.1["points"].as_u64().unwrap() as u32;
+        // validate the game
+        // if valid, insert the score into the database using pg function, which returns a list of top10 scores and top3 personal scores
+        // respond with the list of top10 scores and top3 personal scores
+        let high_scores;
+        let points_added;
+        let score_rank;
+        let pg_pool = state.pg_pool.clone();
+        let pool = pg_pool.lock().await;
+
+        if let PoolValue::Pool(ref pg_pool) = *pool {
+            (high_scores, points_added, score_rank) = update_score(pg_pool, user_id, score, game_id).await.unwrap();
+        } else {
+            // Handle the case where the PoolValue is not a PgPool
+            return Err(reject::custom(InvalidPoolType));
+        }
+        let mut top10 = Vec::with_capacity(10);
+        let mut top3 = Vec::with_capacity(3);
+        for i in 0..high_scores.len() {
+            let hs = high_scores[i].as_object().unwrap();
+            let date = hs["score_date"].clone();
+            let current_score = hs["current_score"].clone();
+            let score = hs["score"].clone();
+            if hs["score_type"] == "top10" {
+                top10.push(json!({
+                    "username": hs["username"],
+                    "score": score,
+                    "date": date,
+                    "current_score": current_score
+                }));
+            } else if hs["score_type"] == "top3" {
+                top3.push(json!({
+                    "score": score,
+                    "date": date,
+                    "current_score": current_score
+                }));
+            }
+        }
+        Ok(warp::reply::json(&serde_json::json!({
+            "top10": top10,
+            "top3": top3,
+            "points_added": points_added,
+            "score_rank": score_rank
+        })))
     }
-    Ok(warp::reply::json(&serde_json::json!({
-        "top10": top10,
-        "top3": top3,
-        "points_added": points_added,
-        "score_rank": score_rank
-    })))
 }
 
 async fn refresh_games(
