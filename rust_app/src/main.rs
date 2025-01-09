@@ -2,6 +2,7 @@ mod routes;
 mod sockets;
 mod state;
 mod db;
+mod utils;
 
 use warp::Filter;
 use sqlx::PgPool;
