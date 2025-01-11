@@ -67,13 +67,14 @@ def create_session():
     session_result = db_create_user_session(user_id)
     if not session_result[0]:
         return (False, session_result[1])
-    return (True, {'session_id': session_result[1], 'logged_in': True})
+    return (True, {'session_id': str(session_result[1]), 'logged_in': True})
 
 def create_session_jwt(session_id):
     secret_key = os.getenv('SHARED_SECRET_KEY')
     # set expiration to 10 seconds
-    jwt_token = jwt.encode({'session_id': session_id, 'exp': int(datetime.now(tz=timezone.utc) + timedelta(seconds=10))}, secret_key, algorithm='HS256')
-    return (True, jwt_token)
+    date_exp = datetime.now(tz=timezone.utc) + timedelta(seconds=10)
+    jwt_token = jwt.encode({'session_id': str(session_id), 'exp': int(date_exp.timestamp())}, secret_key, algorithm='HS256')
+    return jwt_token
 
 def create_user(first_name, last_name, username, email, password):
     register_result = db_create_user(first_name, last_name, username, email, password)
@@ -144,11 +145,11 @@ def get_profile():
     })
 
 def validate_points(server_point_list, client_point_list, score):
-    print('Server points:')
-    print(server_point_list)
-    print('Client points:')
-    print(client_point_list)
-    print(f'Score: {score}')
+    # print('Server points:')
+    # print(server_point_list)
+    # print('Client points:')
+    # print(client_point_list)
+    # print(f'Score: {score}')
     latency_tolerance = timedelta(seconds=0.75)
     if len(server_point_list) < len(client_point_list) or score > len(server_point_list) or score > len(client_point_list):
         return (False, {'error': 'Too many points submitted'})
@@ -163,11 +164,11 @@ def validate_points(server_point_list, client_point_list, score):
         except ValueError:
             return (False, {'error': 'Invalid time format submitted'})
         actual_latency = abs(server_time - client_time)
+        print(f'Actual latency: {actual_latency}')
         # Validate time difference within latency tolerance
         if actual_latency > latency_tolerance:
             print(f'Server time: {server_time}')
             print(f'Client time: {client_time}')
-            print(f'Actual latency: {actual_latency}')
             return (False, {'error': 'Invalid point time submitted'})
     return (True, {'points': len(server_point_list)})      
 
@@ -183,7 +184,8 @@ def fetch_game_room_data(session_jwt):
     # this will fetch game room data from rust server
     # returns (True, {'start_game_token': start_game_token, 'end_game_token': end_game_token, 'point_list': point_list})
     # make post request to IP:3030/get_session_data
-    response = requests.post(f'http://{get_server_ip()}:3030/get_session_data', headers={'Authorization': f'Bearer {session_jwt}'})
+    # {get_server_ip()}
+    response = requests.post(f'http://127.0.0.1:3030/get_session_data', headers={'Authorization': f'{session_jwt}'})
     if response.status_code != 200:
         return (False, {'error': 'Error fetching game room data'})
     data = response.json()
@@ -198,7 +200,7 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
     session_result = db_get_user_session(user_id)
     if not session_result[0]:
         return (False, session_result[1])
-    session_jwt = create_session_jwt(session_result[1])
+    session_jwt = create_session_jwt(session_result[1][0])
     server_data_result = fetch_game_room_data(session_jwt)
     if not server_data_result[0]:
         return (False, server_data_result[1])
@@ -207,13 +209,17 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         'end_game_token': end_game_token,
         'point_list': point_list
     }
-    validation_result = validate_game(user_id, client_data, server_data_result[1], score)
+    server_data = {
+        'start_game_token': server_data_result[1]['start_game_token']['String'],
+        'end_game_token': server_data_result[1]['end_game_token']['String'],
+        'point_list': server_data_result[1]['point_list']['List']
+    }
+    validation_result = validate_game(client_data, server_data, score)
     if not validation_result[0]:
         return (False, validation_result[1])
     score = validation_result[1]['points']
     print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
     update_result = db_update_score(user_id, game_id, score)
-    print(update_result[1])
     if not update_result[0]:
         return (False, update_result[1])
     high_scores, points_added, score_rank = update_result[1]
