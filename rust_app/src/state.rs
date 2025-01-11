@@ -6,7 +6,7 @@ use warp::ws::Message;
 use serde_json::Value;
 
 // Define a custom enum for the values in the inner HashMap
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub enum GameRoomValue {
     Bool(bool),
     String(String),

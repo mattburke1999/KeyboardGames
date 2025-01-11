@@ -1,4 +1,5 @@
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm, TokenData};
+use serde::de;
 use serde::{Deserialize, Serialize};
 use std::env;
 use warp::reject;
@@ -26,7 +27,14 @@ struct Claims {
     exp: usize,
 }
 
-pub fn decode_session_token(token: &str) -> Result<String, jsonwebtoken::errors::Error> {
+
+#[derive(Debug)]
+pub struct TokenResponse {
+    pub session_id: String,
+    pub decoded: bool,
+}
+
+pub fn decode_session_token(token: &str) -> TokenResponse {
     let secret_key = env::var("SHARED_SECRET_KEY").expect("SHARED_SECRET_KEY must be set");
 
     // Define validation settings, disabling the requirement for the `exp` claim
@@ -39,7 +47,24 @@ pub fn decode_session_token(token: &str) -> Result<String, jsonwebtoken::errors:
         token,
         &DecodingKey::from_secret(secret_key.as_ref()),
         &validation,
-    );    
+    );
+    match decoded {
+        Ok(data) => {
+            println!("Token is valid!");
+            println!("Session ID: {:?}", data.claims.session_id);
+            return TokenResponse {
+                session_id: data.claims.session_id,
+                decoded: true,
+            };
+        }
+        Err(err) => {
+            println!("Failed to decode token: {}", err);
+            return TokenResponse {
+                session_id: "".to_string(),
+                decoded: false,
+            };
+        }
+    }
 }
 
 

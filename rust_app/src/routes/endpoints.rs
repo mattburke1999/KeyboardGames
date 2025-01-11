@@ -8,10 +8,10 @@ use crate::state::AppState;
 use crate::state::GameRoomValue;
 use crate::db::update_score;
 use crate::db::load_game_durations;
-use crate::utils::convert_jwt_to_user_id;
+use crate::utils::convert_session_to_user_id;
+use crate::utils::decode_session_token;
 use crate::utils::InvalidPoolType;
 use crate::utils::UtilError;
-
 
 
 
@@ -25,12 +25,18 @@ pub fn handle_endpoints(
         .and_then(handle_score_update)
         .recover(handle_rejection);
 
+    let get_session_data = warp::path!("get_session_data")
+    .and(warp::post())
+        .and(with_state(state.clone()))
+        .and(warp::header::optional::<String>("Authorization"))
+        .and_then(handle_get_session_data);
+
     let refresh_games = warp::path("refresh_games")
         .and(warp::post())
         .and(with_state(state))
         .and_then(handle_refresh_games);
 
-    score_update.or(refresh_games)
+    score_update.or(get_session_data).or(refresh_games)
 }
 
 fn with_state(
@@ -158,16 +164,14 @@ async fn handle_score_update(
     let score = body["score"].as_u64().unwrap() as u32;
     let start_game_token = body["start_game_token"].as_str().unwrap();
     let end_game_token = body["end_game_token"].as_str().unwrap();
-    let user_jwt = body["user_jwt"].as_str().unwrap();
-    let user_data = convert_jwt_to_user_id(&user_jwt, state.clone()).await;
-    if user_data.is_err() {
+    let session_id = body["session_id"].as_str().unwrap();
+    let user_id = convert_session_to_user_id(&session_id.to_string(), state.clone()).await;
+    if user_id.is_err() {
         return Ok(warp::reply::json(&serde_json::json!({"error": "Invalid user"})));
     } else {
-        let user_data = user_data.unwrap();
-        let user_id = user_data.user_id;
-        let session_id = user_data.session_id;
+        let user_id = user_id.unwrap();
         let point_list = body["pointList"].as_array().unwrap();
-        let game_validation_result = validate_game(state.clone(), session_id, start_game_token, end_game_token, score, point_list).await;
+        let game_validation_result = validate_game(state.clone(), session_id.to_string(), start_game_token, end_game_token, score, point_list).await;
         if !game_validation_result.0 {
             return Ok(warp::reply::json(&serde_json::json!(game_validation_result.1)));
         }
@@ -246,4 +250,44 @@ async fn handle_refresh_games(
     tokio::spawn(refresh_games(state.clone()));
     
     Ok(warp::reply::json(&serde_json::json!({ "status": "refreshing games" })))
+}
+
+
+async fn handle_get_session_data(
+    state: AppState,
+    jwt: Option<String>,
+) -> Result<impl Reply, Rejection> {
+    // this endpoint is called internally by the flask server to get the session data
+    // the flask server will generate a JWT token with session_id and current time stamp using shared secret key
+    // the JWT and session_id will be sent to this endpoint
+    // if the JWT is valid, return the session data
+    let jwt_string = jwt.unwrap_or_else(|| "".to_string());
+
+    if jwt_string.is_empty() {
+        return Ok(warp::reply::json(&serde_json::json!({"error": "Missing Authorization header"})));
+    }
+
+    let token_response = decode_session_token(&jwt_string);
+    if token_response.decoded == false {
+        return Ok(warp::reply::json(&serde_json::json!({"error": "Invalid token"})));
+    }
+    let session_id = token_response.session_id;
+    println!("Token is valid!");
+    println!("Session ID: {:?}", session_id);
+    let mut response: serde_json::Value;
+    let mut game_rooms = state.game_rooms.lock().await;
+    if let Some(room_data) = game_rooms.remove(&session_id) {
+        let start_game_token = room_data.get("start_game_token").unwrap();
+        let end_game_token = room_data.get("end_game_token").unwrap();
+        let point_list = room_data.get("point_list").unwrap();
+        return Ok(warp::reply::json(&serde_json::json!({
+                "start_game_token": start_game_token,
+                "end_game_token": end_game_token,
+                "point_list": point_list
+            })));
+    } else {
+        return Ok(warp::reply::json(&serde_json::json!({
+                "error": "No game data found for user"
+            })));
+    }
 }
