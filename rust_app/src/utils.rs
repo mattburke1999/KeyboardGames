@@ -1,5 +1,4 @@
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm, TokenData};
-use serde::de;
 use serde::{Deserialize, Serialize};
 use std::env;
 use warp::reject;
@@ -67,23 +66,6 @@ pub fn decode_session_token(token: &str) -> TokenResponse {
     }
 }
 
-
-pub async fn convert_session_to_user_id(session_id: &str, state: AppState) -> Result<u32, UtilError> {
-    let pg_pool = state.pg_pool.clone();
-    let pool = pg_pool.lock().await;
-
-    if let PoolValue::Pool(ref pg_pool) = *pool {
-        let user_id = verify_session_and_get_userid(&pg_pool, &session_id).await;
-        if let Ok(user_id) = user_id {
-            return Ok(user_id);
-        } else {
-            return Err(UtilError::StringError("User not found".to_string()));
-        }
-    } else {
-        // Handle the case where the PoolValue is not a PgPool
-        return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
-    }
-}
 
 pub async fn verify_session(session_id: &str, state: &AppState) -> Result<bool, UtilError> {
     // Verify the session_id return true or false
