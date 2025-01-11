@@ -14,7 +14,6 @@ let socket;
 let loggedIn = false;
 let enteredGameRoom = false;
 let loadingInterval;
-const IP = '127.0.0.1'
 const socketServer = `ws://${IP}:3030/ws`;
 
 connectSocket();

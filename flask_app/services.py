@@ -15,6 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 import threading
+import socket
 
 GAME_INFO = {}
 GAMES = []
@@ -101,9 +102,12 @@ def logout():
     # create a thread to clear user sessions in the background so this returns immediately
     threading.Thread(target=db_clear_user_sessions, args=(session['user_id'],)).start()
     
-
 def check_login():
     return 'logged_in' in session and session['logged_in'] and 'user_id' in session and session['user_id']
+
+def get_server_ip():
+    hostname = socket.gethostname()
+    return socket.gethostbyname(hostname)
 
 def get_game_info(game):
     global GAME_INFO
@@ -113,7 +117,7 @@ def get_game_info(game):
             return (False, {'error': 'No games found'})
     if game not in GAME_INFO:
         return (False, {'error': 'Game not found'})
-    return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login()})
+    return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login(), 'ip': get_server_ip()})
 
 def check_unique_register_input(type, value):
     result = db_check_unique_register_input(type, value)
