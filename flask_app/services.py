@@ -16,6 +16,7 @@ from datetime import timedelta
 from datetime import timezone
 import threading
 import socket
+import requests
 
 GAME_INFO = {}
 GAMES = []
@@ -181,7 +182,14 @@ def validate_game(client_data, server_data, score):
 def fetch_game_room_data(session_jwt):
     # this will fetch game room data from rust server
     # returns (True, {'start_game_token': start_game_token, 'end_game_token': end_game_token, 'point_list': point_list})
-    pass
+    # make post request to IP:3030/get_session_data
+    response = requests.post(f'http://{get_server_ip()}:3030/get_session_data', headers={'Authorization': f'Bearer {session_jwt}'})
+    if response.status_code != 200:
+        return (False, {'error': 'Error fetching game room data'})
+    data = response.json()
+    if 'error' in data:
+        return (False, {'error': data['error']})
+    return (True, data)
 
 def score_update(game_id, score, start_game_token, end_game_token, point_list):
     if not check_login():
