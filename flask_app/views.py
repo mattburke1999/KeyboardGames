@@ -6,8 +6,9 @@ from services import check_unique_register_input
 from services import create_user
 from services import try_login
 from services import logout
-from services import get_user_jwt
+from services import create_session
 from services import get_profile
+from services import score_update
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
@@ -47,10 +48,14 @@ def logout_view():
     logout()
     return json_result((True, {}))
 
-def get_user_jwt_view():
-    result = get_user_jwt()
+def create_session_view():
+    result = create_session()
     return json_result(result)
 
 def profile_view():
     result = get_profile()
+    return json_result(result)
+
+def score_update_view(game_id, score, start_game_token, end_game_token, point_list):
+    result = score_update(game_id, score, start_game_token, end_game_token, point_list)
     return json_result(result)

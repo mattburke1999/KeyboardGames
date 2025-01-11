@@ -50,7 +50,7 @@ create table point_updates (
 create table user_sessions (
 	session_id uuid DEFAULT gen_random_uuid() primary key,
 	account_id int,
-	login_time timestamp without time zone not null default now(),
+	issued_time timestamp without time zone not null default now(),
 	foreign key (account_id) references accounts(id)
 	on update cascade
 	on delete cascade

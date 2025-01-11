@@ -12,7 +12,6 @@ pub enum UtilError
 {
     StringError(String),
     InvalidPoolTypeError(InvalidPoolType),
-    JWTError(jsonwebtoken::errors::Error),
 
 }
 
@@ -24,6 +23,7 @@ impl reject::Reject for InvalidPoolType {}
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     session_id: String,
+    exp: usize,
 }
 
 pub fn decode_session_token(token: &str) -> Result<String, jsonwebtoken::errors::Error> {
@@ -31,79 +31,49 @@ pub fn decode_session_token(token: &str) -> Result<String, jsonwebtoken::errors:
 
     // Define validation settings, disabling the requirement for the `exp` claim
     let mut validation = Validation::new(Algorithm::HS256);
-    validation.validate_exp = false;
-    validation.required_spec_claims.clear();
+    validation.validate_exp = true;
+    validation.leeway = 5;
 
     // Decode the token
     let decoded: Result<TokenData<Claims>, jsonwebtoken::errors::Error> = decode::<Claims>(
         token,
         &DecodingKey::from_secret(secret_key.as_ref()),
         &validation,
-    );
-
-    // Return the session_id or an error
-    decoded.map(|data| data.claims.session_id)
+    );    
 }
 
 
-pub struct UserData {
-    pub user_id: u32,
-    pub session_id: String
-}
+pub async fn convert_session_to_user_id(session_id: &str, state: AppState) -> Result<u32, UtilError> {
+    let pg_pool = state.pg_pool.clone();
+    let pool = pg_pool.lock().await;
 
-pub async fn convert_jwt_to_user_id(user_jwt: &str, state: AppState) -> Result<UserData, UtilError> {
-    match decode_session_token(user_jwt) {
-        //proceed with session_id
-        Ok(session_id) => {
-            let pg_pool = state.pg_pool.clone();
-            let pool = pg_pool.lock().await;
-
-            if let PoolValue::Pool(ref pg_pool) = *pool {
-                let user_id = verify_session_and_get_userid(&pg_pool, &session_id).await;
-                if user_id.is_ok() {
-                    let user_data = UserData {
-                        user_id: user_id.unwrap(),
-                        session_id
-                    };
-                    return Ok(user_data);
-                } else {
-                    return Err(UtilError::StringError("User not found".to_string()));
-                }
-            } else {
-                // Handle the case where the PoolValue is not a PgPool
-                return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
-            }
+    if let PoolValue::Pool(ref pg_pool) = *pool {
+        let user_id = verify_session_and_get_userid(&pg_pool, &session_id).await;
+        if let Ok(user_id) = user_id {
+            return Ok(user_id);
+        } else {
+            return Err(UtilError::StringError("User not found".to_string()));
         }
-        //return error
-        Err(e) => {
-            eprintln!("Failed to decode session token: {}", e);
-            return Err(UtilError::JWTError(e));
-        }
+    } else {
+        // Handle the case where the PoolValue is not a PgPool
+        return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
     }
 }
 
-pub async fn verify_session(user_jwt: &str, state: &AppState) -> Result<String, UtilError> {
+pub async fn verify_session(session_id: &str, state: &AppState) -> Result<bool, UtilError> {
     // Verify the session_id return true or false
-    match decode_session_token(user_jwt) {
-        Ok(session_id) => {
-            let pg_pool = state.pg_pool.clone();
-            let pool = pg_pool.lock().await;
+    let pg_pool = state.pg_pool.clone();
+    let pool = pg_pool.lock().await;
 
-            if let PoolValue::Pool(ref pg_pool) = *pool {
-                let user_id = verify_session_and_get_userid(&pg_pool, &session_id).await;
-                if user_id.is_ok() {
-                    return Ok(session_id);
-                } else {
-                    return Err(UtilError::StringError("User not found".to_string()));
-                }
-            } else {
-                // Handle the case where the PoolValue is not a PgPool
-                return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
-            }
+    if let PoolValue::Pool(ref pg_pool) = *pool {
+        let user_id = verify_session_and_get_userid(&pg_pool, &session_id).await;
+        if user_id.is_ok() {
+            return Ok(true);
+        } else {
+            return Err(UtilError::StringError("User not found".to_string()));
         }
-        Err(e) => {
-            eprintln!("Failed to decode session token: {}", e);
-            return Err(UtilError::JWTError(e));
-        }
+    } else {
+        // Handle the case where the PoolValue is not a PgPool
+        return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
     }
 }

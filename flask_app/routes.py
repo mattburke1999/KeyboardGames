@@ -7,8 +7,9 @@ from views import check_unique_register_input_view
 from views import register_view
 from views import login_view
 from views import logout_view
-from views import get_user_jwt_view
+from views import create_session_view
 from views import profile_view
+from views import score_update_view
 
 app = Flask(__name__)
 
@@ -52,10 +53,15 @@ def unique_email():
     data = request.get_json()
     return check_unique_register_input_view('email', data['email'])
 
-@app.route('/current_user', methods=['GET'])
-def current_user():
-    return get_user_jwt_view()
+@app.route('/create_session', methods=['GET'])
+def create_session():
+    return create_session_view()
 
 @app.route('/profile', methods=['GET'])
 def profile():
     return profile_view()
+
+@app.route('/game/<game_id>/score_update', methods=['POST'])
+def score_update(game_id):
+    data = request.get_json()
+    return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'], data['pointList'])

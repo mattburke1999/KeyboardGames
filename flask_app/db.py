@@ -65,11 +65,21 @@ def create_user_session(user_id):
         traceback.print_exc()
         return (False, None)
     
-def clear_user_sessions(session_id):
+def get_user_session(user_id):
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute('delete from user_sessions where session_id = %s', (session_id,))
+                cur.execute('select session_id from user_sessions where account_id = %s order by issued_time desc limit 1', (user_id,))
+                return (True, cur.fetchone())
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
+def clear_user_sessions(user_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('delete from user_sessions where account_id = %s', (user_id,))
                 return (True, None)
     except:
         traceback.print_exc()
@@ -108,6 +118,18 @@ def get_profile(user_id):
                     group by username, created_time, num_top10, points
                 ''', (user_id, user_id))
                 return (True, cur.fetchone())
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
+def update_score(user_id, game_id, score):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('select high_scores, points_added, score_rank from update_scores(%s, %s, %s)', (user_id, game_id, score))
+                results = cur.fetchone()
+                conn.commit()
+                return (True, results)
     except:
         traceback.print_exc()
         return (False, None)

@@ -19,28 +19,10 @@ pub enum PoolValue {
     String(String)
 }
 
-#[derive(Clone)]
-pub struct SenderWrapper {
-    pub(crate) sender: Arc<Sender<Message>>, // Wrap Sender in Arc for equality checks
-}
-
-impl PartialEq for SenderWrapper {
-    fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.sender, &other.sender) // Compare pointer addresses
-    }
-}
-
-impl Eq for SenderWrapper {}
-
-impl std::hash::Hash for SenderWrapper {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        Arc::as_ptr(&self.sender).hash(state); // Use the pointer address for hashing
-    }
-}
 
 #[derive(Clone)]
 pub struct AppState {
-    pub game_rooms: Arc<Mutex<HashMap<SenderWrapper, HashMap<String, GameRoomValue>>>>, // Shared game rooms
+    pub game_rooms: Arc<Mutex<HashMap<String, HashMap<String, GameRoomValue>>>>, // Shared game rooms
     pub game_durations: Arc<Mutex<HashMap<i32, f64>>>, // Cached game metadata
     pub pg_pool: Arc<Mutex<PoolValue>>, // Shared database pool
 }
