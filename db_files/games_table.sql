@@ -70,8 +70,8 @@ AS $BODY$
 DECLARE
     _save_score BOOLEAN;
     _inserted_score_id INTEGER;
-    _points_added integer;
-    _score_rank integer;
+    _points_added integer := 0;
+    _score_rank integer := null;
 BEGIN
     -- 1. Check if the score qualifies for saving
     SELECT 
@@ -98,16 +98,18 @@ BEGIN
         INSERT INTO scores (account_id, game_id, score)
         VALUES (_account_id, _game_id, _score)
         RETURNING id INTO _inserted_score_id;
+	END IF;
+    
+	drop table if exists top10scores;
 
-        drop table if exists top10scores;
-
-        create temp table top10scores AS
-        SELECT id, score, score_date, account_id, 'top10'::character varying AS score_type
-        FROM scores s
-        WHERE game_id = _game_id
-        ORDER BY score desc, score_date desc
-        LIMIT 10;
-
+	create temp table top10scores AS
+	SELECT id, score, score_date, account_id, 'top10'::character varying AS score_type
+	FROM scores s
+	WHERE game_id = _game_id
+	ORDER BY score desc, score_date desc
+	LIMIT 10;
+	
+	IF _save_score THEN
         select points into _points_added
         from 
         (
@@ -125,7 +127,6 @@ BEGIN
         set points = points + _points_added,
             last_updated_time = now()
         where id = _account_id;
-
 
         insert into point_updates (point_amount, account_id, score_id, game_id, current_game_rank)
         values (_points_added, _account_id, _inserted_score_id, _game_id, _score_rank);
