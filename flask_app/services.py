@@ -150,7 +150,7 @@ def validate_points(server_point_list, client_point_list, score):
     # print('Client points:')
     # print(client_point_list)
     # print(f'Score: {score}')
-    latency_tolerance = timedelta(seconds=0.75)
+    latency_tolerance = timedelta(seconds=1.5)
     if len(server_point_list) < len(client_point_list) or score > len(server_point_list) or score > len(client_point_list):
         return (False, {'error': 'Too many points submitted'})
     for point in client_point_list:
@@ -202,6 +202,8 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         return (False, session_result[1])
     session_jwt = create_session_jwt(session_result[1][0])
     server_data_result = fetch_game_room_data(session_jwt)
+    # delete session as soon as the data is fetched
+    threading.Thread(target=db_clear_user_sessions, args=(session['user_id'],)).start()
     if not server_data_result[0]:
         return (False, server_data_result[1])
     client_data = {
