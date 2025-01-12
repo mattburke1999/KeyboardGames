@@ -53,6 +53,8 @@ def unique_email():
     data = request.get_json()
     return check_unique_register_input_view('email', data['email'])
 
+# this could potentially be moved to a socket event which is lower latency
+# would prevent us from needing to store sesion id in the DOM or client storage
 @app.route('/create_session', methods=['GET'])
 def create_session():
     return create_session_view()
