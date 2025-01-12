@@ -59,9 +59,11 @@ def create_user_session(user_id):
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
+                cur.execute('delete from user_sessions where account_id = %s', (user_id,))
                 cur.execute('insert into user_sessions (account_id) values (%s) returning session_id', (user_id,))
                 return (True, cur.fetchone()[0])
     except:
+        conn.rollback()
         traceback.print_exc()
         return (False, None)
     
