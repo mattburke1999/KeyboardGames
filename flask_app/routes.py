@@ -10,6 +10,7 @@ from views import logout_view
 from views import create_session_view
 from views import profile_view
 from views import score_update_view
+from views import skins_view
 
 app = Flask(__name__)
 
@@ -67,3 +68,7 @@ def profile():
 def score_update(game_id):
     data = request.get_json()
     return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'], data['pointList'])
+
+@app.route('/skins', methods=['GET'])
+def skins():
+    return skins_view()

@@ -59,3 +59,6 @@ def profile_view():
 def score_update_view(game_id, score, start_game_token, end_game_token, point_list):
     result = score_update(game_id, score, start_game_token, end_game_token, point_list)
     return json_result(result)
+
+def skins_view():
+    return render_template('skins.html')
