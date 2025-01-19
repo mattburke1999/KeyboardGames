@@ -7,12 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ceviche+One&family=Fugaz+One&family=Itim&family=Monoton&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Special+Elite&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/button_style.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/logo_style.css') }}">
 </head>
 <body>
-    <div class='page'>
+    <div class='main'>
         <button class='back-btn' onClick="window.location.href='/'">Back to Games</button>
         <h1 class='site-name'>Keyboard Games</h1>
         <div class='auth-form' id='login-form'>

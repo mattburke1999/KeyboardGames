@@ -8,8 +8,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
     {% block script %}{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/games.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/button_style.css') }}">
     {% block style %}{% endblock %}
 </head>
 <body>
