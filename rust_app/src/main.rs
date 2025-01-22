@@ -19,7 +19,9 @@ fn cors_config() -> warp::cors::Cors {
     warp::cors()
         .allow_origin("http://localhost:5000") // Allow localhost
         .allow_origin("http://127.0.0.1:5000") // Allow 127.0.0.1
-        .allow_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"]) // Allow specific HTTP methods
+        .allow_origin("http://192.168.1.125:5000")
+        .allow_origin("http://192.168.1.177:5000")
+        .allow_methods(vec!["GET", "POST"]) // Allow specific HTTP methods
         .allow_headers(vec!["Content-Type", "Authorization"]) // Allow specific headers
         .build()
 }
@@ -62,7 +64,7 @@ async fn main() -> Result<(), sqlx::Error> {
     println!("Server running on port {}", port);
 
     warp::serve(routes)
-        .run(([127, 0, 0, 1], port))
+        .run(([0, 0, 0, 0], port))
         .await;
 
     Ok(())
