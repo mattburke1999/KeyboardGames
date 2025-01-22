@@ -243,10 +243,7 @@ def get_all_skins():
     all_skins_result = db_get_all_skins(user_id)
     if not all_skins_result[0]:
         return (False, all_skins_result[1])    
-    return (True, [{
-            'id': skin[0],
-            'type': skin[1],
-            'name': skin[2],
-            'data': skin[3],
-            'user_choice': skin[4]
-        } for skin in all_skins_result[1]])
+    return (True, {
+            'points': all_skins_result[1][0],
+            'skins': all_skins_result[1][1]
+        })

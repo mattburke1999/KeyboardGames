@@ -13,11 +13,17 @@
     </head>
     <body>
         <div class="main">
+            <div class="user-points">
+                <h1 class='points'>Your Points: {{ points }}</h1>
+            </div>
             <div class="skins-container">
                 {% for skin in all_skins %}
                     <div class="skin">
-                        {{ render_skin(skin.type, skin.data, 'all skins') }}
-                        <h2 class='skin-name {{ "user-choice" if skin.user_choice else ""}}'>{{ skin.name }}</h2>
+                        {{ render_skin(skin.type, skin.data, 'all skins', skin.user_choice) }}
+                        <div>
+                            <h2 class='points {{ "user-choice" if skin.user_choice else ""}}'><span class='point-label'>Points: </span>{{ skin.points if not skin.user_choice else '--' }}</h2>
+                            <h2 class='skin-name {{ "user-choice" if skin.user_choice else ""}}'>{{ skin.name }}</h2>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -26,14 +32,28 @@
     <script>
         $(document).ready(function() {
             // Add hover effect to both .skin-name and .dot
-            $('.skin-name, .dot').hover(
+            $('.dot').hover(
                 function() {
                     // On hover: scale both elements
-                    $(this).parent().css('transform', 'scale(1.05)');
+                    if(!$(this).hasClass('user-choice')) {
+                        $(this).parent().css('transform', 'scale(1.05)');
+                    }
                 },
                 function() {
                     // On hover out: reset scale
                     $(this).parent().css('transform', 'scale(1)');
+                }
+            );
+            $('.skin-name, .points').hover(
+                function() {
+                    // On hover: scale both elements
+                    if(!$(this).hasClass('user-choice')) {
+                        $(this).parent().parent().css('transform', 'scale(1.05)');
+                    }
+                },
+                function() {
+                    // On hover out: reset scale
+                    $(this).parent().parent().css('transform', 'scale(1)');
                 }
             );
         });

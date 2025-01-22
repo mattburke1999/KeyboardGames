@@ -1,13 +1,13 @@
 
-{% macro render_skin(type, data, page) %}
+{% macro render_skin(type, data, page, user_choice) %}
     {% if type == 'solid-circle' %}
         {% from 'skin_macros/solid-circle.html' import solid_circle %}
-        {{ solid_circle(page, data.color) }}
+        {{ solid_circle(page, user_choice, data.color) }}
     {% elif type == 'half-circle-vertical' %}
         {% from 'skin_macros/half-circle-vertical.html' import half_circle_vertical %}
-        {{ half_circle_vertical(page, data.color1, data.color2) }}
+        {{ half_circle_vertical(page, user_choice, data.color1, data.color2) }}
     {% elif type == 'half-circle-horizontal' %}
         {% from 'skin_macros/half-circle-horizontal.html' import half_circle_horizontal %}
-        {{ half_circle_horizontal(page, data.color1, data.color2) }}
+        {{ half_circle_horizontal(page, user_choice, data.color1, data.color2) }}
     {% endif %}
 {% endmacro %}

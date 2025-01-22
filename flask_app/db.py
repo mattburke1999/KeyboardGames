@@ -141,11 +141,15 @@ def get_all_skins(user_id):
         with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('''
-                        select s.id, type, name, data, (a.id is not null and a.id = %s) user_skin
-                        from skins s
-                        left join accounts a on s.id = a.skin_id and a.id = %s
-                ''', (user_id, user_id))
-                return (True, cur.fetchall())
+                        select points, skins
+                        from (
+                            select json_agg(json_build_object('type', s.type, 'name', s.name, 'data', s.data, 'points', s.points, 'user_choice', a.id is not null and a.id = %s)) skins
+                            from skins s
+                            left join accounts a on s.id = a.skin_id and a.id = %s
+                        ) s, accounts a 
+                        where a.id = %s
+                ''', (user_id, user_id, user_id))
+                return (True, cur.fetchone())
     except:
         traceback.print_exc()
         return (False, None)

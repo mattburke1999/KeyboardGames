@@ -58,11 +58,13 @@ create table user_sessions (
 	on delete cascade
 );
 
+
 create table skins (
 	id serial primary key,
-	type character varying,
-	name character varying,
-	data json
+	type character varying not null,
+	name character varying not null,
+	data json not null,
+	points int not null default 5
 );
 
 CREATE OR REPLACE FUNCTION update_scores(

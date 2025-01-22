@@ -1,7 +1,7 @@
-{% macro solid_circle(page, color) %}
+{% macro solid_circle(page, user_choice, color) %}
     <div
         {% if page == 'all skins' %} 
-            class='dot'
+            class='dot {{ "user-choice" if user_choice else ""}}'
         {% else %}        
             id='dot'
         {% endif %}

@@ -2,10 +2,14 @@
 .main {
     padding: 1.5rem;
 }
+.user-points {
+    border: 1.5px solid gray;
+    padding: 1rem 2rem;
+    border-bottom: none;
+}
 .skins-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     border: 1.5px solid gray;
     border-radius: 3px;
     padding: 1.5rem;
@@ -21,14 +25,17 @@
     gap: 1rem;
 }
 
-.skin-name {
+.skin-name, .points {
     color: white;
     margin: 0;
     font-size: .85rem;
     text-align: center;
     cursor: pointer;
 }
-.skin-name.user-choice {
+.points {
+    margin-bottom: 5px;
+}
+.skin-name.user-choice, .points.user-choice {
     color: #efec48;
 }
 
@@ -39,4 +46,8 @@
     border-radius: 50%;
     border: 1.5px solid white;
     cursor: pointer;
+}
+
+.dot.user-choice {
+    border-color:#efec48;
 }
