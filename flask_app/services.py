@@ -235,6 +235,13 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         } for hs in high_scores if hs['score_type'] == 'top3']
     return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
 
+def move_black_skin_to_top(skins):
+    black_skin = next((skin for skin in skins if skin['name'] == 'Black'), None)
+    if black_skin:
+        skins.remove(black_skin)
+        skins.insert(0, black_skin)
+    return skins
+
 def get_all_skins():
     logged_in = check_login()
     if not logged_in:
@@ -245,5 +252,5 @@ def get_all_skins():
         return (False, all_skins_result[1])    
     return (True, {
             'points': all_skins_result[1][0],
-            'skins': all_skins_result[1][1]
+            'skins': move_black_skin_to_top(all_skins_result[1][1])
         })

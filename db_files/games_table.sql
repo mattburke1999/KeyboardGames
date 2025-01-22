@@ -64,8 +64,16 @@ create table skins (
 	type character varying not null,
 	name character varying not null,
 	data json not null,
-	points int not null default 5
+	points int not null default 50
 );
+
+CREATE TABLE IF NOT EXISTS public.user_skins
+(
+    id serial primary key,
+    account_id integer NOT NULL REFERENCES accounts (id),
+    skin_id integer NOT NULL REFERENCES skins (id),
+    purchase_date timestamp without time zone NOT NULL DEFAULT now()
+)
 
 CREATE OR REPLACE FUNCTION update_scores(
 	_account_id integer,

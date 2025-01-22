@@ -1,7 +1,7 @@
-{% macro half_circle_horizontal(page, user_choice, color1, color2) %}
+{% macro half_circle_horizontal(page, user_skin, color1, color2) %}
     <div
     {% if page == 'all skins' %} 
-        class='dot {{ "user-choice" if user_choice else ""}}'
+        class='dot{{ " user-skin" if user_skin else ""}}'
     {% else %}        
         id='dot'
     {% endif %}

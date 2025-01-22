@@ -1,3 +1,8 @@
+:root {
+    --user-skin-color: #48c0ef;
+    --user-choice-color: #efec48;
+    --not-available-color: gray;
+}
 
 .main {
     padding: 1.5rem;
@@ -7,14 +12,26 @@
     padding: 1rem 2rem;
     border-bottom: none;
 }
-.skins-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+.user-points h1 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+}
+.skins-container-border {
     border: 1.5px solid gray;
     border-radius: 3px;
     padding: 1.5rem;
     width: calc(100% - 3rem);
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.skins-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-row-gap: 1.5rem;
+    align-self: normal;
 }
 .skin {
     display: flex;
@@ -22,7 +39,18 @@
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
-    gap: 1rem;
+    gap: .5rem;
+    cursor: pointer;
+}
+.skin.not-available:hover, .skin.user-choice:hover, .skin.user-skin:hover{
+    transform: scale(1);
+}
+.skin:hover {
+    transform: scale(1.075);
+}
+.skin.user-choice {
+    border: 1.5px solid var(--user-choice-color);
+    border-radius: 7.5px;
 }
 
 .skin-name, .points {
@@ -30,13 +58,22 @@
     margin: 0;
     font-size: .85rem;
     text-align: center;
-    cursor: pointer;
 }
 .points {
-    margin-bottom: 5px;
+    margin-top: 5px;
 }
-.skin-name.user-choice, .points.user-choice {
-    color: #efec48;
+.skin-name.user-skin, .points.user-skin {
+    color: var(--user-skin-color);
+    cursor: default;
+}
+.skin.user-choice .skin-name, .skin.user-choice .points {
+    color: var(--user-choice-color);
+}
+.skin-name.not-available, .points.not-available {
+    color: var(--not-available-color);
+}
+.skin.not-available {
+    cursor: default;
 }
 
 
@@ -45,9 +82,11 @@
     height: 17.5px;
     border-radius: 50%;
     border: 1.5px solid white;
-    cursor: pointer;
 }
 
-.dot.user-choice {
-    border-color:#efec48;
+.dot.user-skin {
+    border-color: var(--user-skin-color);
+}
+.skin.user-choice .dot {
+    border-color: var(--user-choice-color);
 }
