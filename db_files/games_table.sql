@@ -21,8 +21,10 @@ create table IF NOT EXISTS accounts (
 	first_name character varying not null,
 	last_name character varying not null,
     points int not null default 0,
+    skin_id int,
     created_time timestamp without time zone NOT NULL DEFAULT now(),
-	last_updated_time timestamp without time zone NOT NULL DEFAULT now()
+	last_updated_time timestamp without time zone NOT NULL DEFAULT now(),
+    foreign key (skin_id) references skins(id) on update cascade on delete set null
 );
 
 create table IF NOT EXISTS scores (
@@ -54,6 +56,13 @@ create table user_sessions (
 	foreign key (account_id) references accounts(id)
 	on update cascade
 	on delete cascade
+);
+
+create table skins (
+	id serial primary key,
+	type character varying,
+	name character varying,
+	data json
 );
 
 CREATE OR REPLACE FUNCTION update_scores(

@@ -7,6 +7,7 @@ from db import create_user_session as db_create_user_session
 from db import clear_user_sessions as db_clear_user_sessions
 from db import get_user_session as db_get_user_session
 from db import update_score as db_update_score
+from db import get_all_skins as db_get_all_skins
 from flask import session
 import bcrypt
 import jwt
@@ -181,10 +182,6 @@ def validate_game(client_data, server_data, score):
     return (True, point_validation_result[1])
 
 def fetch_game_room_data(session_jwt):
-    # this will fetch game room data from rust server
-    # returns (True, {'start_game_token': start_game_token, 'end_game_token': end_game_token, 'point_list': point_list})
-    # make post request to IP:3030/get_session_data
-    # {get_server_ip()}
     response = requests.post(f'http://127.0.0.1:3030/get_session_data', headers={'Authorization': f'{session_jwt}'})
     if response.status_code != 200:
         return (False, {'error': 'Error fetching game room data'})
@@ -237,3 +234,19 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         'current_score': hs['current_score']
         } for hs in high_scores if hs['score_type'] == 'top3']
     return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
+
+def get_all_skins():
+    logged_in = check_login()
+    if not logged_in:
+        return (False, {'error': 'Not logged in'})
+    user_id = session['user_id']
+    all_skins_result = db_get_all_skins(user_id)
+    if not all_skins_result[0]:
+        return (False, all_skins_result[1])    
+    return (True, [{
+            'id': skin[0],
+            'type': skin[1],
+            'name': skin[2],
+            'data': skin[3],
+            'user_choice': skin[4]
+        } for skin in all_skins_result[1]])

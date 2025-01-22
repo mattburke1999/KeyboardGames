@@ -1,0 +1,10 @@
+{% macro half_circle_horizontal(page, color1, color2) %}
+    <div
+    {% if page == 'all skins' %} 
+        class='dot'
+    {% else %}        
+        id='dot'
+    {% endif %}
+        style='background: linear-gradient(to bottom, {{ color1 }} 50%, {{ color2 }} 50%);'
+    ></div>
+{% endmacro %}

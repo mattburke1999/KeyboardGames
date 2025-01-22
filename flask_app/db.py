@@ -135,3 +135,27 @@ def update_score(user_id, game_id, score):
     except:
         traceback.print_exc()
         return (False, None)
+    
+def get_all_skins(user_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('''
+                        select s.id, type, name, data, (a.id is not null and a.id = %s) user_skin
+                        from skins s
+                        left join accounts a on s.id = a.skin_id and a.id = %s
+                ''', (user_id, user_id))
+                return (True, cur.fetchall())
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
+def get_skin(skin_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('select id, type, name, data from skins where id = %s', (skin_id,))
+                return (True, cur.fetchone())
+    except:
+        traceback.print_exc()
+        return (False, None)

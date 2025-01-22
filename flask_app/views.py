@@ -9,6 +9,7 @@ from services import logout
 from services import create_session
 from services import get_profile
 from services import score_update
+from services import get_all_skins
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
@@ -61,4 +62,6 @@ def score_update_view(game_id, score, start_game_token, end_game_token, point_li
     return json_result(result)
 
 def skins_view():
-    return render_template('skins.html')
+    all_skins = get_all_skins()
+    print(all_skins[1])
+    return render_template('skins.html', all_skins=all_skins[1])

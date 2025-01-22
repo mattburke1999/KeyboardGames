@@ -1,0 +1,10 @@
+{% macro solid_circle(page, color) %}
+    <div
+        {% if page == 'all skins' %} 
+            class='dot'
+        {% else %}        
+            id='dot'
+        {% endif %}
+        style='background-color: {{ color }}'
+    ></div>
+{% endmacro %}

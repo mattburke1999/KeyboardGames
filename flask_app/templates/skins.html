@@ -1,3 +1,4 @@
+{% from 'skin_macros/skin-mapper.html' import render_skin %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -12,7 +13,29 @@
     </head>
     <body>
         <div class="main">
-            <div class="skins-container"></div>
+            <div class="skins-container">
+                {% for skin in all_skins %}
+                    <div class="skin">
+                        {{ render_skin(skin.type, skin.data, 'all skins') }}
+                        <h2 class='skin-name {{ "user-choice" if skin.user_choice else ""}}'>{{ skin.name }}</h2>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </body>
+    <script>
+        $(document).ready(function() {
+            // Add hover effect to both .skin-name and .dot
+            $('.skin-name, .dot').hover(
+                function() {
+                    // On hover: scale both elements
+                    $(this).parent().css('transform', 'scale(1.05)');
+                },
+                function() {
+                    // On hover out: reset scale
+                    $(this).parent().css('transform', 'scale(1)');
+                }
+            );
+        });
+    </script>
 </html>
