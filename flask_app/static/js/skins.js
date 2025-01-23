@@ -30,7 +30,7 @@ function filterSkins(filter) {
     }
 }
 
-function showModal(skin_id, modal_id, closeFunction, page) {
+function showSkinModal(skin_id, modal_id, closeFunction, page) {
     const skin = skins.filter(skin => skin.id == skin_id)[0];
     $.ajax({
         url: '/skins/get_skin',
@@ -40,7 +40,7 @@ function showModal(skin_id, modal_id, closeFunction, page) {
         success: function(response) {
             $('#modal-backdrop').off('click');
             $('#modal-backdrop').on('click', () => closeFunction());
-            $(`#${modal_id} .skin`).replaceWith(response);
+            $(`#${modal_id} .skin`).replaceWith(response.html);
             $(`#skin-id-${page}`).val(skin_id);
             $(`#${modal_id}`).css('display', 'flex');
             $('#modal-backdrop').css('display', 'flex');
@@ -50,16 +50,20 @@ function showModal(skin_id, modal_id, closeFunction, page) {
                 behavior: 'smooth' // Optional for smooth scrolling
             });              
             document.body.overflow = 'hidden';
+        }, 
+        error: function(response) {
+            console.log(response);
+            handleError(response);
         }
     });
 }
 
 function showPurchaseSkinModal(skin_id) {
-    showModal(skin_id, 'purchase-skin-modal', closePurchaseSkinModal, 'purchase');
+    showSkinModal(skin_id, 'purchase-skin-modal', closePurchaseSkinModal, 'purchase');
 }
 
 function showSelectSkinModal(skin_id) {
-    showModal(skin_id, 'select-skin-modal', closeSelectSkinModal, 'select');
+    showSkinModal(skin_id, 'select-skin-modal', closeSelectSkinModal, 'select');
 }
 
 function closePurchaseSkinModal() {
@@ -88,6 +92,10 @@ function selectSkin(){
         success: function(response) {
             closeSelectSkinModal();
             location.reload();
+        }, 
+        error: function(response) {
+            console.log(response);
+            handleError(response);
         }
     });
 }
@@ -102,6 +110,10 @@ function purchaseSkin(){
         success: function(response) {
             closePurchaseSkinModal();
             location.reload();
+        }, 
+        error: function(response) {
+            console.log(response);
+            handleError(response);
         }
     });
 }

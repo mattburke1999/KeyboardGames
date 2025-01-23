@@ -67,8 +67,6 @@ def get_user_jwt():
     return (True, {'logged_in': False, 'user_jwt': None})
 
 def create_session():
-    if not check_login():
-        return (True, {'session_id': None, 'logged_in': False})
     user_id = session['user_id']
     session_result = db_create_user_session(user_id)
     if not session_result[0]:
@@ -118,9 +116,6 @@ def get_server_ip():
     return socket.gethostbyname(hostname)
 
 def get_user_skin():
-    logged_in = check_login()
-    if not logged_in:
-        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     skin_result = db_get_user_skin(user_id)
     if not skin_result[0]:
@@ -136,14 +131,14 @@ def get_game_info(game):
     if not GAME_INFO:
         games_result = get_games()
         if not games_result[0]:
-            return (False, {'error': 'No games found'})
+            return (False, {'error': 'No games found', 'type': 404})
     if game not in GAME_INFO:
-        return (False, {'error': 'Game not found'})
+        return (False, {'error': 'Game not found', 'type': 404})
     user_skin_result = get_user_skin()
     if not user_skin_result[0]:
         user_skin_result = db_get_default_skin()
         if not user_skin_result[0]:
-            return (False, user_skin_result[1])
+            return (False, {'error': user_skin_result[1], 'message': 'Unable to load game', 'type': 500})
     return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login(), 'ip': get_server_ip(), 'user_skin': user_skin_result[1]})
 
 def check_unique_register_input(type, value):
@@ -153,9 +148,6 @@ def check_unique_register_input(type, value):
     return (True, {'unique': result[1]})
 
 def get_profile():
-    if not check_login():
-        print('Not logged in')
-        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     profile_result = db_get_profile(user_id)
     if not profile_result[0]:
@@ -215,8 +207,6 @@ def fetch_game_room_data(session_jwt):
     return (True, data)
 
 def score_update(game_id, score, start_game_token, end_game_token, point_list):
-    if not check_login():
-        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     session_result = db_get_user_session(user_id)
     if not session_result[0]:
@@ -259,11 +249,7 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         } for hs in high_scores if hs['score_type'] == 'top3']
     return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
 
-
 def get_all_skins():
-    logged_in = check_login()
-    if not logged_in:
-        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     all_skins_result = db_get_all_skins(user_id)
     if not all_skins_result[0]:
@@ -274,9 +260,6 @@ def get_all_skins():
         })
     
 def set_user_skin(skin_id):
-    logged_in = check_login()
-    if not logged_in:
-        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     set_skin_result = db_set_user_skin(user_id, skin_id)
     if not set_skin_result[0]:
@@ -284,9 +267,6 @@ def set_user_skin(skin_id):
     return (True, {'success': True})
 
 def purchase_skin(skin_id):
-    logged_in = check_login()
-    if not logged_in:
-        return (False, {'error': 'Not logged in'})
     user_id = session['user_id']
     skin_purchaseable_result = db_check_skin_purchaseable(user_id, skin_id)
     if not skin_purchaseable_result[0]:

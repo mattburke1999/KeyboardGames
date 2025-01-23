@@ -1,6 +1,13 @@
 function logout() {
     window.location.href = '/logout';
 }
+
+function handleError(response) {
+    if (!response.logged_in) {
+        alert(response.message);
+        window.location.href = '/';
+    }
+}
 function get_profile() {
     if($('#profile-username').text() === '') {
         $.ajax({
@@ -9,9 +16,10 @@ function get_profile() {
             success: function(response) {
                 console.log(response);
                 populate_profile_modal(response);
-            },
-            error: function(err) {
-                console.log(err);
+            }, 
+            error: function(response) {
+                console.log(response);
+                handleError(response);
             }
         });
     } else {
