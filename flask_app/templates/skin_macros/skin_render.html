@@ -3,5 +3,7 @@
     <h2 class='skin-name'>{{ skin.name }}</h2>
     <input type='hidden' id='skin-id-{{page}}' value='{{ skin.id }}'>
     {{ render_skin(page, skin) }}
-    <h2 class='points'><span class='point-label'>Points: </span>{{ skin.points }}</h2>
+    {% if page!= 'select' %}
+        <h2 class='points'><span class='point-label'>Points: </span>{{ skin.points }}</h2>
+    {% endif %}
 </div>
