@@ -14,6 +14,10 @@
     <body>
         <div class="main">
             <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
+            <div class='auth-btns'>
+                <button onclick="logout()">Logout</button>
+            </div>
+            <h1 class='site-name'>Keyboard Games</h1>
             <div class="user-points">
                 <h1>Your Points: {{ points }}</h1>
             </div>
@@ -27,10 +31,10 @@
                     {% for skin in all_skins %}
                         <div 
                             class="skin{{ " user-choice" if skin.user_choice else "" }}{{ " not-available" if skin.points > points and not skin.user_skin else "" }}{{ " user-skin" if skin.user_skin else "" }}"
-                            {% if skin.points <= points and not skin.user_choice %}
+                            {% if not skin.user_choice %}
                                 {% if skin.user_skin %}
                                     onclick="showSelectSkinModal('{{ skin.id}}')"
-                                {% else %}
+                                {% elif skin.points <= points %}
                                     onclick="showPurchaseSkinModal('{{ skin.id}}')"
                                 {% endif %}
                             {% endif %}
@@ -62,6 +66,5 @@
     </body>
     <script>
         const skins = {{ all_skins | tojson | safe }};
-        add_event_listeners();
     </script>
 </html>

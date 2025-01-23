@@ -1,4 +1,5 @@
 from flask import render_template
+from flask import redirect
 from flask import jsonify
 from services import get_home_page_data
 from services import get_game_info
@@ -12,6 +13,7 @@ from services import score_update
 from services import get_all_skins
 from services import set_user_skin
 from services import purchase_skin
+from services import check_login
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
@@ -49,7 +51,7 @@ def login_view(username, password):
 
 def logout_view():
     logout()
-    return json_result((True, {}))
+    return redirect('/')
 
 def create_session_view():
     result = create_session()
@@ -64,16 +66,24 @@ def score_update_view(game_id, score, start_game_token, end_game_token, point_li
     return json_result(result)
 
 def skins_view():
+    if not check_login():
+        return redirect('/')
     all_skins = get_all_skins()
     return render_template('skins.html', all_skins=all_skins[1]['skins'], points=all_skins[1]['points'])
 
 def get_skin_view(page, skin):
+    if not check_login():
+        return redirect('/')
     return render_template('skin_macros/skin_render.html', page=page, skin=skin)
 
 def set_user_skin_view(skin_id):
+    if not check_login():
+        return redirect('/')
     result = set_user_skin(skin_id)
     return json_result(result)
 
 def purchase_skin_view(skin_id):
+    if not check_login():
+        return redirect('/')
     result = purchase_skin(skin_id)
     return json_result(result)

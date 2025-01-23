@@ -15,11 +15,11 @@
         <div class="main">
             <div class='auth-btns'>
                 {% if not logged_in %}
-                    <button onClick="window.location.href='/login'">Login</button>
-                    <button onClick="window.location.href='/register'">Register</button>
+                    <button onclick="window.location.href='/login'">Login</button>
+                    <button onclick="window.location.href='/register'">Register</button>
                 {% else %}
-                    <button onClick="logout()">Logout</button>
-                    <button onClick="get_profile()">Profile</button>
+                    <button onclick="logout()">Logout</button>
+                    <button onclick="get_profile()">Profile</button>
                     <a href="{{url_for('skins')}}">
                         <button>Skins</button>
                     </a>
@@ -28,7 +28,7 @@
             {% if logged_in %}
                 <div id='modal-backdrop'></div>
                 <div class='profile-modal' id='profile-modal'>
-                    <button class='profile-close-btn' onClick='close_profile_modal()'>&times;</button>
+                    <button class='profile-close-btn' onclick='close_profile_modal()'>&times;</button>
                     <div class='profile-header'>
                         <h1 id='profile-username'></h1>
                         <h2>Joined <span id='profile-created'></span></h2>

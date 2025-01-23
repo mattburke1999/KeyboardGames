@@ -73,3 +73,16 @@ button:hover {
     right: 10px;
     z-index: 20;
 }
+.auth-btns {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 20;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+.site-name {
+    margin-top: 1.5rem;
+}

@@ -1,3 +1,6 @@
+function logout() {
+    window.location.href = '/logout';
+}
 
 function filterSkins(filter) {
     if (filter === 'all') {

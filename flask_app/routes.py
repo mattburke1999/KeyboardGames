@@ -34,7 +34,7 @@ def login_post():
     data = request.get_json()['formData']
     return login_view(data['username'], data['password'])
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['GET'])
 def logout():
     return logout_view()
 
