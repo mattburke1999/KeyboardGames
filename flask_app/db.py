@@ -170,6 +170,16 @@ def get_user_skin(user_id):
         traceback.print_exc()
         return (False, None)
     
+def get_default_skin():
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("select type, name, data from skins where name = 'Black'")
+                return (True, cur.fetchone())
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
 def get_skin(skin_id):
     try:
         with connect_db() as conn:
@@ -188,5 +198,36 @@ def set_user_skin(user_id, skin_id):
                 conn.commit()
                 return (True, None)
     except:
+        traceback.print_exc()
+        return (False, None)
+    
+def check_skin_purchaseable(user_id, skin_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    select points <= (select points from skins where id = %s)
+                    from accounts where id = %s
+                ''', (skin_id, user_id))
+                return (True, cur.fetchone()[0])
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
+def purchase_skin(user_id, skin_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    update accounts a
+                    set points = a.points - s.points
+                    from skins s
+                    where s.id = %s and a.id = %s and s.points <= a.points
+                ''', (skin_id, user_id))
+                cur.execute('insert into user_skins (account_id, skin_id) values (%s, %s)', (user_id, skin_id))
+                conn.commit()
+                return (True, None)
+    except:
+        conn.rollback()
         traceback.print_exc()
         return (False, None)

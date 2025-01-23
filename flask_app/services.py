@@ -10,6 +10,9 @@ from db import update_score as db_update_score
 from db import get_all_skins as db_get_all_skins
 from db import set_user_skin as db_set_user_skin
 from db import get_user_skin as db_get_user_skin
+from db import get_default_skin as db_get_default_skin
+from db import check_skin_purchaseable as db_check_skin_purchaseable
+from db import purchase_skin as db_purchase_skin
 from flask import session
 import bcrypt
 import jwt
@@ -138,7 +141,9 @@ def get_game_info(game):
         return (False, {'error': 'Game not found'})
     user_skin_result = get_user_skin()
     if not user_skin_result[0]:
-        return (False, user_skin_result[1])
+        user_skin_result = db_get_default_skin()
+        if not user_skin_result[0]:
+            return (False, user_skin_result[1])
     return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login(), 'ip': get_server_ip(), 'user_skin': user_skin_result[1]})
 
 def check_unique_register_input(type, value):
@@ -254,12 +259,6 @@ def score_update(game_id, score, start_game_token, end_game_token, point_list):
         } for hs in high_scores if hs['score_type'] == 'top3']
     return (True, {'top10': top10, 'top3': top3, 'points_added': points_added, 'score_rank': score_rank})
 
-def move_black_skin_to_top(skins):
-    black_skin = next((skin for skin in skins if skin['name'] == 'Black'), None)
-    if black_skin:
-        skins.remove(black_skin)
-        skins.insert(0, black_skin)
-    return skins
 
 def get_all_skins():
     logged_in = check_login()
@@ -271,7 +270,7 @@ def get_all_skins():
         return (False, all_skins_result[1])    
     return (True, {
             'points': all_skins_result[1][0],
-            'skins': move_black_skin_to_top(all_skins_result[1][1])
+            'skins': all_skins_result[1][1]
         })
     
 def set_user_skin(skin_id):
@@ -282,4 +281,19 @@ def set_user_skin(skin_id):
     set_skin_result = db_set_user_skin(user_id, skin_id)
     if not set_skin_result[0]:
         return (False, set_skin_result[1])
+    return (True, {'success': True})
+
+def purchase_skin(skin_id):
+    logged_in = check_login()
+    if not logged_in:
+        return (False, {'error': 'Not logged in'})
+    user_id = session['user_id']
+    skin_purchaseable_result = db_check_skin_purchaseable(user_id, skin_id)
+    if not skin_purchaseable_result[0]:
+        return (False, skin_purchaseable_result[1])
+    if not skin_purchaseable_result[1]:
+        return (False, {'error': 'Not enought points.'})
+    purchase_skin_result = db_purchase_skin(user_id, skin_id)
+    if not purchase_skin_result[0]:
+        return (False, purchase_skin_result[1])
     return (True, {'success': True})

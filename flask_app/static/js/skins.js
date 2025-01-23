@@ -1,32 +1,29 @@
-function add_event_listeners() {
-    $('#user-skin-btn').on('click', function() {
-        showUserSkins(this, 'user');
-    });
-}
 
-function showUserSkins(btn, filter) {
-    console.log('showUserSkins');
-    console.log(`filter: ${filter}`);
-    if (filter == 'user') {
-        $('.skin').each(function() {
-            if (!$(this).hasClass('user-skin')) {
-                $(this).hide();
-            }
-        });
-        $(btn).text('Show All Skins');
-        $(btn).off('click');
-        $(btn).on('click', function() {
-            showUserSkins(this, 'all');
-        });
+function filterSkins(filter) {
+    if (filter === 'all') {
+        $('#all-skins-btn').hide();
+        $('.filter-skin-btns').show();
+        $('.skin').show();
     } else {
-        $('.skin').each(function() {
-            $(this).show();
-        });
-        $(btn).text('View My Skins');
-        $(btn).off('click');
-        $(btn).on('click', function() {
-            showUserSkins(this, 'user');
-        });
+        $('#all-skins-btn').show();
+        $('.filter-skin-btns').hide();
+        if (filter === 'user') {
+            $('.skin').each(function() {
+                if (!$(this).hasClass('user-skin')) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+        } else if (filter === 'available') {
+            $('.skin').each(function() {
+                if ($(this).hasClass('not-available')) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+        }
     }
 }
 
@@ -87,6 +84,20 @@ function selectSkin(){
         contentType: 'application/json',
         success: function(response) {
             closeSelectSkinModal();
+            location.reload();
+        }
+    });
+}
+
+function purchaseSkin(){
+    const skin_id = $('#skin-id-purchase').val();
+    $.ajax({
+        url: '/skins/purchase',
+        type: 'POST',
+        data: JSON.stringify({skin_id}),
+        contentType: 'application/json',
+        success: function(response) {
+            closePurchaseSkinModal();
             location.reload();
         }
     });

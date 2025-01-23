@@ -11,6 +11,7 @@ from services import get_profile
 from services import score_update
 from services import get_all_skins
 from services import set_user_skin
+from services import purchase_skin
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
@@ -71,4 +72,8 @@ def get_skin_view(page, skin):
 
 def set_user_skin_view(skin_id):
     result = set_user_skin(skin_id)
+    return json_result(result)
+
+def purchase_skin_view(skin_id):
+    result = purchase_skin(skin_id)
     return json_result(result)

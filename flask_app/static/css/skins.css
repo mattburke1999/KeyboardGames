@@ -29,6 +29,7 @@ body{
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 1.5rem;
 }
 .skins-container {
     display: grid;
@@ -54,6 +55,7 @@ body{
 .skin.user-choice {
     border: 1.5px solid var(--user-choice-color);
     border-radius: 7.5px;
+    cursor: default;
 }
 
 .skin-name, .points {
@@ -118,4 +120,7 @@ body{
     right: 0;
     padding: 1rem;
     cursor: pointer;
+}
+#all-skins-btn {
+    display: none;
 }
