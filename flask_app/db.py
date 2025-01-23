@@ -164,3 +164,14 @@ def get_skin(skin_id):
     except:
         traceback.print_exc()
         return (False, None)
+    
+def set_user_skin(user_id, skin_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('update accounts set skin_id = %s where id = %s', (skin_id, user_id))
+                conn.commit()
+                return (True, None)
+    except:
+        traceback.print_exc()
+        return (False, None)

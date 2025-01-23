@@ -50,6 +50,22 @@
             </div>
             <button onclick='purchaseSkin()'>Purchase</button>
         </div>
+        <div class="modal" id="purchase-skin-modal">
+            <span class="close" onclick="closePurchaseSkinModal()">&times;</span>
+            <h2 class='modal-title'>Purchase Skin</h2>
+            <div class="skin-container">
+                <div class="skin"></div>
+            </div>
+            <button onclick='purchaseSkin()'>Purchase</button>
+        </div>
+        <div class="modal" id="select-skin-modal">
+            <span class="close" onclick="closeSelectSkinModal()">&times;</span>
+            <h2 class='modal-title'>Select Skin</h2>
+            <div class="skin-container">
+                <div class="skin"></div>
+            </div>
+            <button onclick='selectSkin()'>Select</button>
+        </div>
     </body>
     <script>
         const skins = {{ all_skins | tojson | safe }};

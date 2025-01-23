@@ -8,6 +8,7 @@ from db import clear_user_sessions as db_clear_user_sessions
 from db import get_user_session as db_get_user_session
 from db import update_score as db_update_score
 from db import get_all_skins as db_get_all_skins
+from db import set_user_skin as db_set_user_skin
 from flask import session
 import bcrypt
 import jwt
@@ -254,3 +255,13 @@ def get_all_skins():
             'points': all_skins_result[1][0],
             'skins': move_black_skin_to_top(all_skins_result[1][1])
         })
+    
+def set_user_skin(skin_id):
+    logged_in = check_login()
+    if not logged_in:
+        return (False, {'error': 'Not logged in'})
+    user_id = session['user_id']
+    set_skin_result = db_set_user_skin(user_id, skin_id)
+    if not set_skin_result[0]:
+        return (False, set_skin_result[1])
+    return (True, {'success': True})

@@ -10,6 +10,7 @@ from services import create_session
 from services import get_profile
 from services import score_update
 from services import get_all_skins
+from services import set_user_skin
 
 def json_result(result):
         return (jsonify(result[1]), 200) if result[0] else (jsonify(result[1]), 500)
@@ -67,3 +68,7 @@ def skins_view():
 
 def get_skin_view(page, skin):
     return render_template('skin_macros/skin_render.html', page=page, skin=skin)
+
+def set_user_skin_view(skin_id):
+    result = set_user_skin(skin_id)
+    return json_result(result)

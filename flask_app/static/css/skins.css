@@ -45,7 +45,7 @@ body{
     gap: .5rem;
     cursor: pointer;
 }
-.skin.not-available:hover, .skin.user-choice:hover, .skin.user-skin:hover{
+.skin.not-available:hover, .skin.user-choice:hover{
     transform: scale(1);
 }
 .skin:hover {
@@ -67,7 +67,6 @@ body{
 }
 .skin-name.user-skin, .points.user-skin {
     color: var(--user-skin-color);
-    cursor: default;
 }
 .skin.user-choice .skin-name, .skin.user-choice .points {
     color: var(--user-choice-color);
@@ -93,7 +92,7 @@ body{
 .skin.user-choice .dot {
     border-color: var(--user-choice-color);
 }
-#purchase-skin-modal {
+.modal {
     display: none;
     width: fit-content;
     flex-direction: column;
@@ -109,10 +108,10 @@ body{
     border-radius: 5px;
     padding: 1rem;
 }
-#purchase-skin-modal .skin{
+.modal .skin{
     cursor: default;
 }
-#purchase-skin-modal .skin:hover {
+.modal .skin:hover {
     transform: scale(1);
 }
 .modal-title {

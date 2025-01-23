@@ -12,6 +12,7 @@ from views import profile_view
 from views import score_update_view
 from views import skins_view
 from views import get_skin_view
+from views import set_user_skin_view
 
 app = Flask(__name__)
 
@@ -78,3 +79,8 @@ def skins():
 def get_skin():
     data = request.get_json()
     return get_skin_view(data['page'], data['skin'])
+
+@app.route('/skins/select', methods=['POST'])
+def select_skin():
+    data = request.get_json()
+    return set_user_skin_view(data['skin_id'])
