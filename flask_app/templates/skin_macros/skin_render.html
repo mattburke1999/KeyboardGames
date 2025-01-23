@@ -1,0 +1,6 @@
+{% from 'skin_macros/skin-mapper.html' import render_skin %}
+<div class="skin">
+    <h2 class='skin-name'>{{ skin.name }}</h2>
+    {{ render_skin(page, skin) }}
+    <h2 class='points'><span class='point-label'>Points: </span>{{ skin.points }}</h2>
+</div>

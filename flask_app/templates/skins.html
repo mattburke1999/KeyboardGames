@@ -24,9 +24,9 @@
                             class="skin{{ " user-choice" if skin.user_choice else "" }}{{ " not-available" if skin.points > points else "" }}{{ " user-skin" if skin.user_skin else "" }}"
                             {% if skin.points <= points and not skin.user_choice %}
                                 {% if skin.user_skin %}
-                                    onclick='showSelectSkinModal("{{ skin | tojson }}")'
+                                    onclick="showSelectSkinModal('{{ skin.id}}')"
                                 {% else %}
-                                    onclick='showPurchaseSkinModal("{{ skin | tojson }}")'
+                                    onclick="showPurchaseSkinModal('{{ skin.id}}')"
                                 {% endif %}
                             {% endif %}
                         >
@@ -38,8 +38,21 @@
                 </div>
             </div>
         </div>
+        <div class="modal-backdrop" id="modal-backdrop"></div>
+        <div class="modal" id="purchase-skin-modal">
+            <span class="close" onclick="closePurchaseSkinModal()">&times;</span>
+            <h2 class='modal-title'>Purchase Skin</h2>
+            <div class="skin-container">
+                <h2 class='skin-name'></h2>
+                <div class="skin">
+                </div>
+                <h2 class='points'></h2>
+            </div>
+            <button onclick='purchaseSkin()'>Purchase</button>
+        </div>
     </body>
     <script>
+        const skins = {{ all_skins | tojson | safe }};
         add_event_listeners();
     </script>
 </html>

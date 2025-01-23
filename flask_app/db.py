@@ -143,7 +143,7 @@ def get_all_skins(user_id):
                 cur.execute('''
                         select points, skins
                         from (
-                            select json_agg(json_build_object('type', s.type, 'name', s.name, 'data', s.data, 'points', s.points, 'user_choice', a.id is not null and a.id = %s, 'user_skin', us.id is not null and us.account_id = %s)) skins
+                            select json_agg(json_build_object('id', s.id, 'type', s.type, 'name', s.name, 'data', s.data, 'points', s.points, 'user_choice', a.id is not null and a.id = %s, 'user_skin', us.id is not null and us.account_id = %s)) skins
                             from skins s
                             left join accounts a on s.id = a.skin_id and a.id = %s
                             left join user_skins us on s.id = us.skin_id and us.account_id = %s

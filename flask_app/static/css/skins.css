@@ -3,6 +3,9 @@
     --user-choice-color: #efec48;
     --not-available-color: gray;
 }
+body{
+    position: relative;
+}
 
 .main {
     padding: 1.5rem;
@@ -89,4 +92,37 @@
 }
 .skin.user-choice .dot {
     border-color: var(--user-choice-color);
+}
+#purchase-skin-modal {
+    display: none;
+    width: fit-content;
+    flex-direction: column;
+    height: fit-content;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: black;
+    z-index: 100;
+    color: white;
+    border: 1.5px solid gray;
+    border-radius: 5px;
+    padding: 1rem;
+}
+#purchase-skin-modal .skin{
+    cursor: default;
+}
+#purchase-skin-modal .skin:hover {
+    transform: scale(1);
+}
+.modal-title {
+    margin-top: 1.5rem;
+    margin-bottom: 0;
+}
+.close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1rem;
+    cursor: pointer;
 }

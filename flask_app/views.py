@@ -64,3 +64,6 @@ def score_update_view(game_id, score, start_game_token, end_game_token, point_li
 def skins_view():
     all_skins = get_all_skins()
     return render_template('skins.html', all_skins=all_skins[1]['skins'], points=all_skins[1]['points'])
+
+def get_skin_view(page, skin):
+    return render_template('skin_macros/skin_render.html', page=page, skin=skin)
