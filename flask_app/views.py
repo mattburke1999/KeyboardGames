@@ -25,11 +25,11 @@ def game_view(game):
         return render_template('404.html'), 404
     game_info = game_info_results[1]['game_info']
     if game_info['basic_circle_template']:
-        return basic_circle_template(game, game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'])
-    return render_template(f'{game}.html', game_info=game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'])
+        return basic_circle_template(game, game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'], user_skin=game_info_results[1]['user_skin'])
+    return render_template(f'{game}.html', game_info=game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'], user_skin=game_info_results[1]['user_skin'])
 
-def basic_circle_template(game, game_info, logged_in, ip):
-    return render_template('basic_circle_template.html', game=game, game_info=game_info, logged_in=logged_in, ip=ip)
+def basic_circle_template(game, game_info, logged_in, ip, user_skin):
+    return render_template('basic_circle_template.html', game=game, game_info=game_info, logged_in=logged_in, ip=ip, user_skin=user_skin)
 
 def auth_view(page):
     return render_template('login.html', page=page)

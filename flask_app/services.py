@@ -9,6 +9,7 @@ from db import get_user_session as db_get_user_session
 from db import update_score as db_update_score
 from db import get_all_skins as db_get_all_skins
 from db import set_user_skin as db_set_user_skin
+from db import get_user_skin as db_get_user_skin
 from flask import session
 import bcrypt
 import jwt
@@ -113,6 +114,20 @@ def get_server_ip():
     hostname = socket.gethostname()
     return socket.gethostbyname(hostname)
 
+def get_user_skin():
+    logged_in = check_login()
+    if not logged_in:
+        return (False, {'error': 'Not logged in'})
+    user_id = session['user_id']
+    skin_result = db_get_user_skin(user_id)
+    if not skin_result[0]:
+        return (False, skin_result[1])
+    return (True, {
+        'type': skin_result[1][0],
+        'name': skin_result[1][1],
+        'data': skin_result[1][2]
+    })
+
 def get_game_info(game):
     global GAME_INFO
     if not GAME_INFO:
@@ -121,7 +136,10 @@ def get_game_info(game):
             return (False, {'error': 'No games found'})
     if game not in GAME_INFO:
         return (False, {'error': 'Game not found'})
-    return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login(), 'ip': get_server_ip()})
+    user_skin_result = get_user_skin()
+    if not user_skin_result[0]:
+        return (False, user_skin_result[1])
+    return (True, {'game_info': GAME_INFO[game], 'logged_in': check_login(), 'ip': get_server_ip(), 'user_skin': user_skin_result[1]})
 
 def check_unique_register_input(type, value):
     result = db_check_unique_register_input(type, value)

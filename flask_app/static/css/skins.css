@@ -79,12 +79,6 @@ body{
 }
 
 
-.dot{
-    width: 17.5px;
-    height: 17.5px;
-    border-radius: 50%;
-    border: 1.5px solid white;
-}
 
 .dot.user-skin {
     border-color: var(--user-skin-color);
@@ -106,7 +100,7 @@ body{
     color: white;
     border: 1.5px solid gray;
     border-radius: 5px;
-    padding: 1rem;
+    padding: 2.5rem;
 }
 .modal .skin{
     cursor: default;

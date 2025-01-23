@@ -1,3 +1,4 @@
+{% from 'skin_macros/skin-mapper.html' import render_skin %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,7 +16,7 @@
 <body>
     <input type="hidden" id='start_game_token' value='' />
     <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
-    <div id="dot"></div>
+    {{ render_skin('game', user_skin) }}
     <div id="instructions">
         <h1 class='game-title'>{% block game_title %}{% endblock %}</h1>
         <h2>Instructions</h2>

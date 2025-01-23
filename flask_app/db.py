@@ -155,6 +155,21 @@ def get_all_skins(user_id):
         traceback.print_exc()
         return (False, None)
     
+def get_user_skin(user_id):
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    select type, name, data 
+                    from skins s
+                    join accounts a on s.id = a.skin_id
+                    where a.id = %s
+                ''', (user_id,))
+                return (True, cur.fetchone())
+    except:
+        traceback.print_exc()
+        return (False, None)
+    
 def get_skin(skin_id):
     try:
         with connect_db() as conn:
