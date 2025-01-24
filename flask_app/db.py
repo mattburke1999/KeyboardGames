@@ -218,16 +218,8 @@ def purchase_skin(user_id, skin_id):
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute('''
-                    update accounts a
-                    set points = a.points - s.points
-                    from skins s
-                    where s.id = %s and a.id = %s and s.points <= a.points
-                ''', (skin_id, user_id))
-                cur.execute('insert into user_skins (account_id, skin_id) values (%s, %s)', (user_id, skin_id))
-                conn.commit()
+                cur.execute('select purchase_skin(%s, %s)', (user_id, skin_id,))
                 return (True, None)
     except:
-        conn.rollback()
         traceback.print_exc()
         return (False, None)

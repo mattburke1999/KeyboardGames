@@ -37,17 +37,36 @@ create table IF NOT EXISTS scores (
 	foreign key (account_id) references accounts(id) on update cascade on delete cascade
 );
 
-create table point_updates (
-    id serial primary key, -- change this to bigserial
+CREATE TABLE IF NOT EXISTS public.score_updates
+(
+    id bigserial primary key,
     account_id integer NOT NULL,
-    point_amount integer NOT NULL,
-    score_id int not null,
-    game_id int not null,
+    score_id integer NOT NULL,
+    game_id integer NOT NULL,
     current_game_rank integer NOT NULL,
     update_time timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT score_updates_account_id_fkey FOREIGN KEY (account_id)
+        REFERENCES public.accounts (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+
+create table point_updates (
+    id bigserial primary key,
+    account_id integer NOT NULL,
+    point_amount integer NOT NULL,
+	update_type character varying not null,
+	skin_id int,
+	score_update_id int,
+    update_time timestamp without time zone NOT NULL DEFAULT now(),
     foreign key (account_id) references accounts(id)
-    on update cascade on delete cascade
+    on update cascade on delete cascade,
+	foreign key (skin_id) references skins(id)
+	on update cascade on delete set null,
+	foreign key (score_update_id) references score_updates(id)
+	on update cascade on delete set null
 );
+
 
 create table user_sessions (
 	session_id uuid DEFAULT gen_random_uuid() primary key,
@@ -91,6 +110,7 @@ DECLARE
     _inserted_score_id INTEGER;
     _points_added integer := 0;
     _score_rank integer := null;
+	_inserted_score_update_id integer;
 BEGIN
     -- 1. Check if the score qualifies for saving
     SELECT 
@@ -118,7 +138,6 @@ BEGIN
         VALUES (_account_id, _game_id, _score)
         RETURNING id INTO _inserted_score_id;
 	END IF;
-    
 	drop table if exists top10scores;
 
 	create temp table top10scores AS
@@ -147,8 +166,12 @@ BEGIN
             last_updated_time = now()
         where id = _account_id;
 
-        insert into point_updates (point_amount, account_id, score_id, game_id, current_game_rank)
-        values (_points_added, _account_id, _inserted_score_id, _game_id, _score_rank);
+        insert into score_updates (account_id, score_id, game_id, current_game_rank)
+        values (_account_id, _inserted_score_id, _game_id, _score_rank)
+		returning id into _inserted_score_update_id;
+
+		insert into point_updates (account_id, point_amount, update_type, score_update_id)
+		values (_account_id, _points_added, 'game points', _inserted_score_update_id);
     END IF;
 
     -- 3. Return the results
@@ -174,3 +197,22 @@ BEGIN
 
 END;
 $BODY$;
+
+CREATE OR REPLACE FUNCTION purchase_skin(_account_id int, _skin_id int)
+RETURNS void AS $$
+declare 
+_skin_points int;
+_purchaseable bool;
+BEGIN
+    select points into _skin_points from skins where id = _skin_id;
+	select _skin_points is not null and points >= _skin points into _purchaseable;
+
+	if purchaseable then
+     	update accounts set points = points - _skin_points where id = _account_id;
+        
+		insert into point_updates (account_id, point_amount, update_type, skin_id) 
+		values (_account_id, -_skin_points, 'skin purchase', _skin_id);
+		
+        insert into user_skins (account_id, skin_id) values (_account_id, _skin_id);
+	end if;
+END;
