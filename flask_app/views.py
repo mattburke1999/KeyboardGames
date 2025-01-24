@@ -51,7 +51,7 @@ def home_view():
 def game_view(game):
     game_info_results = get_game_info(game)
     if not game_info_results[0]:
-        return render_template(f'{game_info_results[1]['type']}.html', message=game_info_results[1]['message']), game_info_results[1]['type']
+        return render_template(f"{game_info_results[1]['type']}.html", message=game_info_results[1]['message']), game_info_results[1]['type']
     game_info = game_info_results[1]['game_info']
     if game_info['basic_circle_template']:
         return basic_circle_template(game, game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'], user_skin=game_info_results[1]['user_skin'])
@@ -108,7 +108,7 @@ def score_update_view(game_id, score, start_game_token, end_game_token, point_li
 def skins_view():
     all_skins_results = get_all_skins()
     if not all_skins_results[0]:
-        return render_template('404.html'), 404
+        return render_template('505.html'), 505
     return render_template('skins.html', all_skins=all_skins_results[1]['skins'], points=all_skins_results[1]['points'])
 
 # endpoint
