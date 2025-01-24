@@ -253,10 +253,14 @@ def get_all_skins():
     user_id = session['user_id']
     all_skins_result = db_get_all_skins(user_id)
     if not all_skins_result[0]:
-        return (False, all_skins_result[1])    
+        return (False, all_skins_result[1])
+    skin_list = all_skins_result[1][1]
+    #sort
+    skin_list.sort(key=lambda x: (x['points'], x['id']))
     return (True, {
             'points': all_skins_result[1][0],
-            'skins': all_skins_result[1][1]
+            # sort by points ascending, then id ascending
+            'skins': skin_list
         })
     
 def set_user_skin(skin_id):
