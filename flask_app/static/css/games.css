@@ -32,7 +32,7 @@ h1, p, h2 {
     font-family: 'Courier New', Courier, monospace;
 }
 #dot {
-    position: absolute;
+    position: absolute !important;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);

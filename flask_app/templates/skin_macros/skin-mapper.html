@@ -9,5 +9,11 @@
     {% elif skin.type == 'half-circle-horizontal' %}
         {% from 'skin_macros/half-circle-horizontal.html' import half_circle_horizontal %}
         {{ half_circle_horizontal(page, skin) }}
+    {% elif skin.type == 'vertical-stripe' %}
+        {% from 'skin_macros/vertical-stripe.html' import vertical_stripe %}
+        {{ vertical_stripe(page, skin) }}
+    {% elif skin.type == 'horizontal-stripe' %}
+        {% from 'skin_macros/horizontal-stripe.html' import horizontal_stripe %}
+        {{ horizontal_stripe(page, skin) }}
     {% endif %}
 {% endmacro %}
