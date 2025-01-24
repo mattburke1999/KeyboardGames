@@ -18,9 +18,9 @@ function filterSkins(filter) {
                     $(this).show();
                 }
             });
-        } else if (filter === 'available') {
+        } else if (filter === 'purchaseable') {
             $('.skin').each(function() {
-                if ($(this).hasClass('not-available')) {
+                if ($(this).hasClass('not-available') || $(this).hasClass('user-skin')) {
                     $(this).hide();
                 } else {
                     $(this).show();
@@ -56,6 +56,17 @@ function showSkinModal(skin_id, modal_id, closeFunction, page) {
             handleError(response);
         }
     });
+}
+
+function countSkins() {
+    // count skins where with class 'user-skin' and number without class 'not-available'
+    const userSkins = $('.skin.user-skin').length;
+    $('#user-skin-count').text(`(${userSkins})`);
+    $('#user-skin-count').show();
+    const userPoints = parseInt($('#user-points').text());
+    const purchaseableSkins = skins.filter(skin => !skin.user_skin && skin.points <= userPoints).length;    
+    $('#purchaseable-skin-count').text(`(${purchaseableSkins})`);
+    $('#purchaseable-skin-count').show();
 }
 
 function showPurchaseSkinModal(skin_id) {

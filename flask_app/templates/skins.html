@@ -19,12 +19,12 @@
             </div>
             <h1 class='site-name'>Keyboard Games</h1>
             <div class="user-points">
-                <h1>Your Points: {{ points }}</h1>
+                <h1>Your Points: <span id='user-points'>{{ points }}</span></h1>
             </div>
             <div class="skins-container-border">
                 <div>
-                    <button class='filter-skin-btns' onclick='filterSkins("user")'>Show My Skins</button>
-                    <button class='filter-skin-btns' onclick='filterSkins("available")'>Show Available Skins</button>
+                    <button class='filter-skin-btns' onclick='filterSkins("user")'>Show My Skins<span class='skin-count' id='user-skin-count'></span></button>
+                    <button class='filter-skin-btns' onclick='filterSkins("purchaseable")'>Show Purchaseable Skins<span class='skin-count' id='purchaseable-skin-count'></span></button>
                     <button id='all-skins-btn' onclick='filterSkins("all")'>Show All Skins</button>
                 </div>
                 <div class="skins-container">
@@ -66,5 +66,6 @@
     </body>
     <script>
         const skins = {{ all_skins | tojson | safe }};
+        countSkins();
     </script>
 </html>

@@ -33,7 +33,7 @@ body{
 }
 .skins-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
     grid-row-gap: 1.5rem;
     align-self: normal;
 }
@@ -45,6 +45,7 @@ body{
     padding: 1.5rem;
     gap: .5rem;
     cursor: pointer;
+    transition: transform 0.3s ease-in-out;
 }
 .skin.not-available:hover, .skin.user-choice:hover{
     transform: scale(1);
@@ -122,5 +123,8 @@ body{
     cursor: pointer;
 }
 #all-skins-btn {
+    display: none;
+}
+.skin-count {
     display: none;
 }
