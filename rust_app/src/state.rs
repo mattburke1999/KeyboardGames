@@ -12,6 +12,15 @@ pub enum GameRoomValue {
     Float(f64),
     Int(i32),
 }
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct GameRoomData {
+    pub game_id: Option<i32>,
+    pub duration: Option<f64>,
+    pub game_running: Option<bool>,
+    pub point_list: Vec<serde_json::Value>,
+    pub start_game_token: String,
+    pub end_game_token: String
+}
 pub enum PoolValue {
     Pool(sqlx::PgPool),
     String(String)
@@ -20,7 +29,7 @@ pub enum PoolValue {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub game_rooms: Arc<Mutex<HashMap<String, HashMap<String, GameRoomValue>>>>, // Shared game rooms
+    pub game_rooms: Arc<Mutex<HashMap<String, GameRoomData>>>, // Shared game rooms
     pub game_durations: Arc<Mutex<HashMap<i32, f64>>>, // Cached game metadata
     pub pg_pool: Arc<Mutex<PoolValue>>, // Shared database pool
 }

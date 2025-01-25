@@ -83,16 +83,12 @@ async fn handle_get_session_data(
     let session_id = token_response.session_id;
     println!("Token is valid!");
     println!("Session ID: {:?}", session_id);
-    let mut response: serde_json::Value;
     let mut game_rooms = state.game_rooms.lock().await;
     if let Some(room_data) = game_rooms.remove(&session_id) {
-        let start_game_token = room_data.get("start_game_token").unwrap();
-        let end_game_token = room_data.get("end_game_token").unwrap();
-        let point_list = room_data.get("point_list").unwrap();
         return Ok(warp::reply::json(&serde_json::json!({
-                "start_game_token": start_game_token,
-                "end_game_token": end_game_token,
-                "point_list": point_list
+                "start_game_token": room_data.start_game_token,
+                "end_game_token": room_data.end_game_token,
+                "point_list": room_data.point_list
             })));
     } else {
         return Ok(warp::reply::json(&serde_json::json!({

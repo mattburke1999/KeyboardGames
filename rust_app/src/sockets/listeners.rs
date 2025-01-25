@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 use crate::state::AppState;
 use crate::state::GameRoomValue;
+use crate::state::GameRoomData;
 use crate::utils::verify_session;
 
 
@@ -45,6 +46,8 @@ async fn disconnect(_data: serde_json::Value, tx: mpsc::Sender<Message>) {
     println!("Client disconnected");
 }  
 
+
+
 async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
     let session_id = data["session_id"].as_str().unwrap();
@@ -63,14 +66,20 @@ async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, sta
         let response_event = "entered_game_room_response";
         if let Some(&duration) = game_durations.get(&game_id) {
             let mut game_rooms = state.game_rooms.lock().await;
-        
+            
+            
             // Insert the user into the game room with all relevant data
             game_rooms.insert(
                 session_id.to_string(), // session_id as String
                 {
-                    let mut room_data = HashMap::new();
-                    room_data.insert("game_id".to_string(), GameRoomValue::Int(game_id)); // game_id as i32
-                    room_data.insert("duration".to_string(), GameRoomValue::Float(duration)); // duration as f64
+                    let room_data = GameRoomData {
+                        game_id: Some(game_id),
+                        duration: Some(duration),
+                        game_running: Some(false),
+                        point_list: Vec::new(),
+                        start_game_token: String::new(),
+                        end_game_token: String::new()
+                    };
                     room_data
                 },
             );
@@ -100,19 +109,14 @@ async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, en
     {
         let mut game_rooms = state.game_rooms.lock().await;
         let room_data = game_rooms.get_mut(&session_id).unwrap(); 
-        duration = match room_data.get("duration") {
-            Some(GameRoomValue::Float(duration)) => duration.clone(),
-            _ => 60.0 as f64,
-        };
-        room_data.insert("game_running".to_string(), GameRoomValue::Bool(true));
-        // add empty point list which will hold json obj
-        room_data.insert("point_list".to_string(), GameRoomValue::List(Vec::new()));
+        duration = room_data.duration.unwrap();
+        room_data.game_running = Some(true);
     }
     tokio::time::sleep(Duration::from_secs_f64(duration)).await;
     {
         let mut game_rooms = state.game_rooms.lock().await;
         let room_data = game_rooms.get_mut(&session_id).unwrap();
-        room_data.insert("game_running".to_string(), GameRoomValue::Bool(false));
+        room_data.game_running = Some(false);
     }
     emit_end_game(game_id, end_game_token, tx).await;
 }
@@ -132,36 +136,25 @@ async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, state: A
 
     let response;
     let response_event = "start_game_response";
-    let mut start_game_token = String::new();
-    let mut end_game_token = String::new();
+    let mut start_game_token = Uuid::new_v4().to_string();
+    let mut end_game_token = Uuid::new_v4().to_string();
     {
         let mut game_rooms = state.game_rooms.lock().await;
         if let Some(room_data) = game_rooms.get_mut(&session_id.to_string()) {
-            if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
-                if room_game_id == game_id {
-                    start_game_token = Uuid::new_v4().to_string();
-                    end_game_token = Uuid::new_v4().to_string();
-                    room_data.insert("start_game_token".to_string(), GameRoomValue::String(start_game_token.clone()));
-                    room_data.insert("end_game_token".to_string(), GameRoomValue::String(end_game_token.clone()));
-                    response = json!({
-                        "event": response_event,
-                        "success": true,
-                        "message": "Game started",
-                        "start_game_token": start_game_token
-                    });
-                    
-                } else {
-                    response = json!({
-                        "event": response_event,
-                        "success": false,
-                        "message": format!("Incorrect game room for user")
-                    });
-                }
+            if room_data.game_id == Some(game_id) {
+                room_data.start_game_token = start_game_token.clone();
+                room_data.end_game_token = end_game_token.clone();
+                response = json!({
+                    "event": response_event,
+                    "success": true,
+                    "message": "Game started",
+                    "start_game_token": start_game_token
+                });
             } else {
                 response = json!({
                     "event": response_event,
                     "success": false,
-                    "message": format!("User is not in a game room")
+                    "message": format!("Incorrect game room for user")
                 });
             }
         } else {
@@ -171,6 +164,7 @@ async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, state: A
                 "message": format!("User is not in a game room")
             });
         }
+        
     }
     if response["success"].as_bool().unwrap_or(false) {
         tokio::spawn(game_timer(game_id, tx.clone(), state, end_game_token.clone(), session_id.to_string())); // don't await
@@ -195,52 +189,32 @@ async fn point_added(data: serde_json::Value, tx: mpsc::Sender<Message>, state: 
     });
     let mut game_rooms = state.game_rooms.lock().await;
     if let Some(room_data) = game_rooms.get_mut(&session_id.to_string()) {
-        if let Some(&GameRoomValue::Int(room_game_id)) = room_data.get("game_id") {
-            if room_game_id == game_id {
-                if let Some(&GameRoomValue::Bool(game_running)) = room_data.get("game_running") {
-                    if game_running {
-                        if let Some(&mut GameRoomValue::List(ref mut point_list)) = room_data.get_mut("point_list") {
-                            let point_token = Uuid::new_v4().to_string();
-                            // set point time to current time in iso8601 format that will match format of new Date().toISOString(),
-                            let point_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-                            // append {'point_token': point_token, 'point_time': point_time} to point_list
-                            point_list.push(json!({
-                                "point_token": point_token,
-                                "point_time": point_time
-                            }));
-                            response = json!({
-                                "event": response_event,
-                                "success": true,
-                                "point_token": point_token,
-                                "message": "Point added"
-                            });
-                        } else {
-                            response = game_not_started_response;
-                            println!("Game not started for user");
-                        }
-                    } else {
-                        response = json!({
-                            "event": response_event,
-                            "success": false,
-                            "message": "Game ended already"
-                        });
-                        println!("Game ended already for user");
-                    }
-                } else {
-                    response = game_not_started_response;
-                    println!("Game not started for user");
-                }
-            } else {
+        if room_data.game_id == Some(game_id) {
+            if room_data.game_running.unwrap() {
+                let point_token = Uuid::new_v4().to_string();
+                // set point time to current time in iso8601 format that will match format of new Date().toISOString(),
+                let point_time = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+                room_data.point_list.push(json!({
+                    "point_token": point_token,
+                    "point_time": point_time
+                }));
                 response = json!({
                     "event": response_event,
-                    "success": false,
-                    "message": format!("Incorrect game room for user")
+                    "success": true,
+                    "point_token": point_token,
+                    "message": "Point added"
                 });
-                println!("Incorrect game room for user");
+            } else {
+                response = game_not_started_response;
+                println!("Game not started for user");
             }
         } else {
-            response = no_game_room_response;
-            println!("User is not in a game room");
+            response = json!({
+                "event": response_event,
+                "success": false,
+                "message": format!("Incorrect game room for user")
+            });
+            println!("Incorrect game room for user");
         }
     } else {
         response = no_game_room_response;
