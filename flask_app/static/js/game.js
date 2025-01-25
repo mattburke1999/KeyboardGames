@@ -93,24 +93,27 @@ async function connectSocket() {
         };
     }
 }
-app_socket.on('disconnect', () => {
+function app_socket_on_disconnect() {
     //notify user that they were disconnected from the server
     //disconnect from game sockets
     alert('You have been disconnected from the server. Please reload the page to try again.');
-});
+}
 
 function start_app_socket() {
     app_socket = io({transports: ['websocket']});
     app_socket.emit('join_session', (response) => {
-        if (response.joined_room){
+        console.log(`app_socket join_session response:`);
+        console.log(response);
+        if (response.success && response.joined_room){
             $('#start-game-btn').css('display', 'block');
         } else {
-            window.location.reload();
+            // window.location.reload();
 
             // Notify user and provide next steps
-            alert('Error connecting to the server. Please reload the page to try again.');
+            alert('Error connecting to the app server. Please reload the page to try again.');
         }
     });
+    app_socket.on('disconnect', app_socket_on_disconnect);
 }
 
 function entered_game_room_response_Socketlistener(response) {
@@ -118,7 +121,7 @@ function entered_game_room_response_Socketlistener(response) {
         enteredGameRoom = true;
         console.log('Entered game room');
         // after the jwt is validated in rust, initiate app socket
-        
+        start_app_socket();
         // display Start Button here
         $('#start-game-btn').css('display', 'block');
     } else {
@@ -126,7 +129,7 @@ function entered_game_room_response_Socketlistener(response) {
         window.location.reload();
 
         // Notify user and provide next steps
-        alert('Error connecting to the server. Please reload the page to try again.');
+        alert('Error connecting to the game server. Please reload the page to try again.');
     }
 }
 
@@ -301,18 +304,31 @@ function point_added_response_Socketlistener(response) {
     }
 }
 
-function getSessionJWT() {
-    app_socket.emit('get_session', (response) => {
-        if (response.session_jwt) {
-            return response.session_jwt;
-        } else {
-            return null;
-        }
+function emitSessionJWT() {
+    return new Promise((resolve, reject) => {
+        app_socket.emit('get_session', (response) => {
+            if (response.success && response.session_jwt) {
+                resolve(response.session_jwt);
+            } else {
+                reject(new Error('Failed to retrieve session JWT'));
+            }
+        });
     });
 }
 
+async function getSessionJWT() {
+    try {
+        const session_jwt = await emitSessionJWT();
+        console.log(`Session id: ${session_jwt}`);
+        return session_jwt; // Return the resolved JWT value
+    } catch (err) {
+        console.error(err.message);
+        return null; // Return null in case of an error
+    }
+}
+
 async function addPointToServer() {
-    const session_jwt = getSessionJWT();
+    const session_jwt = await getSessionJWT();
     if (!session_jwt) {
         console.error('No session ID found');
         window.location.reload();
@@ -378,11 +394,11 @@ function resetPointListInDB() {
 function start_game_response_Socketlistener(response) {
     if (!response.success) {
         enteredGameRoom = false;
-        console.error(response.message);
+        console.error(`server error: ${response.message}`);
         // Notify user that there was an error starting the game
         window.location.reload();
     } else {
-        console.log(response.message);
+        console.log(`server sucess: ${response.message}`);
         $('#start_game_token').val(response.start_game_token);
         // create a new list for point tokens to be added to
         resetPointListInDB();
@@ -402,7 +418,7 @@ function startGame({intervalFunction, interval}) {
     let countDown = 3;
     $('#instructions').css('display', 'none');
     $('#starting').css('display', 'flex');
-    const countdownInterval = setInterval(function() {
+    const countdownInterval = setInterval(async function() {
         if (countDown > 0) {
             $(`#startCount`).css('color', '#2e2e2e');
             $(`#startCount`).text(countDown);
@@ -416,7 +432,7 @@ function startGame({intervalFunction, interval}) {
                 intervalFunction.function(intervalFunction.inputs);
             }, interval);
             startTimer();
-            const session_jwt = getSessionJWT();
+            const session_jwt = await getSessionJWT();
             if (loggedIn && enteredGameRoom && session_jwt) {
                 console.log(`UserId starting game`);
                 startGameServer(session_jwt);
@@ -451,6 +467,7 @@ function checkDotInsideCircle(event, $circle) {
 }
 
 function endGameSocketListener(response) {
+    console.log('Game ended from server');
     clearInterval(circleInterval);
     $('#dot').css('display', 'none');
     clearCircles();

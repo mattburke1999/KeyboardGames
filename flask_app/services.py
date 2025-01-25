@@ -67,11 +67,12 @@ def get_user_jwt():
     return (True, {'logged_in': False, 'user_jwt': None})
 
 def create_session(client_ip):
+    client_ip = client_ip.replace('127.0.0.1', get_server_ip())
     user_id = session['user_id']
     session_result = db_create_user_session(user_id, client_ip)
     if not session_result[0]:
         return (False, session_result[1])
-    session_jwt = create_session_jwt(session_result[1], client_ip, user_id)
+    session_jwt = create_session_jwt(session_result[1], client_ip)
     return (True, {'session_jwt': session_jwt, 'logged_in': True})
 
 def get_user_session():
@@ -81,12 +82,12 @@ def get_user_session():
         return (False, session_result[1])
     return (True, {'session_jwt': session_result[1]})
 
-def create_session_jwt(session_id, client_ip, user_id):
+def create_session_jwt(session_id, client_ip):
     secret_key = os.getenv('SHARED_SECRET_KEY')
     # set expiration to 10 seconds
     date_exp = datetime.now(tz=timezone.utc) + timedelta(seconds=10)
     jwt_token = jwt.encode({'session_id': str(session_id), 'client_ip': client_ip, 'exp': int(date_exp.timestamp())}, secret_key, algorithm='HS256')
-    session['session_jwt'] = jwt_token
+    session['session_jwt'] = str(jwt_token)
     session['client_ip'] = client_ip
     return jwt_token
 

@@ -115,19 +115,19 @@ async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, cli
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String, session_id: String) {
+async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, end_game_token: String, session_jwt: String) {
     // TODO: Implement the timer logic
     let duration;
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        let room_data = game_rooms.get_mut(&session_id).unwrap(); 
+        let room_data = game_rooms.get_mut(&session_jwt).unwrap(); 
         duration = room_data.duration.unwrap();
         room_data.game_running = Some(true);
     }
     tokio::time::sleep(Duration::from_secs_f64(duration)).await;
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        let room_data = game_rooms.get_mut(&session_id).unwrap();
+        let room_data = game_rooms.get_mut(&session_jwt).unwrap();
         room_data.game_running = Some(false);
     }
     emit_end_game(game_id, end_game_token, tx).await;
@@ -202,6 +202,8 @@ async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, client_i
 }
 
 async fn point_added(data: serde_json::Value, tx: mpsc::Sender<Message> , client_ip_port: &str, state: AppState) {
+    println!("Point added");
+    println!("{:?}", data);
     let game_id = data["gameId"].as_i64().unwrap() as i32;
     let session_jwt = data["session_jwt"].as_str().unwrap();
     if !verify_client_session(session_jwt, client_ip_port, state.clone()).await{

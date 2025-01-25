@@ -17,8 +17,8 @@ def user_disconnects():
 @socketio.on('join_session')
 def join_session():
     if not check_login():
-        return disconnect()
-    return (True, {'joined_room': True})
+        return disconnect()    
+    return ({'success': True, 'joined_room': True})
 
 @socketio.on('get_session')
 def get_session():
@@ -27,4 +27,4 @@ def get_session():
     session_jwt = session.get('session_jwt', None)
     if not session_jwt:
         return disconnect()
-    return (True, {'session_jwt': session_jwt})
+    return ({'success': True,'session_jwt': str(session_jwt)})

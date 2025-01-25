@@ -22,7 +22,7 @@ impl reject::Reject for InvalidPoolType {}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
-    session_jwt: String,
+    session_id: String,
     client_ip: String,
     exp: usize,
 }
@@ -52,9 +52,9 @@ pub fn decode_session_token(token: &str) -> TokenResponse {
     match decoded {
         Ok(data) => {
             println!("Token is valid!");
-            println!("Session JWT: {:?}", data.claims.session_jwt);
+            println!("Session JWT: {:?}", data.claims.session_id);
             return TokenResponse {
-                session_id: data.claims.session_jwt,
+                session_id: data.claims.session_id,
                 client_ip: data.claims.client_ip,
                 decoded: true,
             };
