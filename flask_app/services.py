@@ -221,7 +221,7 @@ def score_update(game_id, client_ip, score, start_game_token, end_game_token, po
         return (False, {'error': 'No session token'})
     server_data_result = rd_get_game_data(session_jwt)
     # delete session as soon as the data is fetched
-    threading.Thread(target=rd_clear_user_sessions, args=(user_id,)).start()
+    threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
     if not server_data_result[0]:
         return (False, server_data_result[1])
     client_data = {
