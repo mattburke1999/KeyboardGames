@@ -473,8 +473,16 @@ function endGameSocketListener(response) {
     clearCircles();
     $('#timer').css('display', 'none');
     startLoadingScreen();
-    setHighScoreServer(response.end_game_token);
+    $('#end_game_token').val(response.end_game_token);
+    // wait for stored_game_data event
 }
+
+function storedGameDataSocketListener(response) {
+    console.log(`Stored game data: ${response}`);
+    const end_game_token = $('#end_game_token').val();
+    setHighScoreServer(end_game_token);
+}
+    
 
 async function startLoadingScreen() {
     $('#loading-screen').css('display', 'flex');

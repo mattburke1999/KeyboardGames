@@ -84,12 +84,13 @@ async fn handle_get_session_data(
     println!("Token is valid!");
     println!("Session ID: {:?}", session_id);
     let mut game_rooms = state.game_rooms.lock().await;
-    if let Some(room_data) = game_rooms.remove(&session_id) {
-        return Ok(warp::reply::json(&serde_json::json!({
-                "start_game_token": room_data.start_game_token,
-                "end_game_token": room_data.end_game_token,
-                "point_list": room_data.point_list
-            })));
+    if let Some(room_data) = game_rooms.remove(&jwt_string) {
+        let response =serde_json::json!({
+            "start_game_token": room_data.start_game_token,
+            "end_game_token": room_data.end_game_token,
+            "point_list": room_data.point_list
+        });
+        return Ok(warp::reply::json(&response));
     } else {
         return Ok(warp::reply::json(&serde_json::json!({
                 "error": "No game data found for user"

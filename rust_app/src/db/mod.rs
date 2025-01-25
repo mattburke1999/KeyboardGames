@@ -4,3 +4,7 @@ pub mod actions;
 pub use actions::load_game_durations;
 
 pub use actions::db_verify_session;
+
+pub use actions::rd_verify_session;
+
+pub use actions::rd_store_game_data;

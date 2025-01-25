@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use redis::Client;
 use tokio::sync::Mutex;
 
 
@@ -24,16 +25,18 @@ pub struct AppState {
     pub game_durations: Arc<Mutex<HashMap<i32, f64>>>, // Cached game metadata
     pub sender_session_map: Arc<Mutex<HashMap<String, String>>>, // Shared mapper for senders
     pub pg_pool: Arc<Mutex<PoolValue>>, // Shared database pool
+    pub redis_client: Arc<Client>, // Shared Redis client
 }
 
 
 impl AppState {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(redis_client: Arc<Client>) -> Self {
+        AppState {
             game_rooms: Arc::new(Mutex::new(HashMap::new())),
             game_durations: Arc::new(Mutex::new(HashMap::new())),
             sender_session_map: Arc::new(Mutex::new(HashMap::new())),
             pg_pool: Arc::new(Mutex::new(PoolValue::String("".to_string()))),
+            redis_client,
         }
     }
 }

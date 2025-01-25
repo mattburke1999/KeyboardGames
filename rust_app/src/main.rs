@@ -9,6 +9,7 @@ use sqlx::PgPool;
 use dotenv::dotenv;
 use std::env;
 use tokio::sync::Mutex;
+use redis::Client;
 use std::sync::Arc;
 use std::net::SocketAddr;
 
@@ -34,10 +35,14 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPool::connect(&database_url).await?;
+    let redis_password = env::var("REDIS_PASSWORD").expect("REDIS_PASSWORD must be set");
+    let redis_url = format!("redis://:{}@127.0.0.1:6379/", redis_password);
+    let redis_client = Arc::new(
+        Client::open(redis_url).expect("Failed to create Redis client")
+    );
 
     // Initialize shared state
-    let mut state = state::AppState::new();
-    // set "pg_pool" to pool
+    let mut state = state::AppState::new(redis_client.clone());
     state.pg_pool = Arc::new(Mutex::new(state::PoolValue::Pool(pool.clone())));
 
     load_game_durations(&pool, state.game_durations.clone()).await?;

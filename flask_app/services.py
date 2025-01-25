@@ -13,9 +13,13 @@ from db import get_user_skin as db_get_user_skin
 from db import get_default_skin as db_get_default_skin
 from db import check_skin_purchaseable as db_check_skin_purchaseable
 from db import purchase_skin as db_purchase_skin
+from redis_store import create_user_session as rd_create_user_session
+from redis_store import clear_user_sessions as rd_clear_user_sessions
+from redis_store import get_game_data as rd_get_game_data
 from flask import session
 import bcrypt
 import jwt
+import json
 import os
 from datetime import datetime
 from datetime import timedelta
@@ -69,18 +73,11 @@ def get_user_jwt():
 def create_session(client_ip):
     client_ip = client_ip.replace('127.0.0.1', get_server_ip())
     user_id = session['user_id']
-    session_result = db_create_user_session(user_id, client_ip)
+    session_result = rd_create_user_session(user_id, client_ip)
     if not session_result[0]:
         return (False, session_result[1])
     session_jwt = create_session_jwt(session_result[1], client_ip)
     return (True, {'session_jwt': session_jwt, 'logged_in': True})
-
-def get_user_session():
-    user_id = session['user_id']
-    session_result = db_get_user_session(user_id)
-    if not session_result[0]:
-        return (False, session_result[1])
-    return (True, {'session_jwt': session_result[1]})
 
 def create_session_jwt(session_id, client_ip):
     secret_key = os.getenv('SHARED_SECRET_KEY')
@@ -117,7 +114,7 @@ def logout():
     session['logged_in'] = False
     session['user_id'] = None
     # create a thread to clear user sessions in the background so this returns immediately
-    threading.Thread(target=db_clear_user_sessions, args=(session['user_id'],)).start()
+    threading.Thread(target=rd_clear_user_sessions, args=(session['user_id'],)).start()
     
 def check_login():
     return 'logged_in' in session and session['logged_in'] and 'user_id' in session and session['user_id']
@@ -222,9 +219,9 @@ def score_update(game_id, client_ip, score, start_game_token, end_game_token, po
     session_jwt = session.get('session_jwt', None)
     if not session_jwt:
         return (False, {'error': 'No session token'})
-    server_data_result = fetch_game_room_data(session_jwt)
+    server_data_result = rd_get_game_data(session_jwt)
     # delete session as soon as the data is fetched
-    threading.Thread(target=db_clear_user_sessions, args=(user_id,)).start()
+    threading.Thread(target=rd_clear_user_sessions, args=(user_id,)).start()
     if not server_data_result[0]:
         return (False, server_data_result[1])
     client_data = {
@@ -232,11 +229,7 @@ def score_update(game_id, client_ip, score, start_game_token, end_game_token, po
         'end_game_token': end_game_token,
         'point_list': point_list
     }
-    server_data = {
-        'start_game_token': server_data_result[1]['start_game_token']['String'],
-        'end_game_token': server_data_result[1]['end_game_token']['String'],
-        'point_list': server_data_result[1]['point_list']['List']
-    }
+    server_data = json.loads(server_data_result[1])
     validation_result = validate_game(client_data, server_data, score)
     if not validation_result[0]:
         return (False, validation_result[1])

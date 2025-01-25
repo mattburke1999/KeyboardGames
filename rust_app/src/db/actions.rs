@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
+use redis::{AsyncCommands, Client};
 use tokio::sync::Mutex;
 
 pub async fn load_game_durations (
@@ -24,7 +25,42 @@ pub async fn load_game_durations (
     Ok(())
 }
 
+pub async fn rd_verify_session(
+    redis_client: Arc<Client>,
+    session_id: &str,
+    client_ip: &str,
+) -> Result<bool, redis::RedisError> {
+    // Get an async connection to Redis
+    let mut conn = redis_client.get_async_connection().await?;
 
+    // Retrieve the session details from Redis
+    let session_key = format!("user_session:{}", session_id);
+    let stored_client_ip: Option<String> = conn.hget(&session_key, "client_ip").await?;
+
+    // Verify if the session exists and matches the client IP
+    if let Some(stored_ip) = stored_client_ip {
+        if stored_ip == client_ip {
+            return Ok(true);
+        }
+    }
+
+    Ok(false) // Session not found or IP mismatch
+}
+
+pub async fn rd_store_game_data(
+    redis_client: Arc<Client>,
+    session_id: &str,
+    game_data: &str,
+) -> Result<(), redis::RedisError> {
+    // Get an async connection to Redis
+    let mut conn = redis_client.get_async_connection().await?;
+
+    // Store the game data in Redis
+    let game_key = format!("game_data:{}", session_id);
+    conn.set(&game_key, game_data).await?;
+
+    Ok(())
+}
 
 pub async fn db_verify_session (
     pool: &PgPool,

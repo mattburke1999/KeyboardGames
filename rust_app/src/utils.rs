@@ -5,7 +5,7 @@ use warp::reject;
 
 use crate::state::PoolValue;
 use crate::state::AppState;
-use crate::db::db_verify_session;
+use crate::db::rd_verify_session;
 
 #[derive(Debug)]
 pub enum UtilError
@@ -75,20 +75,15 @@ pub async fn verify_session(session_id: &str, client_ip: &str, client_ip_port: &
     // Verify the session_id return true or false
     let actual_ip = client_ip_port.split(":").collect::<Vec<&str>>()[0];
     if actual_ip == client_ip {
-        let pg_pool = state.pg_pool.clone();
-        let pool = pg_pool.lock().await;
+        let redis_client = state.redis_client.clone();
 
-        if let PoolValue::Pool(ref pg_pool) = *pool {
-            let session_exists = db_verify_session(&pg_pool, &session_id, &client_ip).await;
-            if session_exists.is_ok() {
-                return Ok(true);
-            } else {
-                return Err(UtilError::StringError("User not found".to_string()));
-            }
+        let session_exists = rd_verify_session(redis_client, &session_id, &client_ip).await;
+        if session_exists.is_ok() {
+            return Ok(true);
         } else {
-            // Handle the case where the PoolValue is not a PgPool
-            return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
+            return Err(UtilError::StringError("User not found".to_string()));
         }
+        
     } else {
         return Err(UtilError::StringError("Client IP does not match".to_string()));
     }

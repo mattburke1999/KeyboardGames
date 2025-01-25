@@ -9,7 +9,7 @@ use crate::state::AppState;
 use crate::state::GameRoomData;
 use crate::utils::verify_session;
 use crate::utils::decode_session_token;
-
+use crate::db::rd_store_game_data;
 
 #[derive(Deserialize)]
 pub struct Event {
@@ -130,14 +130,38 @@ async fn game_timer(game_id: i32, tx: mpsc::Sender<Message>, state: AppState, en
         let room_data = game_rooms.get_mut(&session_jwt).unwrap();
         room_data.game_running = Some(false);
     }
-    emit_end_game(game_id, end_game_token, tx).await;
+    emit_end_game(game_id, end_game_token, tx, &session_jwt, state).await;
 }
 
-async fn emit_end_game(game_id: i32, end_game_token: String, tx: mpsc::Sender<Message>) {
+async fn store_game_data(session_jwt: &str, tx: &mpsc::Sender<Message>, state: AppState) {
+    let game_rooms = state.game_rooms.lock().await;
+    if let Some(room_data) = game_rooms.get(&session_jwt.to_string()) {
+        let data = serde_json::json!({
+            "start_game_token": room_data.start_game_token,
+            "end_game_token": room_data.end_game_token,
+            "point_list": room_data.point_list
+        });
+        let redis_client = state.redis_client.clone();
+        rd_store_game_data(redis_client, session_jwt, &data.to_string()).await.unwrap();
+        let response = json!({
+            "event": "game_data_stored",
+            "success": true,
+            "message": "Game data stored"
+        });
+        let _ = tx.send(Message::text(response.to_string())).await;
+    }
+}
+
+async fn emit_end_game(game_id: i32, end_game_token: String, tx: mpsc::Sender<Message>, session_jwt: &str, state: AppState) {
     println!("Ending game for in game {}", game_id);
     let response = json!({
         "event": "end_game",
         "end_game_token": end_game_token
+    });
+    let session_jwt_clone = session_jwt.to_string();
+    let tx_clone = tx.clone();
+    tokio::spawn(async move {
+        store_game_data(&session_jwt_clone, &tx_clone, state).await;
     });
     let _ = tx.send(Message::text(response.to_string())).await;
 }
