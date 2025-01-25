@@ -89,6 +89,9 @@ async function connectSocket() {
                 case 'start_game_response':
                     start_game_response_Socketlistener(response);
                     break;
+                case 'game_data_stored':
+                    storedGameDataSocketListener(response);
+                    break;
             }
         };
     }
