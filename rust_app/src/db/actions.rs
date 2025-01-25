@@ -24,18 +24,23 @@ pub async fn load_game_durations (
     Ok(())
 }
 
-pub async fn verify_session_and_get_userid (
+
+
+pub async fn db_verify_session (
     pool: &PgPool,
     session_id: &str,
-) -> Result<u32, sqlx::Error> {
+    client_ip: &str,
+) -> Result<bool, sqlx::Error> {
     let row = sqlx::query!(
-        "SELECT account_id from user_sessions where session_id = $1",
-        uuid::Uuid::parse_str(session_id).map_err(|err| sqlx::Error::Decode(Box::new(err)))?
+        "select exists(select 1 from user_sessions where session_id = $1 and client_ip = $2) as exists",
+        // Convert the session_id to a UUID, and pass client_ip as a string
+        uuid::Uuid::parse_str(session_id).map_err(|err| sqlx::Error::Decode(Box::new(err)))?,
+        client_ip
     )
     .fetch_one(pool)
     .await?;
-    if let Some(user_id) = row.account_id {
-        return Ok(user_id as u32);
+    if let Some(exists) = row.exists {
+        return Ok(exists);
     } else {
         return Err(sqlx::Error::RowNotFound);
     }

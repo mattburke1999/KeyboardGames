@@ -5,7 +5,7 @@ use warp::reject;
 
 use crate::state::PoolValue;
 use crate::state::AppState;
-use crate::db::verify_session_and_get_userid;
+use crate::db::db_verify_session;
 
 #[derive(Debug)]
 pub enum UtilError
@@ -22,7 +22,8 @@ impl reject::Reject for InvalidPoolType {}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
-    session_id: String,
+    session_jwt: String,
+    client_ip: String,
     exp: usize,
 }
 
@@ -30,6 +31,7 @@ struct Claims {
 #[derive(Debug)]
 pub struct TokenResponse {
     pub session_id: String,
+    pub client_ip: String,
     pub decoded: bool,
 }
 
@@ -50,9 +52,10 @@ pub fn decode_session_token(token: &str) -> TokenResponse {
     match decoded {
         Ok(data) => {
             println!("Token is valid!");
-            println!("Session ID: {:?}", data.claims.session_id);
+            println!("Session JWT: {:?}", data.claims.session_jwt);
             return TokenResponse {
-                session_id: data.claims.session_id,
+                session_id: data.claims.session_jwt,
+                client_ip: data.claims.client_ip,
                 decoded: true,
             };
         }
@@ -60,6 +63,7 @@ pub fn decode_session_token(token: &str) -> TokenResponse {
             println!("Failed to decode token: {}", err);
             return TokenResponse {
                 session_id: "".to_string(),
+                client_ip: "".to_string(),
                 decoded: false,
             };
         }
@@ -67,20 +71,25 @@ pub fn decode_session_token(token: &str) -> TokenResponse {
 }
 
 
-pub async fn verify_session(session_id: &str, state: &AppState) -> Result<bool, UtilError> {
+pub async fn verify_session(session_id: &str, client_ip: &str, client_ip_port: &str, state: &AppState) -> Result<bool, UtilError> {
     // Verify the session_id return true or false
-    let pg_pool = state.pg_pool.clone();
-    let pool = pg_pool.lock().await;
+    let actual_ip = client_ip_port.split(":").collect::<Vec<&str>>()[0];
+    if actual_ip == client_ip {
+        let pg_pool = state.pg_pool.clone();
+        let pool = pg_pool.lock().await;
 
-    if let PoolValue::Pool(ref pg_pool) = *pool {
-        let user_id = verify_session_and_get_userid(&pg_pool, &session_id).await;
-        if user_id.is_ok() {
-            return Ok(true);
+        if let PoolValue::Pool(ref pg_pool) = *pool {
+            let session_exists = db_verify_session(&pg_pool, &session_id, &client_ip).await;
+            if session_exists.is_ok() {
+                return Ok(true);
+            } else {
+                return Err(UtilError::StringError("User not found".to_string()));
+            }
         } else {
-            return Err(UtilError::StringError("User not found".to_string()));
+            // Handle the case where the PoolValue is not a PgPool
+            return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
         }
     } else {
-        // Handle the case where the PoolValue is not a PgPool
-        return Err(UtilError::InvalidPoolTypeError(InvalidPoolType));
+        return Err(UtilError::StringError("Client IP does not match".to_string()));
     }
 }

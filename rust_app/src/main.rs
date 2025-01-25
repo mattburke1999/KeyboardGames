@@ -10,6 +10,7 @@ use dotenv::dotenv;
 use std::env;
 use tokio::sync::Mutex;
 use std::sync::Arc;
+use std::net::SocketAddr;
 
 use crate::db::load_game_durations;
 use crate::routes::endpoints::handle_endpoints;
@@ -46,9 +47,13 @@ async fn main() -> Result<(), sqlx::Error> {
     // Define the WebSocket route
     let ws_route = warp::path("ws")
         .and(warp::ws())
+        .and(warp::addr::remote())
         .and(with_state(state.clone()))
-        .map(|ws: warp::ws::Ws, state| {
-            ws.on_upgrade(move |socket| sockets::handle_ws(socket, state))
+        .map(|ws: warp::ws::Ws, addr: Option<SocketAddr>, state| {
+            ws.on_upgrade(move |socket| {
+                // Pass the client's address to the WebSocket handler
+                sockets::handle_ws(socket, addr, state)
+            })
         });
 
     // Import and define the API routes from `routes::endpoints`

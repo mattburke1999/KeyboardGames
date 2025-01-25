@@ -8,6 +8,7 @@ use tokio::time::Duration;
 use crate::state::AppState;
 use crate::state::GameRoomData;
 use crate::utils::verify_session;
+use crate::utils::decode_session_token;
 
 
 #[derive(Deserialize)]
@@ -15,13 +16,13 @@ pub struct Event {
     pub event: String,
     pub data: serde_json::Value,
 }
-pub async fn handle_event(event: Event, tx: mpsc::Sender<Message>, state: AppState) {
+pub async fn handle_event(event: Event, tx: mpsc::Sender<Message>, client_ip_port: &str, state: AppState) {
     match event.event.as_str() {
         "connect" => connect(event.data, &tx).await,
         "disconnect" => disconnect(event.data, tx).await,
-        "enter_game_room" => enter_game_room(event.data, tx, state).await,
-        "start_game" => start_game(event.data, tx, state).await,
-        "point_added" => point_added(event.data, tx, state).await,
+        "enter_game_room" => enter_game_room(event.data, tx, client_ip_port, state).await,
+        "start_game" => start_game(event.data, tx, client_ip_port, state).await,
+        "point_added" => point_added(event.data, tx, client_ip_port, state).await,
         _ => {
             let _ = tx.send(Message::text("Unknown event")).await;
         }
@@ -46,14 +47,26 @@ async fn disconnect(_data: serde_json::Value, tx: mpsc::Sender<Message>) {
 
 
 
-async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
+async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, client_ip_port: &str, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let session_id = data["session_id"].as_str().unwrap();
+    let session_jwt = data["session_jwt"].as_str().unwrap();
     let response: serde_json::Value;
     let response_event = "entered_game_room_response";
 
-    let valid_session = verify_session(&session_id, &state).await;
-    if let Err(_) = valid_session {
+    let decoded_token_result = decode_session_token(session_jwt);
+    if !decoded_token_result.decoded {
+        response = json!({
+            "event": response_event,
+            "success": false,
+            "message": "Invalid session token"
+        });
+        let _ = tx.send(Message::text(response.to_string())).await;
+        return;
+    }
+
+    let valid_session = verify_session(&decoded_token_result.session_id, &decoded_token_result.client_ip, &client_ip_port, &state).await;
+    if let Err(err) = valid_session {
+        print!("{:?}", err);
         response = json!({
             "event": response_event,
             "success": false,
@@ -64,11 +77,12 @@ async fn enter_game_room(data: serde_json::Value, tx: mpsc::Sender<Message>, sta
         let response_event = "entered_game_room_response";
         if let Some(&duration) = game_durations.get(&game_id) {
             let mut game_rooms = state.game_rooms.lock().await;
-            
+            let mut sender_session_map = state.sender_session_map.lock().await;
+            sender_session_map.insert(client_ip_port.to_string(), session_jwt.to_string());
             
             // Insert the user into the game room with all relevant data
             game_rooms.insert(
-                session_id.to_string(), // session_id as String
+                session_jwt.to_string(), // session_jwt
                 {
                     let room_data = GameRoomData {
                         game_id: Some(game_id),
@@ -128,17 +142,34 @@ async fn emit_end_game(game_id: i32, end_game_token: String, tx: mpsc::Sender<Me
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
-    let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let session_id = data["session_id"].as_str().unwrap();
+async fn verify_client_session(session_jwt: &str, client_ip_port: &str, state: AppState) -> bool {
+    let sender_session_map = state.sender_session_map.lock().await;
+    if let Some(stored_session_jwt) = sender_session_map.get(client_ip_port) {
+        if stored_session_jwt == session_jwt {
+            return true;
+        }
+    }
+    return false;
+}
 
+async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, client_ip_port: &str, state: AppState) {
+    let game_id = data["gameId"].as_i64().unwrap() as i32;
+    let session_jwt = data["session_jwt"].as_str().unwrap();
+    if !verify_client_session(session_jwt, client_ip_port, state.clone()).await{
+        let _ = tx.send(Message::text(json!({
+            "event": "start_game_response",
+            "success": false,
+            "message": "Invalid session"
+        }).to_string())).await;
+        return;
+    }
     let response;
     let response_event = "start_game_response";
     let start_game_token = Uuid::new_v4().to_string();
     let end_game_token = Uuid::new_v4().to_string();
     {
         let mut game_rooms = state.game_rooms.lock().await;
-        if let Some(room_data) = game_rooms.get_mut(&session_id.to_string()) {
+        if let Some(room_data) = game_rooms.get_mut(&session_jwt.to_string()) {
             if room_data.game_id == Some(game_id) {
                 room_data.start_game_token = start_game_token.clone();
                 room_data.end_game_token = end_game_token.clone();
@@ -165,14 +196,22 @@ async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, state: A
         
     }
     if response["success"].as_bool().unwrap_or(false) {
-        tokio::spawn(game_timer(game_id, tx.clone(), state, end_game_token.clone(), session_id.to_string())); // don't await
+        tokio::spawn(game_timer(game_id, tx.clone(), state, end_game_token.clone(), session_jwt.to_string())); // don't await
     }
     let _ = tx.send(Message::text(response.to_string())).await;
 }
 
-async fn point_added(data: serde_json::Value, tx: mpsc::Sender<Message>, state: AppState) {
+async fn point_added(data: serde_json::Value, tx: mpsc::Sender<Message> , client_ip_port: &str, state: AppState) {
     let game_id = data["gameId"].as_i64().unwrap() as i32;
-    let session_id = data["session_id"].as_str().unwrap();
+    let session_jwt = data["session_jwt"].as_str().unwrap();
+    if !verify_client_session(session_jwt, client_ip_port, state.clone()).await{
+        let _ = tx.send(Message::text(json!({
+            "event": "start_game_response",
+            "success": false,
+            "message": "Invalid session"
+        }).to_string())).await;
+        return;
+    }
     let response;
     let response_event = "point_added_response";
     let game_not_started_response = json!({
@@ -186,7 +225,7 @@ async fn point_added(data: serde_json::Value, tx: mpsc::Sender<Message>, state: 
         "message": format!("User is not in a game room")
     });
     let mut game_rooms = state.game_rooms.lock().await;
-    if let Some(room_data) = game_rooms.get_mut(&session_id.to_string()) {
+    if let Some(room_data) = game_rooms.get_mut(&session_jwt.to_string()) {
         if room_data.game_id == Some(game_id) {
             if room_data.game_running.unwrap() {
                 let point_token = Uuid::new_v4().to_string();

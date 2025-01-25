@@ -22,6 +22,7 @@ pub enum PoolValue {
 pub struct AppState {
     pub game_rooms: Arc<Mutex<HashMap<String, GameRoomData>>>, // Shared game rooms
     pub game_durations: Arc<Mutex<HashMap<i32, f64>>>, // Cached game metadata
+    pub sender_session_map: Arc<Mutex<HashMap<String, String>>>, // Shared mapper for senders
     pub pg_pool: Arc<Mutex<PoolValue>>, // Shared database pool
 }
 
@@ -31,6 +32,7 @@ impl AppState {
         Self {
             game_rooms: Arc::new(Mutex::new(HashMap::new())),
             game_durations: Arc::new(Mutex::new(HashMap::new())),
+            sender_session_map: Arc::new(Mutex::new(HashMap::new())),
             pg_pool: Arc::new(Mutex::new(PoolValue::String("".to_string()))),
         }
     }
