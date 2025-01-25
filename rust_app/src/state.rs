@@ -1,17 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde_json::Value;
 
-// Define a custom enum for the values in the inner HashMap
-#[derive(Clone, Debug, serde::Serialize)]
-pub enum GameRoomValue {
-    Bool(bool),
-    String(String),
-    List(Vec<Value>),
-    Float(f64),
-    Int(i32),
-}
+
 #[derive(Clone, Debug, serde::Serialize)]
 pub struct GameRoomData {
     pub game_id: Option<i32>,

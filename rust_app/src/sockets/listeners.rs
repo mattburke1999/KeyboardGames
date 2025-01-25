@@ -4,10 +4,8 @@ use tokio::sync::mpsc;
 use uuid::Uuid;
 use serde_json::json;
 use tokio::time::Duration;
-use std::collections::HashMap;
 
 use crate::state::AppState;
-use crate::state::GameRoomValue;
 use crate::state::GameRoomData;
 use crate::utils::verify_session;
 
@@ -136,8 +134,8 @@ async fn start_game(data: serde_json::Value, tx: mpsc::Sender<Message>, state: A
 
     let response;
     let response_event = "start_game_response";
-    let mut start_game_token = Uuid::new_v4().to_string();
-    let mut end_game_token = Uuid::new_v4().to_string();
+    let start_game_token = Uuid::new_v4().to_string();
+    let end_game_token = Uuid::new_v4().to_string();
     {
         let mut game_rooms = state.game_rooms.lock().await;
         if let Some(room_data) = game_rooms.get_mut(&session_id.to_string()) {
