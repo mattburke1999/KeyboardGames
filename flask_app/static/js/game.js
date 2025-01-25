@@ -10,11 +10,12 @@ const centerXRange = [centerX - pathTolerance, centerX + pathTolerance];
 const centerY = Math.round(window.innerHeight / 2);
 const centerYRange = [centerY - pathTolerance, centerY + pathTolerance];
 let circleInterval;
-let socket;
+let game_socket;
+let app_socket;
 let loggedIn = false;
 let enteredGameRoom = false;
 let loadingInterval;
-const socketServer = `ws://${IP}:3030/ws`;
+const game_socketServer = `ws://${IP}:3030/ws`;
 
 connectSocket();
 
@@ -40,44 +41,39 @@ async function getNewSession() {
         let response = await fetchNewSession();
         console.log(response);
         loggedIn = response.logged_in;
-        return {logged_in: response.logged_in, session_id: response.session_id};
+        return {logged_in: response.logged_in, session_jwt: response.session_jwt};
     } catch (error) {
         console.error(error);
         return false, null;
     }
 }
 
-async function addSessionToDOM(session_id) {
-    $(`<input type="hidden" id="session_id" value="${session_id}">`).appendTo('body');
-}
-
 async function connectSocket() {
-    let { logged_in, session_id } = await getNewSession();
+    $('#start-game-btn').css('display', 'none');
+    let { logged_in, session_jwt } = await getNewSession();
     loggedIn = logged_in;
-    user = session_id ? 1 : 0;
+    user = session_jwt ? 1 : 0;
     console.log(loggedIn, user);
     if (!loggedIn) {
         // notify user that they are not logged in
         // if they want their scores to be saved, they need to log in
         enteredGameRoom = false;
         console.log("User not logged in");
+        $('#start-game-btn').css('display', 'block');
         return;
     }
-    // set start button display to none
-    $('#start-game-btn').css('display', 'none');
-    addSessionToDOM(session_id);
-    console.log("Creating socket");
-    socket = new WebSocket(socketServer);
-    socket.onopen = () => {
+    console.log("Creating sockets");
+    game_socket = new WebSocket(game_socketServer);
+    game_socket.onopen = () => {
         console.log('Connected to WebSocket server.');
         //emit 'enter_game_room' event and receieve response from same event
         const message = JSON.stringify({
             event: 'enter_game_room', // Define the action
-            data: { session_id, gameId },  // Your payload
+            data: { session_jwt, gameId },  // Your payload
         });
-        socket.send(message);
+        game_socket.send(message);
         // set up event listners
-        socket.onmessage = (event) => {
+        game_socket.onmessage = (event) => {
             const response = JSON.parse(event.data);
             console.log(response);
             switch (response.event) {
@@ -97,11 +93,32 @@ async function connectSocket() {
         };
     }
 }
+app_socket.on('disconnect', () => {
+    //notify user that they were disconnected from the server
+    //disconnect from game sockets
+    alert('You have been disconnected from the server. Please reload the page to try again.');
+});
+
+function start_app_socket() {
+    app_socket = io({transports: ['websocket']});
+    app_socket.emit('join_session', (response) => {
+        if (response.joined_room){
+            $('#start-game-btn').css('display', 'block');
+        } else {
+            window.location.reload();
+
+            // Notify user and provide next steps
+            alert('Error connecting to the server. Please reload the page to try again.');
+        }
+    });
+}
 
 function entered_game_room_response_Socketlistener(response) {
     if (response.success) {
         enteredGameRoom = true;
         console.log('Entered game room');
+        // after the jwt is validated in rust, initiate app socket
+        
         // display Start Button here
         $('#start-game-btn').css('display', 'block');
     } else {
@@ -284,21 +301,29 @@ function point_added_response_Socketlistener(response) {
     }
 }
 
+function getSessionJWT() {
+    app_socket.emit('get_session', (response) => {
+        if (response.session_jwt) {
+            return response.session_jwt;
+        } else {
+            return null;
+        }
+    });
+}
+
 async function addPointToServer() {
-    const $session_el = $('#session_id');
-    if (!$session_el) {
+    const session_jwt = getSessionJWT();
+    if (!session_jwt) {
         console.error('No session ID found');
         window.location.reload();
         return;
     } 
-    const session_id = $session_el.val();
-    console.log('Adding point to server');
     
     const message = JSON.stringify({
         event: 'point_added', // Define the action
-        data: { session_id, gameId },  // Your payload
+        data: { session_jwt, gameId },  // Your payload
     });
-    socket.send(message);
+    game_socket.send(message);
 }
 
 function dotEnteredCircle($circle) {
@@ -364,12 +389,12 @@ function start_game_response_Socketlistener(response) {
     }
 }
 
-async function startGameServer(session_id) {
+async function startGameServer(session_jwt) {
     const message = JSON.stringify({
         event: 'start_game', // Define the action
-        data: { session_id, gameId },  // Your payload
+        data: { session_jwt, gameId },  // Your payload
     });
-    socket.send(message);
+    game_socket.send(message);
 }
 
 function startGame({intervalFunction, interval}) {
@@ -391,16 +416,14 @@ function startGame({intervalFunction, interval}) {
                 intervalFunction.function(intervalFunction.inputs);
             }, interval);
             startTimer();
-            const $session_el = $('#session_id');
-            if (loggedIn && enteredGameRoom && $session_el) {
-                const session_id = $session_el.val();
-                console.log(`UserId starting game with session: ${session_id}`);
-                startGameServer(session_id);
+            const session_jwt = getSessionJWT();
+            if (loggedIn && enteredGameRoom && session_jwt) {
+                console.log(`UserId starting game`);
+                startGameServer(session_jwt);
             } else {
                 console.log('Starting game without server');
                 enteredGameRoom = false;
                 loggedIn = false;
-                $('#session_id').remove();
             }
         }
     }, 1000);
@@ -433,7 +456,6 @@ function endGameSocketListener(response) {
     clearCircles();
     $('#timer').css('display', 'none');
     startLoadingScreen();
-    $('#session_id').remove();
     setHighScoreServer(response.end_game_token);
 }
 

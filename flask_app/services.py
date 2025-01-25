@@ -66,18 +66,28 @@ def get_user_jwt():
         return (True, {'logged_in': True, 'user_jwt': session['user_jwt']})
     return (True, {'logged_in': False, 'user_jwt': None})
 
-def create_session():
+def create_session(client_ip):
     user_id = session['user_id']
-    session_result = db_create_user_session(user_id)
+    session_result = db_create_user_session(user_id, client_ip)
     if not session_result[0]:
         return (False, session_result[1])
-    return (True, {'session_id': str(session_result[1]), 'logged_in': True})
+    session_jwt = create_session_jwt(session_result[1], client_ip, user_id)
+    return (True, {'session_jwt': session_jwt, 'logged_in': True})
 
-def create_session_jwt(session_id):
+def get_user_session():
+    user_id = session['user_id']
+    session_result = db_get_user_session(user_id)
+    if not session_result[0]:
+        return (False, session_result[1])
+    return (True, {'session_jwt': session_result[1]})
+
+def create_session_jwt(session_id, client_ip, user_id):
     secret_key = os.getenv('SHARED_SECRET_KEY')
     # set expiration to 10 seconds
     date_exp = datetime.now(tz=timezone.utc) + timedelta(seconds=10)
-    jwt_token = jwt.encode({'session_id': str(session_id), 'exp': int(date_exp.timestamp())}, secret_key, algorithm='HS256')
+    jwt_token = jwt.encode({'session_id': str(session_id), 'client_ip': client_ip, 'exp': int(date_exp.timestamp())}, secret_key, algorithm='HS256')
+    session['session_jwt'] = jwt_token
+    session['client_ip'] = client_ip
     return jwt_token
 
 def create_user(first_name, last_name, username, email, password):
@@ -206,15 +216,14 @@ def fetch_game_room_data(session_jwt):
         return (False, {'error': data['error']})
     return (True, data)
 
-def score_update(game_id, score, start_game_token, end_game_token, point_list):
+def score_update(game_id, client_ip, score, start_game_token, end_game_token, point_list):
     user_id = session['user_id']
-    session_result = db_get_user_session(user_id)
-    if not session_result[0]:
-        return (False, session_result[1])
-    session_jwt = create_session_jwt(session_result[1][0])
+    session_jwt = session.get('session_jwt', None)
+    if not session_jwt:
+        return (False, {'error': 'No session token'})
     server_data_result = fetch_game_room_data(session_jwt)
     # delete session as soon as the data is fetched
-    threading.Thread(target=db_clear_user_sessions, args=(session['user_id'],)).start()
+    threading.Thread(target=db_clear_user_sessions, args=(user_id,)).start()
     if not server_data_result[0]:
         return (False, server_data_result[1])
     client_data = {

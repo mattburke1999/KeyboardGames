@@ -87,8 +87,8 @@ def logout_view():
 
 # endpoint
 @login_required_endpoint
-def create_session_view():
-    session_result = create_session()
+def create_session_view(client_ip):
+    session_result = create_session(client_ip)
     return json_result(session_result)
 
 # endpoint
@@ -99,8 +99,8 @@ def profile_view():
 
 # endpoint
 @login_required_endpoint
-def score_update_view(game_id, score, start_game_token, end_game_token, point_list):
-    result = score_update(game_id, score, start_game_token, end_game_token, point_list)
+def score_update_view(game_id, client_ip, score, start_game_token, end_game_token, point_list):
+    result = score_update(game_id, client_ip, score, start_game_token, end_game_token, point_list)
     return json_result(result)
 
 # page

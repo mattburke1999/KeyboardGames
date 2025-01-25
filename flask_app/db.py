@@ -55,12 +55,12 @@ def check_unique_register_input(type, value):
         traceback.print_exc()
         return (False, None)
     
-def create_user_session(user_id):
+def create_user_session(user_id, client_ip):
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute('delete from user_sessions where account_id = %s', (user_id,))
-                cur.execute('insert into user_sessions (account_id) values (%s) returning session_id', (user_id,))
+                cur.execute('delete from user_sessions where account_id = %s or client_ip = %s', (user_id, client_ip))
+                cur.execute('insert into user_sessions (account_id, client_ip) values (%s, %s) returning session_id', (user_id, client_ip))
                 return (True, cur.fetchone()[0])
     except:
         conn.rollback()

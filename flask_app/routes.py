@@ -61,7 +61,8 @@ def unique_email():
 # would prevent us from needing to store sesion id in the DOM or client storage
 @app.route('/create_session', methods=['GET'])
 def create_session():
-    return create_session_view()
+    client_ip = request.remote_addr
+    return create_session_view(client_ip)
 
 @app.route('/profile', methods=['GET'])
 def profile():
@@ -70,7 +71,8 @@ def profile():
 @app.route('/game/<game_id>/score_update', methods=['POST'])
 def score_update(game_id):
     data = request.get_json()
-    return score_update_view(game_id, data['score'], data['start_game_token'], data['end_game_token'], data['pointList'])
+    client_ip = request.remote_addr
+    return score_update_view(game_id, client_ip, data['score'], data['start_game_token'], data['end_game_token'], data['pointList'])
 
 @app.route('/skins', methods=['GET'])
 def skins():
