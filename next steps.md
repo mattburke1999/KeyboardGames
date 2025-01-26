@@ -23,7 +23,6 @@
 - points awarded from games
     - possibly make place a multiplier times points scored = profile points
 - possible add login bonus
-- skins will be unlockable with points
 
 # NEW GAMES
 - shaky dot
@@ -51,18 +50,11 @@
 
 ## Socket (Rust) Changes
 
-### 1. Game Room Data
-- at end of game "pop" game room data from hash map and store in shared redis
-
-
-### 2. Session Management
+### Session Management
 - rust will have background task to remove outdated session data from both in memory hash and redis
 
 ## Flask Changes
-### 1. Game Room Data
-- in score update endpoint, retrieve game room data from redis
-
-### 2. Session Management
+### Session Management
 - Sockets/heartbeat
     - flask will have a single socket listener for heartbeat, checking logged in users
         - if the user has not sent a heartbeat within a certain period, clear their session data from db and redis
