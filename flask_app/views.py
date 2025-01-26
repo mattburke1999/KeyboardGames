@@ -38,7 +38,7 @@ def json_result(result):
     if result[0]:
         return (jsonify(result[1]), 200) 
     else:
-        if 'logged_in' in result[1] and not result[1]['logged_in']:
+        if result[1] and 'logged_in' in result[1] and not result[1]['logged_in']:
             return (jsonify(result[1]), 401)
         return (jsonify(result[1]), 500)
 
