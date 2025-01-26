@@ -68,17 +68,6 @@ create table point_updates (
 );
 
 
-create table user_sessions (
-	session_id uuid DEFAULT gen_random_uuid() primary key,
-	account_id int not null,
-    client_ip character varying not null,
-	issued_time timestamp without time zone not null default now(),
-	foreign key (account_id) references accounts(id)
-	on update cascade
-	on delete cascade
-);
-
-
 create table skins (
 	id serial primary key,
 	type character varying not null,
@@ -149,15 +138,15 @@ BEGIN
 	LIMIT 10;
 	
 	IF _save_score THEN
-        select points into _points_added
+        select p.score_ranked into _score_rank
         from 
         (
-            SELECT id, row_number() over(order by score, score_date) as points
+            SELECT id, row_number() over(order by score desc, score_date desc) as score_ranked
             from top10scores
         ) p
         where id = _inserted_score_id;
 
-        select 11 - _points_added into _score_rank;
+        select 11 - _score_rank into _points_added;
 
         -- if they get the top score, award 15 points instead of 10
         select case when _points_added = 10 then 15 else _points_added into _points_added end;
