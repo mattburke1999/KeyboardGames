@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS public.user_skins
     purchase_date timestamp without time zone NOT NULL DEFAULT now()
 );
 
+--- VIEWS
 
 create view skins_view as
 select s.id, s.name, s.points, t.name type, jsonb_object_agg(i.name, sv.value) AS data
@@ -135,6 +136,34 @@ join skin_input_values sv on s.id = sv.skin_id and sv.input_id = i.id
 group by s.name, s.points, t.name, s.id
 order by s.points, t.name, s.id;
 
+create view profile_view as
+with score_ranks as (
+	select account_id,
+		game_id, 
+		score,
+		row_number() over (partition by game_id order by score desc, score_date desc) "rank"
+	from scores
+)
+select a.id, username, created_time, points, num_top10, json_agg(json_build_object('score', score, 'rank', s.rank, 'game_name', g.title)) as ranks
+from (
+	select min(rank) "rank", game_id, account_id
+	from score_ranks s
+	where rank <= 3
+	group by game_id, account_id
+) s
+join score_ranks sr on sr.game_id = s.game_id and sr.account_id = s.account_id and sr.rank = s.rank
+join games g on g.id = s.game_id
+join (
+	select account_id, 
+		sum(case when rank <= 10 then 1 else 0 end) as num_top10
+	from score_ranks	
+	group by account_id
+) s2 on s.account_id = s2.account_id
+join accounts a on a.id = s.account_id
+group by a.id, username, created_time, num_top10, points
+
+
+--- functions
 
 CREATE OR REPLACE FUNCTION update_scores(
 	_account_id integer,

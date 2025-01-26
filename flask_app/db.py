@@ -61,34 +61,7 @@ def get_profile(user_id):
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute('''
-                    with score_ranks as (
-                        select account_id,
-                            game_id, 
-                            score,
-                            row_number() over (partition by game_id order by score desc, score_date desc) "rank"
-                        from scores
-                    )
-                    select username, created_time, points, num_top10, json_agg(json_build_object('score', score, 'rank', s.rank, 'game_name', g.title)) as ranks
-                    from (
-                        select min(rank) "rank", game_id, account_id
-                        from score_ranks s
-                        where account_id = %s
-                            and rank <= 3
-                        group by game_id, account_id
-                    ) s
-                    join score_ranks sr on sr.game_id = s.game_id and sr.account_id = s.account_id and sr.rank = s.rank
-                    join games g on g.id = s.game_id
-                    join (
-                        select account_id, 
-                            sum(case when rank <= 10 then 1 else 0 end) as num_top10
-                        from score_ranks	
-                        group by account_id
-                    ) s2 on s.account_id = s2.account_id
-                    join accounts a on a.id = s.account_id
-                    where a.id = %s
-                    group by username, created_time, num_top10, points
-                ''', (user_id, user_id))
+                cur.execute('select username, created_time, points, num_top10, ranks from profile_view where id = %s', (user_id,))
                 return (True, cur.fetchone())
     except:
         traceback.print_exc()
