@@ -31,7 +31,7 @@ pub async fn rd_verify_session(
     client_ip: &str,
 ) -> Result<bool, redis::RedisError> {
     // Get an async connection to Redis
-    let mut conn = redis_client.get_async_connection().await?;
+    let mut conn = redis_client.get_multiplexed_async_connection().await?;
 
     // Retrieve the session details from Redis
     let session_key = format!("user_session:{}", session_id);
@@ -53,31 +53,11 @@ pub async fn rd_store_game_data(
     game_data: &str,
 ) -> Result<(), redis::RedisError> {
     // Get an async connection to Redis
-    let mut conn = redis_client.get_async_connection().await?;
+    let mut conn = redis_client.get_multiplexed_async_connection().await?;
 
     // Store the game data in Redis
     let game_key = format!("game_data:{}", session_id);
-    conn.set(&game_key, game_data).await?;
+    conn.set::<_, _, ()>(&game_key, game_data).await?;
 
     Ok(())
-}
-
-pub async fn db_verify_session (
-    pool: &PgPool,
-    session_id: &str,
-    client_ip: &str,
-) -> Result<bool, sqlx::Error> {
-    let row = sqlx::query!(
-        "select exists(select 1 from user_sessions where session_id = $1 and client_ip = $2) as exists",
-        // Convert the session_id to a UUID, and pass client_ip as a string
-        uuid::Uuid::parse_str(session_id).map_err(|err| sqlx::Error::Decode(Box::new(err)))?,
-        client_ip
-    )
-    .fetch_one(pool)
-    .await?;
-    if let Some(exists) = row.exists {
-        return Ok(exists);
-    } else {
-        return Err(sqlx::Error::RowNotFound);
-    }
 }
