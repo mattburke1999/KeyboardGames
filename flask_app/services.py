@@ -3,9 +3,6 @@ from db import check_unique_register_input as db_check_unique_register_input
 from db import create_user as db_create_user
 from db import check_user as db_check_user
 from db import get_profile as db_get_profile
-from db import create_user_session as db_create_user_session
-from db import clear_user_sessions as db_clear_user_sessions
-from db import get_user_session as db_get_user_session
 from db import update_score as db_update_score
 from db import get_all_skins as db_get_all_skins
 from db import set_user_skin as db_set_user_skin
