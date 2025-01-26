@@ -17,9 +17,11 @@ def create_user(first_name, last_name, username, email, password):
                 with cnxn.cursor() as cursor:
                     cursor.execute('insert into accounts (first_name, last_name, username, email, password) values (%s, %s, %s, %s, %s) returning id', (first_name, last_name, username, email, bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())))
                     result = cursor.fetchone()
+                    cursor.execute('insert into user_skins (account_id, skin_id) values (%s, 1)', (result[0],))
                 cnxn.commit()
                 return (True, result[0])
         except:
+            cnxn.rollback()
             traceback.print_exc()
             return (False, None)
 
@@ -51,38 +53,6 @@ def check_unique_register_input(type, value):
             with conn.cursor() as cur:
                 cur.execute(f'SELECT count(*) from accounts where {type} = %s', (value,))
                 return (True, cur.fetchone()[0] == 0)
-    except:
-        traceback.print_exc()
-        return (False, None)
-    
-def create_user_session(user_id, client_ip):
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('delete from user_sessions where account_id = %s or client_ip = %s', (user_id, client_ip))
-                cur.execute('insert into user_sessions (account_id, client_ip) values (%s, %s) returning session_id', (user_id, client_ip))
-                return (True, cur.fetchone()[0])
-    except:
-        conn.rollback()
-        traceback.print_exc()
-        return (False, None)
-    
-def get_user_session(user_id):
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('select session_id from user_sessions where account_id = %s order by issued_time desc limit 1', (user_id,))
-                return (True, cur.fetchone())
-    except:
-        traceback.print_exc()
-        return (False, None)
-    
-def clear_user_sessions(user_id):
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('delete from user_sessions where account_id = %s', (user_id,))
-                return (True, None)
     except:
         traceback.print_exc()
         return (False, None)
@@ -144,7 +114,7 @@ def get_all_skins(user_id):
                         select points, skins
                         from (
                             select json_agg(json_build_object('id', s.id, 'type', s.type, 'name', s.name, 'data', s.data, 'points', s.points, 'user_choice', a.id is not null and a.id = %s, 'user_skin', us.id is not null and us.account_id = %s)) skins
-                            from skins s
+                            from skins_view s
                             left join accounts a on s.id = a.skin_id and a.id = %s
                             left join user_skins us on s.id = us.skin_id and us.account_id = %s
                         ) s, accounts a 
@@ -161,7 +131,7 @@ def get_user_skin(user_id):
             with conn.cursor() as cur:
                 cur.execute('''
                     select type, name, data 
-                    from skins s
+                    from skins_view s
                     join accounts a on s.id = a.skin_id
                     where a.id = %s
                 ''', (user_id,))
@@ -174,7 +144,7 @@ def get_default_skin():
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute("select type, name, data from skins where name = 'Black'")
+                cur.execute("select type, name, data from skins_view where name = 'Black'")
                 return (True, cur.fetchone())
     except:
         traceback.print_exc()

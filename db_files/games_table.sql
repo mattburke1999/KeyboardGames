@@ -13,6 +13,53 @@ CREATE TABLE IF NOT EXISTS games
     last_updated_time timestamp without time zone DEFAULT now()
 );
 
+create table skin_types (
+	id serial primary key,
+	name character varying not null
+);
+
+create table skin_inputs (
+	id serial primary key,
+	name character varying not null
+);
+
+create table skin_type_inputs (
+	id serial primary key,
+	type_id int not null,
+	input_id int not null,
+	foreign key (type_id) references skin_types(id)
+	on update cascade
+	on delete cascade,
+	foreign key (input_id) references skin_inputs(id)
+	on update cascade
+	on delete cascade
+);
+
+CREATE TABLE IF NOT EXISTS skins
+(
+    id serial primary key,
+    type_id int not null,
+    name character varying COLLATE pg_catalog."default" NOT NULL,
+    points integer NOT NULL,
+	foreign key (type_id) references skin_types(id)
+	on update cascade
+	on delete cascade
+);
+
+create table skin_input_values (
+	id serial primary key,
+	skin_id int not null,
+	input_id int not null,
+	value character varying not null,
+	foreign key (skin_id) references skins(id)
+	on update cascade
+	on delete cascade,
+	foreign key (input_id) references skin_inputs(id)
+	on update cascade
+	on delete cascade
+);
+
+
 create table IF NOT EXISTS accounts (
 	id serial primary key,
 	username character varying not null unique,
@@ -49,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.score_updates
         REFERENCES public.accounts (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
-)
+);
 
 create table point_updates (
     id bigserial primary key,
@@ -68,13 +115,6 @@ create table point_updates (
 );
 
 
-create table skins (
-	id serial primary key,
-	type character varying not null,
-	name character varying not null,
-	data json not null,
-	points int not null default 50
-);
 
 CREATE TABLE IF NOT EXISTS public.user_skins
 (
@@ -82,7 +122,19 @@ CREATE TABLE IF NOT EXISTS public.user_skins
     account_id integer NOT NULL REFERENCES accounts (id),
     skin_id integer NOT NULL REFERENCES skins (id),
     purchase_date timestamp without time zone NOT NULL DEFAULT now()
-)
+);
+
+
+create view skins_view as
+select s.id, s.name, s.points, t.name type, json_agg(json_build_object(i.name, sv.value)) data
+from skins s
+join skin_types t on s.type_id = t.id
+join skin_type_inputs st on t.id = st.type_id
+join skin_inputs i on i.id = st.input_id
+join skin_input_values sv on s.id = sv.skin_id and sv.input_id = i.id
+group by s.name, s.points, t.name, s.id
+order by s.points, t.name, s.id;
+
 
 CREATE OR REPLACE FUNCTION update_scores(
 	_account_id integer,

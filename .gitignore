@@ -43,3 +43,5 @@ Thumbs.db
 
 # ignore test_rust/
 test_rust/
+
+/skin_data
