@@ -68,7 +68,7 @@ create table IF NOT EXISTS accounts (
 	first_name character varying not null,
 	last_name character varying not null,
     points int not null default 0,
-    skin_id int,
+    skin_id int default 1,
     created_time timestamp without time zone NOT NULL DEFAULT now(),
 	last_updated_time timestamp without time zone NOT NULL DEFAULT now(),
     foreign key (skin_id) references skins(id) on update cascade on delete set null
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS public.user_skins
 
 
 create view skins_view as
-select s.id, s.name, s.points, t.name type, json_agg(json_build_object(i.name, sv.value)) data
+select s.id, s.name, s.points, t.name type, jsonb_object_agg(i.name, sv.value) AS data
 from skins s
 join skin_types t on s.type_id = t.id
 join skin_type_inputs st on t.id = st.type_id
