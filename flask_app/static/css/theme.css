@@ -65,6 +65,8 @@ button:hover {
     border-radius: 5px;
     text-shadow: 3px 3px rgb(0 255 242 / 75%);
     background-color: #1d1d1d;
+    cursor: default;
+    user-select: none;
 }
 
 .home-btn {
