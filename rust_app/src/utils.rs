@@ -1,24 +1,11 @@
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm, TokenData};
 use serde::{Deserialize, Serialize};
 use std::env;
-use warp::reject;
 
-use crate::state::PoolValue;
 use crate::state::AppState;
 use crate::db::rd_verify_session;
 
-#[derive(Debug)]
-pub enum UtilError
-{
-    StringError(String),
-    InvalidPoolTypeError(InvalidPoolType),
 
-}
-
-#[derive(Debug)]
-pub struct InvalidPoolType;
-
-impl reject::Reject for InvalidPoolType {}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
@@ -71,7 +58,7 @@ pub fn decode_session_token(token: &str) -> TokenResponse {
 }
 
 
-pub async fn verify_session(session_id: &str, client_ip: &str, client_ip_port: &str, state: &AppState) -> Result<bool, UtilError> {
+pub async fn verify_session(session_id: &str, client_ip: &str, client_ip_port: &str, state: &AppState) -> Result<bool, String> {
     // Verify the session_id return true or false
     let actual_ip = client_ip_port.split(":").collect::<Vec<&str>>()[0];
     if actual_ip == client_ip {
@@ -81,10 +68,10 @@ pub async fn verify_session(session_id: &str, client_ip: &str, client_ip_port: &
         if session_exists.is_ok() {
             return Ok(true);
         } else {
-            return Err(UtilError::StringError("User not found".to_string()));
+            return Err("User not found".to_string());
         }
         
     } else {
-        return Err(UtilError::StringError("Client IP does not match".to_string()));
+        return Err("Client IP does not match".to_string());
     }
 }

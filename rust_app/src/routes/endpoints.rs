@@ -1,7 +1,6 @@
 use warp::{Filter, Rejection, Reply};
 use std::convert::Infallible;
 
-use crate::state::PoolValue;
 use crate::state::AppState;
 use crate::db::load_game_durations;
 
@@ -30,15 +29,7 @@ async fn refresh_games(
 ) {
     println!("Refreshing games...");
     let pg_pool = state.pg_pool.clone();
-    let pool = pg_pool.lock().await;
-    if let PoolValue::Pool(ref pg_pool) = *pool {
-        load_game_durations(pg_pool, state.game_durations.clone()).await.unwrap();
-        // Use high_scores, points_added, and score_rank here
-    } else {
-        // Handle the case where the PoolValue is not a PgPool
-        return ;
-    }
-    
+    load_game_durations(&pg_pool, state.game_durations.clone()).await.unwrap();    
 }
 
 async fn handle_refresh_games(
