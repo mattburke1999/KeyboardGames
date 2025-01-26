@@ -15,5 +15,8 @@
     {% elif skin.type == 'horizontal-stripe' %}
         {% from 'skin_macros/horizontal-stripe.html' import horizontal_stripe %}
         {{ horizontal_stripe(page, skin) }}
+    {% elif skin.type == 'polka-dot' %}
+        {% from 'skin_macros/polka-dot.html' import polka_dot %}
+        {{ polka_dot(page, skin) }}
     {% endif %}
 {% endmacro %}
