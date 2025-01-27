@@ -100,10 +100,11 @@ def try_login(username, password):
     if not result[0]:
         return (False, None)
     if result[1]:
-        user_id, hashed_password = result[1]
+        user_id, hashed_password, is_admin = result[1]
         if bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)):
             session['logged_in'] = True
             session['user_id'] = user_id
+            session['is_admin'] = is_admin
             return (True, {'logged_in': True})
     return (True, {'logged_in': False})
 
@@ -115,6 +116,9 @@ def logout():
     
 def check_login():
     return 'logged_in' in session and session['logged_in'] and 'user_id' in session and session['user_id']
+
+def check_admin():
+    return 'is_admin' in session and session['is_admin']
 
 def get_server_ip():
     hostname = socket.gethostname()

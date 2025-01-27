@@ -29,7 +29,7 @@ def check_user(username):
         try:
             with connect_db() as cnxn:
                 with cnxn.cursor() as cursor:
-                    cursor.execute('select id, password from accounts where (email = %s or username = %s)', (username, username))
+                    cursor.execute('select id, password, isadmin from accounts where (email = %s or username = %s)', (username, username))
                     return (True, cursor.fetchone())
         except:
             traceback.print_exc()

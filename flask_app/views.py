@@ -14,7 +14,24 @@ from services import get_all_skins
 from services import set_user_skin
 from services import purchase_skin
 from services import check_login
+from services import check_admin
 from functools import wraps
+
+def admin_page(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not check_admin():
+            return redirect('/')
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_endpoint(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not check_admin():
+            return json_result((False, {'is_admin': False, 'message': 'You must be an admin to access this page.'}))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def login_required_page(f):
     @wraps(f)
@@ -24,13 +41,11 @@ def login_required_page(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
-not_logged_in = (False, {'logged_in': False, 'message': 'You must be logged in to access this page.'})
 def login_required_endpoint(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_login():
-            return json_result(not_logged_in)
+            return json_result((False, {'logged_in': False, 'message': 'You must be logged in to access this page.'}))
         return f(*args, **kwargs)
     return decorated_function
 

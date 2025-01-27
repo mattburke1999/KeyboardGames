@@ -116,6 +116,7 @@ create table point_updates (
 
 
 
+
 CREATE TABLE IF NOT EXISTS public.user_skins
 (
     id serial primary key,
@@ -123,6 +124,8 @@ CREATE TABLE IF NOT EXISTS public.user_skins
     skin_id integer NOT NULL REFERENCES skins (id),
     purchase_date timestamp without time zone NOT NULL DEFAULT now()
 );
+
+
 
 --- VIEWS
 
