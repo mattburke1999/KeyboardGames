@@ -43,12 +43,7 @@ function showSkinModal(skin_id, modal_id, closeFunction, page) {
             $(`#${modal_id} .skin`).replaceWith(response.html);
             $(`#skin-id-${page}`).val(skin_id);
             $(`#${modal_id}`).css('display', 'flex');
-            $('#modal-backdrop').css('display', 'flex');
-            window.scrollTo({
-                top: 0,
-                left: 0,
-                behavior: 'smooth' // Optional for smooth scrolling
-            });              
+            $('#modal-backdrop').css('display', 'flex');           
             document.body.overflow = 'hidden';
         }, 
         error: function(response) {
