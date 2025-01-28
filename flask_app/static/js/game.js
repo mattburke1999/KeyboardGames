@@ -44,7 +44,7 @@ async function getNewSession() {
         return {logged_in: response.logged_in, session_jwt: response.session_jwt};
     } catch (error) {
         console.error(error);
-        return false, null;
+        return {logged_in: false, session_jwt: null};
     }
 }
 
