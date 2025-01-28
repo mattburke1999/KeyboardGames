@@ -1,27 +1,27 @@
 {% extends 'game_template.html' %}
-{% block title %}{{ game_info.title }}{% endblock %}
+{% block title %}{{ game_page.game_info.title }}{% endblock %}
 {% block script %}
     <script src="{{ url_for('static', filename='js/' + game + '.js') }}" defer></script>
 {% endblock %}
 {% block style %}
     <style type="text/css">
         body {
-            background: linear-gradient({{ game_info.bg_rot }}deg, {{ game_info.bg_color1 }}, {{ game_info.bg_color2 }});
+            background: linear-gradient({{ game_page.game_info.bg_rot }}deg, {{ game_page.game_info.bg_color1 }}, {{ game_page.game_info.bg_color2 }});
         }
         .circle {
             position: absolute;
         }
         .game-title {
-            color: {{ game_info.title_color }};
-            text-emphasis-style: {{ game_info.title_style | safe }};
+            color: {{ game_page.game_info.title_color }};
+            text-emphasis-style: {{ game_page.game_info.title_style | safe }};
         }
         .game-title::after {
-            content: ' {{ game_info.title }}';
-            text-emphasis-style: {{ game_info.title_style | safe }};
+            content: ' {{ game_page.game_info.title }}';
+            text-emphasis-style: {{ game_page.game_info.title_style | safe }};
         }
     </style>        
 {% endblock %}
-{% block game_title %}{{ game_info.title }}{% endblock %}
+{% block game_title %}{{ game_page.game_info.title }}{% endblock %}
 {% block game_content %}
     <div id="circle-template" class="circle"></div>
 {% endblock %}

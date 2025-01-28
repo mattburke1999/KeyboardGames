@@ -14,7 +14,7 @@
     <body>
         <div class="main">
             <div class='auth-btns'>
-                {% if not logged_in %}
+                {% if not home_page.logged_in %}
                     <button onclick="window.location.href='/login'">Login</button>
                     <button onclick="window.location.href='/register'">Register</button>
                 {% else %}
@@ -25,7 +25,7 @@
                     </a>
                 {% endif %}
             </div>
-            {% if logged_in %}
+            {% if home_page.logged_in %}
                 <div id='modal-backdrop'></div>
                 <div class='profile-modal' id='profile-modal'>
                     <button class='profile-close-btn' onclick='close_profile_modal()'>&times;</button>
@@ -49,14 +49,14 @@
             {% endif %}
             <h1 class='site-name'>Keyboard Games</h1>
             <div class="pages">
-                {% for game in games %}
+                {% for game in home_page.games %}
                     <a href="/games/{{ game }}">
                         <div class="circle-page">
                             <div class='img-wrapper'>
                                 <img src="{{ url_for('static', filename='imgs/' + game +'.png') }}">
                                 <div class='img-overlay'></div>
                             </div>
-                            <h2>{{ game_info[game].title }}</h2>
+                            <h2>{{ home_page.game_info[game].title }}</h2>
                         </div>
                     </a>
                 {% endfor %}

@@ -19,7 +19,7 @@
             </div>
             <h1 class='site-name'>Keyboard Games</h1>
             <div class="user-points">
-                <h1>Your Points: <span id='user-points'>{{ points }}</span></h1>
+                <h1>Your Points: <span id='user-points'>{{ skins_page.points }}</span></h1>
             </div>
             <div class="skins-container-border">
                 <div>
@@ -28,25 +28,26 @@
                     <button id='all-skins-btn' onclick='filterSkins("all")'>Show All Skins</button>
                 </div>
                 <div class="skins-container">
-                    {% for skin in all_skins %}
+                    {% for skin in skins_page.skins %}
                         <div 
-                            class="skin{{ " user-choice" if skin.user_choice else "" }}{{ " not-available" if skin.points > points and not skin.user_skin else "" }}{{ " user-skin" if skin.user_skin else "" }}"
+                            class="skin{{ " user-choice" if skin.user_choice else "" }}{{ " not-available" if skin.points > skins_page.points and not skin.user_skin else "" }}{{ " user-skin" if skin.user_skin else "" }}"
                             {% if not skin.user_choice %}
                                 {% if skin.user_skin %}
                                     onclick="showSelectSkinModal('{{ skin.id}}')"
-                                {% elif skin.points <= points %}
+                                {% elif skin.points <= skins_page.points %}
                                     onclick="showPurchaseSkinModal('{{ skin.id}}')"
                                 {% endif %}
                             {% endif %}
                         >
-                            <h2 class='skin-name{{ " user-skin" if skin.user_skin else "" }}{{ " not-available" if skin.points > points and not skin.user_skin else "" }}'>{{ skin.name }}</h2>
+                            <h2 class='skin-name{{ " user-skin" if skin.user_skin else "" }}{{ " not-available" if skin.points > skins_page.points and not skin.user_skin else "" }}'>{{ skin.name }}</h2>
                             {{ render_skin('all skins', skin) }}
-                            <h2 class='points{{ " user-skin" if skin.user_skin else "" }}{{ " not-available" if skin.points > points and not skin.user_skin  else "" }}'><span class='point-label'>Points: </span>{{ skin.points if not skin.user_skin else '--' }}</h2>
+                            <h2 class='points{{ " user-skin" if skin.user_skin else "" }}{{ " not-available" if skin.points > skins_page.points and not skin.user_skin  else "" }}'><span class='point-label'>Points: </span>{{ skin.points if not skin.user_skin else '--' }}</h2>
                         </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
+        <div id='modal-backdrop'></div>
         <div class="modal" id="purchase-skin-modal">
             <span class="close" onclick="closePurchaseSkinModal()">&times;</span>
             <h2 class='modal-title'>Purchase Skin</h2>
@@ -65,7 +66,7 @@
         </div>
     </body>
     <script>
-        const skins = {{ all_skins | tojson | safe }};
+        const skins = {{ skins_page.skins | tojson | safe }};
         countSkins();
     </script>
 </html>

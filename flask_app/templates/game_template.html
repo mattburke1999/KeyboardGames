@@ -18,7 +18,7 @@
     <input type="hidden" id='start_game_token' value='' />
     <input type="hidden" id='end_game_token' value='' />
     <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
-    {{ render_skin('game', user_skin) }}
+    {{ render_skin('game', game_page.user_skin) }}
     <div id="instructions">
         <h1 class='game-title'>{% block game_title %}{% endblock %}</h1>
         <h2>Instructions</h2>
@@ -59,7 +59,7 @@
             <h2>High Scores</h2>
             <ol></ol>
         </div>
-        {% if logged_in %}
+        {% if game_page.logged_in %}
             <p class='score-ranking'>Rank: <span id='score-rank'></span></p>
             <p class='score-ranking'>Points Awarded: <span id='score-points'></span></p>
             <div class='high-score' id="high-score-online">
@@ -83,8 +83,8 @@
     {% block game_content %}{% endblock %}
 </body>
 <script>
-    const gameId = {{ game_info.id }};
-    const GAME_DURATION = {{ game_info.duration }};
-    const IP = '{{ ip }}';
+    const gameId = {{ game_page.game_info.id }};
+    const GAME_DURATION = {{ game_page.game_info.duration }};
+    const IP = '{{ game_page.ip }}';
 </script>
 </html>

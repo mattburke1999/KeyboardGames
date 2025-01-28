@@ -16,8 +16,13 @@ from services import purchase_skin
 from services import check_login
 from services import check_admin
 from functools import wraps
+from typing import Callable
+from models import NewUser
+from models import Skin
+from models import Game_Data
+from models import Game_Page
 
-def admin_page(f):
+def admin_page(f: Callable):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_admin():
@@ -25,7 +30,7 @@ def admin_page(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def admin_endpoint(f):
+def admin_endpoint(f: Callable):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_admin():
@@ -33,7 +38,7 @@ def admin_endpoint(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def login_required_page(f):
+def login_required_page(f: Callable):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_login():
@@ -41,7 +46,7 @@ def login_required_page(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def login_required_endpoint(f):
+def login_required_endpoint(f: Callable):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_login():
@@ -49,7 +54,7 @@ def login_required_endpoint(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def json_result(result):
+def json_result(result: tuple[bool, any]): # type: ignore
     if result[0]:
         return (jsonify(result[1]), 200) 
     else:
@@ -59,39 +64,42 @@ def json_result(result):
 
 # page
 def home_view():
-    home_page_results = get_home_page_data()
-    return render_template('index.html', games=home_page_results[1]['games'], game_info=home_page_results[1]['game_info'], logged_in=home_page_results[1]['logged_in'])
+    home_page_result = get_home_page_data()
+    if not home_page_result[0] or not home_page_result[1]:
+        return render_template('505.html'), 505
+    home_page = home_page_result[1]
+    return render_template('index.html', home_page=home_page)
 
 # page
-def game_view(game):
-    game_info_results = get_game_info(game)
-    if not game_info_results[0]:
-        return render_template(f"{game_info_results[1]['type']}.html", message=game_info_results[1]['message']), game_info_results[1]['type']
-    game_info = game_info_results[1]['game_info']
-    if game_info['basic_circle_template']:
-        return basic_circle_template(game, game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'], user_skin=game_info_results[1]['user_skin'])
-    return render_template(f'{game}.html', game_info=game_info, logged_in=game_info_results[1]['logged_in'], ip=game_info_results[1]['ip'], user_skin=game_info_results[1]['user_skin'])
+def game_view(game: str):
+    game_info_result = get_game_info(game)
+    if not game_info_result[0] and type(game_info_result[1]) == dict:
+        return render_template(f"{game_info_result[1]['type']}.html", message=game_info_result[1]['message']), game_info_result[1]['type']
+    game_page = game_info_result[1]
+    if game_page.game_info.basic_circle_template: # type: ignore
+        return basic_circle_template(game, game_page) # type: ignore
+    return render_template(f'{game}.html', game_page=game_page)
 
 # page
-def basic_circle_template(game, game_info, logged_in, ip, user_skin):
-    return render_template('basic_circle_template.html', game=game, game_info=game_info, logged_in=logged_in, ip=ip, user_skin=user_skin)
+def basic_circle_template(game: str, game_page: Game_Page):
+    return render_template('basic_circle_template.html', game=game, game_page=game_page)
 
 # page
-def auth_view(page):
+def auth_view(page: str):
     return render_template('login.html', page=page)
 
 # endpoint
-def check_unique_register_input_view(type, value):
+def check_unique_register_input_view(type: str, value: str):
     result = check_unique_register_input(type, value)
     return json_result(result)
 
 # endpoint
-def register_view(first_name, last_name, username, email, password):
-    result = create_user(first_name, last_name, username, email, password)
+def register_view(new_user: NewUser):
+    result = create_user(new_user)
     return json_result(result)
 
 # endpoint
-def login_view(username, password):
+def login_view(username: str, password: str):
     result = try_login(username, password)
     return json_result(result)
 
@@ -101,44 +109,38 @@ def logout_view():
     return redirect('/')
 
 # endpoint
-@login_required_endpoint
 def create_session_view(client_ip):
     session_result = create_session(client_ip)
     return json_result(session_result)
 
 # endpoint
-@login_required_endpoint
 def profile_view():
     result = get_profile()
     return json_result(result)
 
 # endpoint
-@login_required_endpoint
-def score_update_view(game_id, client_ip, score, start_game_token, end_game_token, point_list):
-    result = score_update(game_id, client_ip, score, start_game_token, end_game_token, point_list)
+def score_update_view(game_id: int, client_ip: str|None, client_game_data: Game_Data, score: int):
+    result = score_update(game_id, client_ip, client_game_data, score)
     return json_result(result)
 
 # page
-@login_required_page
 def skins_view():
-    all_skins_results = get_all_skins()
-    if not all_skins_results[0]:
+    skins_page_result = get_all_skins()
+    if not skins_page_result[0]:
         return render_template('505.html'), 505
-    return render_template('skins.html', all_skins=all_skins_results[1]['skins'], points=all_skins_results[1]['points'])
+    skins_page = skins_page_result[1]
+    return render_template('skins.html', skins_page=skins_page)
 
 # endpoint
-@login_required_endpoint
-def get_skin_view(page, skin):
+def get_skin_view(page: str, skin: Skin):
     return json_result((True, {'html': render_template('skin_macros/skin_render.html', page=page, skin=skin)}))
 
 # endpoint
-@login_required_endpoint
-def set_user_skin_view(skin_id):
+def set_user_skin_view(skin_id: int):
     result = set_user_skin(skin_id)
     return json_result(result)
 
 # endpoint
-@login_required_endpoint
-def purchase_skin_view(skin_id):
+def purchase_skin_view(skin_id: int):
     result = purchase_skin(skin_id)
     return json_result(result)
