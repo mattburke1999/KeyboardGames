@@ -45,7 +45,6 @@ def get_home_page_data() -> tuple[bool, Home_Page|None]:
         return (False, None)
     logged_in = check_login()
     print(f'service logged_in: {logged_in}')
-    print(session)
     return (True, Home_Page(games_result[1][1], games_result[1][0], logged_in))
 
 def get_games() -> tuple[bool, tuple[dict[str, Game_Info], list[str]]|None]:
@@ -114,8 +113,7 @@ def try_login(username: str, password: str) -> tuple[bool, dict[str, bool]|None]
     return (True, {'logged_in': False})
 
 def logout() -> None:
-    session['logged_in'] = False
-    session['user_id'] = None
+    session.clear()
     # create a thread to clear user sessions in the background so this returns immediately
     threading.Thread(target=rd_clear_user_sessions, args=(session['user_id'],)).start()
     
