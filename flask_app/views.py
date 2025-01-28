@@ -144,3 +144,12 @@ def set_user_skin_view(skin_id: int):
 def purchase_skin_view(skin_id: int):
     result = purchase_skin(skin_id)
     return json_result(result)
+
+# page 
+def create_skin_view():
+    inputs = [{'id': id, 'name': f'Input-{id}'} for id in range(1, 6)]
+    return render_template('create_skin.html', new_skin_page = {'inputs': inputs})
+
+# page
+def create_new_skin_view():
+    return render_template('create_skin.html')

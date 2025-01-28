@@ -14,8 +14,11 @@ from views import skins_view
 from views import get_skin_view
 from views import set_user_skin_view
 from views import purchase_skin_view
+from views import create_skin_view
+from views import create_new_skin_view
 from views import login_required_endpoint
 from views import login_required_page
+from views import admin_page
 from models import NewUser
 from models import Skin
 from models import Game_Data
@@ -87,7 +90,6 @@ def score_update(game_id):
 def skins():
     return skins_view()
 
-
 @login_required_endpoint
 @app.route('/skins/get_skin', methods=['POST'])
 def get_skin():
@@ -106,3 +108,14 @@ def select_skin():
 def purchase_skin():
     data = request.get_json()
     return purchase_skin_view(data['skin_id'])
+
+@admin_page
+@app.route('/create_skin', methods=['GET'])
+def create_skin():
+    return create_skin_view()
+
+@admin_page
+@app.route('/create_skin', methods=['POST'])
+def create_new_skin():
+    data = request.get_json()
+    return create_new_skin_view()

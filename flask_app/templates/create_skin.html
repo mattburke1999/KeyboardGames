@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Create Skin</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Ceviche+One&family=Fugaz+One&family=Itim&family=Monoton&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Special+Elite&display=swap" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
+        <style>
+            .main {
+                justify-content: center;
+            }
+            .create-skin-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                border: 2px solid gray;
+                border-radius: 10px;
+                color: white;
+                padding: 1.5rem;
+            }
+            .create-skin-container label {
+                font-size: 1.25rem;
+            }
+            input {
+                font-family: 'Courier New', Courier, monospace;
+                margin: .5rem;
+                padding: 0.5rem;
+                border-radius: 5px;
+                border: 1px solid gray;
+            }
+            .create-skin-container button {
+                margin: 1rem;
+            }
+            h3 {
+                font-size: 1.5rem;
+                font-weight: normal;
+            }
+            fieldset {
+                display: flex;
+                flex-direction: column;
+                gap: .5rem;
+                width: 100%;
+            }
+            fieldset.no-inputs {
+                gap: .75rem;
+                align-items: center;
+                justify-content: center;
+            }
+            fieldset i.fa-plus {
+                font-size: 1.25rem;
+                border: 1px solid white;
+                border-radius: 5px;
+                cursor: pointer;
+                padding: 2px;
+                width: 100%;
+                text-align: center;
+            }
+            i.fa-plus:hover {
+                background-color: white;
+                color: black;
+            }
+            select {
+                font-family: 'Courier New', Courier, monospace;
+                margin: .5rem;
+                padding: 0.5rem;
+                border-radius: 5px;
+                border: 1px solid gray;
+            }
+            .input-container {
+                display: flex;
+                gap: .5rem;
+                align-items: center;
+                justify-content: center;
+            }
+            .input-container i.fa-trash {
+                font-size: 1.25rem;
+                cursor: pointer;
+                transition: transform 0.15s ease-in-out;
+            }
+            i.fa-trash:hover {
+                transform: scale(1.075);
+            }
+            .inputs-container {
+                display: none;
+                flex-direction: column;
+                gap: .5rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main">
+            <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
+            <div class='auth-btns'>
+                <button onclick="logout()">Logout</button>
+            </div>
+            <form class='create-skin-container' action="{{ url_for('create_new_skin') }}" method="post">
+                <h1 class='title'>Create Skin</h1>
+                <div>
+                    <label for='skin-type'>Skin Type:</label>
+                    <input type='text' id='skin-type' name='skin-type' required>
+                </div>
+                <fieldset class='no-inputs'>
+                    <legend>Inputs</legend>
+                    <h3 id='no-inputs'>None.</h3>
+                    <div class='inputs-container'>
+                        <div id='input-1' class='input-container'>
+                            <select name='inputs[]' required onchange='toggleNewInput(this)'>
+                                <option value='' disabled selected>Select an input</option>
+                                {% for input in new_skin_page.inputs %}
+                                    <option value='{{ input.id }}'>{{ input.name }}</option>
+                                {% endfor %}
+                                <option value='new'>** New Input **</option>
+                            </select>
+                            <input type='text' name='new-inputs[]' placeholder='New Input' style='display: none;'>
+                            <i class="fa-solid fa-trash" onclick="removeInput(1)"></i>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-plus" onclick='addInput()'></i>
+                </fieldset>
+                <button onclick="createSkin()">Create Skin</button>
+            </form>
+        </div>
+    </body>
+    <script>
+        function addInput() {
+            console.log('Adding input');
+            $('fieldset').removeClass('no-inputs');
+            $('#no-inputs').css('display', 'none');
+            if ($('.inputs-container').css('display') == 'none') {
+                $('.inputs-container').css('display', 'flex');
+            } else {
+                const $newInput = $('#input-1').clone();
+                const numInputs = $('.input-container').length;
+                $newInput.attr('id', `input-${numInputs + 1}`);
+                $newInput.find('select').prop('selectedIndex', 0);
+                $newInput.find('i').attr('onclick', `removeInput(${numInputs + 1})`);
+                $newInput.find('input').val('');
+                $newInput.find('input').css('display', 'none');
+                $newInput.appendTo('.inputs-container');
+            }
+        }
+
+        function removeInput(num) {
+            console.log(`Removing input ${num}`);
+            const numInputs = $('.input-container').length;
+            if (numInputs === 1) {
+                $('fieldset').addClass('no-inputs');
+                $('#no-inputs').css('display', 'block');
+                $('.inputs-container').css('display', 'none');
+                $('.input-container select').prop('selectedIndex', 0);
+            } else {
+                $(`#input-${num}`).remove();
+                if (num < numInputs) {
+                    resetInputNums();
+                }
+            }
+        }
+        function resetInputNums() {
+            const $inputs = $('.input-container');
+            for (let i = 0; i < $inputs.length; i++) {
+                $inputs.eq(i).attr('id', `input-${i + 1}`);
+                $inputs.eq(i).find('i').attr('onclick', `removeInput(${i + 1})`);
+            }
+        }
+
+        function toggleNewInput(select) {
+            const $input = $(select).next();
+            if ($(select).val() == 'new') {
+                $input.css('display', 'block');
+            } else {
+                $input.css('display', 'none');
+            }
+        }                
+    </script>
+</html>
