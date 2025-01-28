@@ -66,56 +66,56 @@ def unique_email():
     data = request.get_json()
     return check_unique_register_input_view('email', data['email'])
 
-@login_required_endpoint
 @app.route('/create_session', methods=['GET'])
+@login_required_endpoint
 def create_session():
     client_ip = request.remote_addr
     return create_session_view(client_ip)
 
-@login_required_endpoint
 @app.route('/profile', methods=['GET'])
+@login_required_endpoint
 def profile():
     return profile_view()
 
-@login_required_endpoint
 @app.route('/game/<game_id>/score_update', methods=['POST'])
+@login_required_endpoint
 def score_update(game_id):
     data = request.get_json()
     client_ip = request.remote_addr
     client_game_data = Game_Data(data['start_game_token'], data['end_game_token'], data['pointList'])
     return score_update_view(game_id, client_ip, client_game_data, data['score'])
 
-@login_required_page
 @app.route('/skins', methods=['GET'])
+@login_required_page
 def skins():
     return skins_view()
 
-@login_required_endpoint
 @app.route('/skins/get_skin', methods=['POST'])
+@login_required_endpoint
 def get_skin():
     data = request.get_json()
     skin = Skin(**data['skin'])
     return get_skin_view(data['page'], skin)
 
-@login_required_endpoint
 @app.route('/skins/select', methods=['POST'])
+@login_required_endpoint
 def select_skin():
     data = request.get_json()
     return set_user_skin_view(data['skin_id'])
 
-@login_required_endpoint
 @app.route('/skins/purchase', methods=['POST'])
+@login_required_endpoint
 def purchase_skin():
     data = request.get_json()
     return purchase_skin_view(data['skin_id'])
 
-@admin_page
 @app.route('/create_skin', methods=['GET'])
+@admin_page
 def create_skin():
     return create_skin_view()
 
-@admin_page
 @app.route('/create_skin', methods=['POST'])
+@admin_page
 def create_new_skin():
     data = request.get_json()
     return create_new_skin_view()
