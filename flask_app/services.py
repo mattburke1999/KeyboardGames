@@ -4,7 +4,7 @@ from db import get_games as db_get_games
 from models import Game_Info
 from db import check_unique_register_input as db_check_unique_register_input
 from db import create_user as db_create_user
-from models import NewUser
+from models import New_User
 from db import check_user as db_check_user
 from db import get_profile as db_get_profile
 from models import Profile
@@ -21,6 +21,8 @@ from db import get_user_skin as db_get_user_skin
 from db import get_default_skin as db_get_default_skin
 from db import check_skin_purchaseable as db_check_skin_purchaseable
 from db import purchase_skin as db_purchase_skin
+from db import get_skin_inputs as db_get_skin_inputs
+from models import Skin_Input
 from redis_store import create_user_session as rd_create_user_session
 from redis_store import clear_user_sessions as rd_clear_user_sessions
 from redis_store import get_game_data as rd_get_game_data
@@ -87,7 +89,7 @@ def create_session_jwt(session_id: str, client_ip: str) -> str:
     session['client_ip'] = client_ip
     return jwt_token
 
-def create_user(new_user: NewUser) -> tuple[bool, dict[str, bool]|None]:
+def create_user(new_user: New_User) -> tuple[bool, dict[str, bool]|None]:
     # first_name, last_name, username, email, password):
     register = db_create_user(new_user)
         # first_name, last_name, username, email, password)
@@ -266,3 +268,9 @@ def purchase_skin(skin_id: int) -> tuple[bool, dict[str, bool|str]]:
     if not purchase_skin.success:
         return (False, purchase_skin.result)
     return (True, {'success': True})
+
+def get_skin_inputs() -> tuple[bool, list[Skin_Input]|str]:
+    skin_inputs = db_get_skin_inputs()
+    if not skin_inputs.success:
+        return (False, skin_inputs.result)
+    return (True, [Skin_Input(skin[0], skin[1]) for skin in skin_inputs.result])

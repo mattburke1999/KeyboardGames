@@ -19,8 +19,9 @@ from views import create_new_skin_view
 from views import login_required_endpoint
 from views import login_required_page
 from views import admin_page
-from models import NewUser
+from models import New_User
 from models import Skin
+from models import New_Skin
 from models import Game_Data
 
 app = Flask(__name__)
@@ -53,7 +54,7 @@ def register():
 @app.route('/register', methods=['POST'])
 def register_post():
     data = request.get_json()['formData']
-    new_user = NewUser(data['first_name'], data['last_name'], data['username'], data['email'], data['password'])
+    new_user = New_User(data['first_name'], data['last_name'], data['username'], data['email'], data['password'])
     return register_view(new_user)
 
 @app.route('/unique_username', methods=['POST'])
@@ -118,4 +119,7 @@ def create_skin():
 @admin_page
 def create_new_skin():
     data = request.get_json()
-    return create_new_skin_view()
+    inputs = [int(x) for x in data['inputs']]
+    new_inputs = data['newInputs']
+    new_skin = New_Skin(data['skinType'], data['skinHtml'], inputs, new_inputs)
+    return create_new_skin_view(new_skin)

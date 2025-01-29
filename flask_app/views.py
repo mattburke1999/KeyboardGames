@@ -15,10 +15,12 @@ from services import set_user_skin
 from services import purchase_skin
 from services import check_login
 from services import check_admin
+from services import get_skin_inputs
 from functools import wraps
 from typing import Callable
-from models import NewUser
+from models import New_User
 from models import Skin
+from models import New_Skin
 from models import Game_Data
 from models import Game_Page
 
@@ -94,7 +96,7 @@ def check_unique_register_input_view(type: str, value: str):
     return json_result(result)
 
 # endpoint
-def register_view(new_user: NewUser):
+def register_view(new_user: New_User):
     result = create_user(new_user)
     return json_result(result)
 
@@ -147,9 +149,12 @@ def purchase_skin_view(skin_id: int):
 
 # page 
 def create_skin_view():
-    inputs = [{'id': id, 'name': f'Input-{id}'} for id in range(1, 6)]
-    return render_template('create_skin.html', new_skin_page = {'inputs': inputs})
+    skin_input_result = get_skin_inputs()
+    if not skin_input_result[0]:
+        return render_template('505.html'), 505
+    print(skin_input_result[1])
+    return render_template('create_skin.html', new_skin_page = {'inputs': skin_input_result[1]})
 
 # page
-def create_new_skin_view():
-    return render_template('create_skin.html')
+def create_new_skin_view(new_skin: New_Skin):
+    return redirect('/create_skin')

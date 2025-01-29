@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class NewUser:
+class New_User:
     first_name: str
     last_name: str
     username: str
@@ -30,11 +30,23 @@ class Skin:
     points: int | None = None
     user_choice: bool | None = None
     user_skin: bool | None = None
+    
+@dataclass
+class Skin_Input:
+    id: int
+    name: str
 
 @dataclass
 class Skins_Page:
     points: int
     skins: list[Skin]
+    
+@dataclass
+class New_Skin:
+    type: str
+    html: str
+    inputs: list[int]
+    new_inputs: list[str]
     
 @dataclass
 class Game_Info:

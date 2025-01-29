@@ -20,6 +20,9 @@
                 border-radius: 10px;
                 color: white;
                 padding: 1.5rem;
+                overflow-y: auto;
+                overflow-x: hidden;
+                max-height: 80vh;
             }
             .create-skin-container label {
                 font-size: 1.25rem;
@@ -37,6 +40,7 @@
             h3 {
                 font-size: 1.5rem;
                 font-weight: normal;
+                margin: 0;
             }
             fieldset {
                 display: flex;
@@ -68,6 +72,7 @@
                 padding: 0.5rem;
                 border-radius: 5px;
                 border: 1px solid gray;
+                width: 80%;
             }
             .input-container {
                 display: flex;
@@ -88,6 +93,24 @@
                 flex-direction: column;
                 gap: .5rem;
             }
+            .skin-html-fieldset {
+                align-items: center;
+            }
+            textarea {
+                font-family: 'Courier New', Courier, monospace;
+                margin: .5rem;
+                padding: 0.5rem;
+                border-radius: 5px;
+                border: 1px solid gray;
+                width: 625px;
+                min-width: 625px;
+                max-width: 625px;
+                height: 125px;
+                min-height: 125px;
+                max-height: 125px;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
         </style>
     </head>
     <body>
@@ -96,31 +119,35 @@
             <div class='auth-btns'>
                 <button onclick="logout()">Logout</button>
             </div>
-            <form class='create-skin-container' action="{{ url_for('create_new_skin') }}" method="post">
+            <form class='create-skin-container' >
                 <h1 class='title'>Create Skin</h1>
                 <div>
                     <label for='skin-type'>Skin Type:</label>
-                    <input type='text' id='skin-type' name='skin-type' required>
+                    <input type='text' id='skin-type' required>
                 </div>
+                <fieldset class='skin-html-fieldset'>
+                    <legend>Skin HTML:</legend>
+                    <textarea id='skin-html' name='skin_html' required></textarea>
+                </fieldset>
                 <fieldset class='no-inputs'>
                     <legend>Inputs</legend>
                     <h3 id='no-inputs'>None.</h3>
                     <div class='inputs-container'>
                         <div id='input-1' class='input-container'>
-                            <select name='inputs[]' required onchange='toggleNewInput(this)'>
+                            <select class='inputs' required onchange='toggleNewInput(this)'>
                                 <option value='' disabled selected>Select an input</option>
                                 {% for input in new_skin_page.inputs %}
                                     <option value='{{ input.id }}'>{{ input.name }}</option>
                                 {% endfor %}
                                 <option value='new'>** New Input **</option>
                             </select>
-                            <input type='text' name='new-inputs[]' placeholder='New Input' style='display: none;'>
+                            <input type='text' class='new-inputs' placeholder='New Input' style='display: none;'>
                             <i class="fa-solid fa-trash" onclick="removeInput(1)"></i>
                         </div>
                     </div>
                     <i class="fa-solid fa-plus" onclick='addInput()'></i>
                 </fieldset>
-                <button onclick="createSkin()">Create Skin</button>
+                <button onclick="createSkin(event)">Create Skin</button>
             </form>
         </div>
     </body>
@@ -173,6 +200,47 @@
             } else {
                 $input.css('display', 'none');
             }
-        }                
+        }
+
+        function getFormData() {
+            const skinType = $('#skin-type').val();
+            const skinHtml = $('#skin-html').val();
+            const inputs = [];
+            const newInputs = [];
+            if ($('#no-inputs').css('display') === 'none') {
+                $('.inputs').each(function() {
+                    if ($(this).val() === 'new') {
+                        newInputs.push($(this).next().val());
+                    } else {
+                        inputs.push($(this).val());
+                    }
+                });
+            }
+            return {skinType, skinHtml, inputs, newInputs};
+        }
+        
+        function createSkin(event) {
+            event.preventDefault();
+            const formData = getFormData();
+            $.ajax({
+                url: '/create_skin',
+                type: 'POST',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log(response);
+                    if (response.success) {
+                        alert('Skin created successfully!');
+                        window.location.href = '/create_skin';
+                    } else {
+                        alert('Error creating skin.');
+                    }
+                },
+                error: function(error) {
+                    console.log(error);
+                    alert('Error creating skin.');
+                }
+            });
+        }
     </script>
 </html>

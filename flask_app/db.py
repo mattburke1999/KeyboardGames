@@ -2,7 +2,7 @@ import psycopg2 as pg
 import os
 import traceback
 import bcrypt
-from models import NewUser
+from models import New_User
 from models import DB_Result
 
 DATABASE_URL = None
@@ -13,7 +13,7 @@ def connect_db():
         DATABASE_URL = os.environ['DATABASE_URL']
     return pg.connect(DATABASE_URL)
 
-def create_user(new_user: NewUser) -> DB_Result:
+def create_user(new_user: New_User) -> DB_Result:
     # first_name, last_name, username, email, password):
         with connect_db() as cnxn:
             try:
@@ -177,6 +177,16 @@ def purchase_skin(user_id: int, skin_id: int) -> DB_Result:
             with conn.cursor() as cur:
                 cur.execute('select purchase_skin(%s, %s)', (user_id, skin_id,))
                 return DB_Result(True, None)
+    except:
+        traceback.print_exc()
+        return DB_Result(False, None)
+    
+def get_skin_inputs() -> DB_Result:
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('select id, name from skin_inputs')
+                return DB_Result(True, cur.fetchall())
     except:
         traceback.print_exc()
         return DB_Result(False, None)
