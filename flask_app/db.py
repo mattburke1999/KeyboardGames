@@ -228,3 +228,16 @@ def create_skin(conn: pg.extensions.connection, new_skin: New_Skin) -> DB_Result
     except:
         traceback.print_exc()
         return DB_Result(False, None)
+    
+def check_skin_type_exists(name: str) -> DB_Result:
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('select count(*) from skin_types where name = %s', (name,))
+                result = cur.fetchone()
+                if result:
+                    return DB_Result(True, result[0]>0)
+                return DB_Result(True, False)
+    except:
+        traceback.print_exc()
+        return DB_Result(False, None)

@@ -27,6 +27,7 @@ from models import Skin_Input
 from db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
 from db import new_skin_input as db_new_skin_input
 from db import create_skin as db_create_skin
+from db import check_skin_type_exists as db_check_skin_type_exists
 from models import New_Skin
 from redis_store import create_user_session as rd_create_user_session
 from redis_store import clear_user_sessions as rd_clear_user_sessions
@@ -316,22 +317,30 @@ def add_new_html_to_mapper(type, macro_name) -> tuple[bool, dict[str, bool|str]]
             skin_mapper = f.read()
     except:
         return (False, {'error': 'Error reading skin mapper'})
-    end_if = skin_mapper.index('{% endif %}')
-    if end_if == -1:
-        return (False, {'error': 'Error parsing skin mapper'})
-    skin_mapper_pre = skin_mapper[:end_if]
-    new_macro_mapper = "{% elif skin.type == '" + type + "' %}\n"
-    new_macro_mapper += "\t\t{% from 'skin_macros/" + macro_name + ".html' import " + macro_name + " %}\n"
-    new_macro_mapper += "\t\t{{ " + macro_name + "(page, skin) }}\n"
-    new_skin_mapper = skin_mapper_pre + new_macro_mapper + "    " + skin_mapper[end_if:]
-    try:
-        with open('flask_app/templates/skin_macros/skin-mapper.html', 'w') as f:
-            f.write(new_skin_mapper)
-        return (True, {'success': True})
-    except:
-        return (False, {'error': 'Error writing skin mapper'})
+    macro_index = skin_mapper.find(macro_name)
+    if macro_index == -1:
+        end_if = skin_mapper.index('{% endif %}')
+        if end_if == -1:
+            return (False, {'error': 'Error parsing skin mapper'})
+        skin_mapper_pre = skin_mapper[:end_if]
+        new_macro_mapper = "{% elif skin.type == '" + type + "' %}\n"
+        new_macro_mapper += "\t\t{% from 'skin_macros/" + macro_name + ".html' import " + macro_name + " %}\n"
+        new_macro_mapper += "\t\t{{ " + macro_name + "(page, skin) }}\n"
+        new_skin_mapper = skin_mapper_pre + new_macro_mapper + "    " + skin_mapper[end_if:]
+        try:
+            with open('flask_app/templates/skin_macros/skin-mapper.html', 'w') as f:
+                f.write(new_skin_mapper)
+            return (True, {'success': True})
+        except:
+            return (False, {'error': 'Error writing skin mapper'})
+    return (True, {'success': True})
     
 def create_new_skin(new_skin: New_Skin):
+    skin_type_exists = db_check_skin_type_exists(new_skin.type)
+    if not skin_type_exists.success:
+        return (False, skin_type_exists.result)
+    if skin_type_exists.result:
+        return (False, {'error': 'Skin type already exists'})
     with connect_db() as conn:
         if len(new_skin.new_inputs) > 0:
             add_skin_inputs_result = add_new_skin_inputs(conn, new_skin)
