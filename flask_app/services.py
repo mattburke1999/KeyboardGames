@@ -1,5 +1,6 @@
 from models import Home_Page
 from models import Game_Page
+from db import connect_db
 from db import get_games as db_get_games
 from models import Game_Info
 from db import check_unique_register_input as db_check_unique_register_input
@@ -23,6 +24,10 @@ from db import check_skin_purchaseable as db_check_skin_purchaseable
 from db import purchase_skin as db_purchase_skin
 from db import get_skin_inputs as db_get_skin_inputs
 from models import Skin_Input
+from db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
+from db import new_skin_input as db_new_skin_input
+from db import create_skin as db_create_skin
+from models import New_Skin
 from redis_store import create_user_session as rd_create_user_session
 from redis_store import clear_user_sessions as rd_clear_user_sessions
 from redis_store import get_game_data as rd_get_game_data
@@ -36,7 +41,6 @@ from datetime import timedelta
 from datetime import timezone
 import threading
 import socket
-import requests
 
 GAME_INFO = {}
 GAMES = []
@@ -274,3 +278,70 @@ def get_skin_inputs() -> tuple[bool, list[Skin_Input]|str]:
     if not skin_inputs.success:
         return (False, skin_inputs.result)
     return (True, [Skin_Input(skin[0], skin[1]) for skin in skin_inputs.result])
+
+def add_new_skin_inputs(conn, new_skin: New_Skin) -> tuple[bool, dict[str, bool]]:
+    for new_input in new_skin.new_inputs:
+        input_id = db_get_skin_input_id_by_name(new_input)
+        if not input_id.success:
+            return (False, input_id.result)
+        if input_id.result:
+            new_skin.inputs.append(input_id.result)
+        else:
+            new_input_result = db_new_skin_input(conn, new_input)
+            if not new_input_result.success:
+                conn.rollback()
+                return (False, new_input_result.result)
+            new_skin.inputs.append(new_input_result.result)
+    return (True, {'success': True})
+
+def add_new_skin_html(new_skin: New_Skin) -> tuple[bool, dict[str, bool|str]]:
+    # later we will add some validation checking:
+    # - if new_skin.inputs is empty, then skin.data is not in the html
+    # - if new_skin.inputs is not empty, then find all skin.data.{input} and make sure any in html are in new_skin.inputs
+    macro_name = new_skin.type.replace('-', '_')
+    skin_html = "{% macro " + macro_name + "(page, skin) %}\n"
+    skin_html += "\t" + new_skin.html + "\n"
+    skin_html += "{% endmacro %}"
+    # add to /templates/skin_macros/{macro_name}.html
+    try:
+        with open(f'flask_app/templates/skin_macros/{macro_name}.html', 'w') as f:
+            f.write(skin_html)
+        return add_new_html_to_mapper(new_skin.type, macro_name)
+    except:
+        return (False, {'error': 'Error writing skin html'})
+    
+def add_new_html_to_mapper(type, macro_name) -> tuple[bool, dict[str, bool|str]]:
+    try:
+        with open('flask_app/templates/skin_macros/skin-mapper.html', 'r') as f:
+            skin_mapper = f.read()
+    except:
+        return (False, {'error': 'Error reading skin mapper'})
+    end_if = skin_mapper.index('{% endif %}')
+    if end_if == -1:
+        return (False, {'error': 'Error parsing skin mapper'})
+    skin_mapper_pre = skin_mapper[:end_if]
+    new_macro_mapper = "{% elif skin.type == '" + type + "' %}\n"
+    new_macro_mapper += "\t\t{% from 'skin_macros/" + macro_name + ".html' import " + macro_name + " %}\n"
+    new_macro_mapper += "\t\t{{ " + macro_name + "(page, skin) }}\n"
+    new_skin_mapper = skin_mapper_pre + new_macro_mapper + "    " + skin_mapper[end_if:]
+    try:
+        with open('flask_app/templates/skin_macros/skin-mapper.html', 'w') as f:
+            f.write(new_skin_mapper)
+        return (True, {'success': True})
+    except:
+        return (False, {'error': 'Error writing skin mapper'})
+    
+def create_new_skin(new_skin: New_Skin):
+    with connect_db() as conn:
+        if len(new_skin.new_inputs) > 0:
+            add_skin_inputs_result = add_new_skin_inputs(conn, new_skin)
+            if not add_skin_inputs_result[0]:
+                return add_skin_inputs_result
+        create_skin_result = db_create_skin(conn, new_skin)
+        if not create_skin_result.success:
+            conn.rollback()
+            return (False, create_skin_result.result)
+    add_new_skin_html_result = add_new_skin_html(new_skin)
+    if not add_new_skin_html_result[0]:
+        return add_new_skin_html_result
+    return (True, {'success': True})

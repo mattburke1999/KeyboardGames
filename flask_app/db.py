@@ -4,6 +4,7 @@ import traceback
 import bcrypt
 from models import New_User
 from models import DB_Result
+from models import New_Skin
 
 DATABASE_URL = None
 
@@ -187,6 +188,43 @@ def get_skin_inputs() -> DB_Result:
             with conn.cursor() as cur:
                 cur.execute('select id, name from skin_inputs')
                 return DB_Result(True, cur.fetchall())
+    except:
+        traceback.print_exc()
+        return DB_Result(False, None)
+    
+def get_skin_input_id_by_name(name: str) -> DB_Result:
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute('select id from skin_inputs where name = %s', (name,))
+                return DB_Result(True, cur.fetchone())
+    except:
+        traceback.print_exc()
+        return DB_Result(False, None)
+    
+def new_skin_input(conn: pg.extensions.connection, name: str) -> DB_Result:
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO skin_inputs (name) VALUES (%s) RETURNING id', (name,))
+            result = cur.fetchone()
+            if result:
+                return DB_Result(True, result[0])
+            return DB_Result(True, None)
+    except:
+        traceback.print_exc()
+        return DB_Result(False, None)
+    
+def create_skin(conn: pg.extensions.connection, new_skin: New_Skin) -> DB_Result:
+    try:
+        with conn.cursor() as cur:
+            cur.execute('insert into skin_types (name) values (%s) returning id', (new_skin.type,))
+            type_id = cur.fetchone()
+            if not type_id:
+                return DB_Result(False, None)
+            cur.executemany('insert into skin_type_inputs (type_id, input_id) values (%s, %s)', [(type_id, input_id) for input_id in new_skin.inputs])
+        conn.commit()
+        return DB_Result(True, type_id)
     except:
         traceback.print_exc()
         return DB_Result(False, None)
