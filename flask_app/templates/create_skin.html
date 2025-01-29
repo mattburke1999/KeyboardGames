@@ -119,7 +119,7 @@
             <div class='auth-btns'>
                 <button onclick="logout()">Logout</button>
             </div>
-            <form class='create-skin-container' >
+            <div class='create-skin-container' >
                 <h1 class='title'>Create Skin</h1>
                 <div>
                     <label for='skin-type'>Skin Type:</label>
@@ -134,21 +134,21 @@
                     <h3 id='no-inputs'>None.</h3>
                     <div class='inputs-container'>
                         <div id='input-1' class='input-container'>
-                            <select class='inputs' required onchange='toggleNewInput(this)'>
+                            <select class='inputs' required onchange='toggleSelects(this)'>
                                 <option value='' disabled selected>Select an input</option>
                                 {% for input in new_skin_page.inputs %}
                                     <option value='{{ input.id }}'>{{ input.name }}</option>
                                 {% endfor %}
                                 <option value='new'>** New Input **</option>
                             </select>
-                            <input type='text' class='new-inputs' placeholder='New Input' style='display: none;'>
+                            <input type='text' class='new-inputs' placeholder='New Input' style='display: none;' onchange='toggleNewInputs(this)'>
                             <i class="fa-solid fa-trash" onclick="removeInput(1)"></i>
                         </div>
                     </div>
                     <i class="fa-solid fa-plus" onclick='addInput()'></i>
                 </fieldset>
                 <button onclick="createSkin(event)">Create Skin</button>
-            </form>
+            </div>
         </div>
     </body>
     <script>
@@ -193,8 +193,11 @@
             }
         }
 
-        function toggleNewInput(select) {
+        function toggleSelects(select) {
             const $input = $(select).next();
+            if($(select).css('border') === '2px solid rgb(255, 0, 0)' && $(select).val() !== '') {
+                $(select).css('border', '1px solid gray');
+            }
             if ($(select).val() == 'new') {
                 $input.css('display', 'block');
             } else {
@@ -202,45 +205,65 @@
             }
         }
 
-        function getFormData() {
-            const skinType = $('#skin-type').val();
-            const skinHtml = $('#skin-html').val();
+        function toggleNewInputs(input) {
+            if($(input).css('border') === '2px solid rgb(255, 0, 0)' && $(input).val() !== '') {
+                $(input).css('border', '1px solid gray');
+            }
+        }
+
+        function getFormDataAndValidate() {
+            let invalid = false;
+            const skinType = $('#skin-type').val(); // required attribute prevents empty value
+            const skinHtml = $('#skin-html').val(); // required attribute
             const inputs = [];
             const newInputs = [];
             if ($('#no-inputs').css('display') === 'none') {
                 $('.inputs').each(function() {
-                    if ($(this).val() === 'new') {
-                        newInputs.push($(this).next().val());
+                    if ($(this).prop('selectedIndex') === 0) {
+                        $(this).css('border', '2px solid red');
+                        invalid = true;
+                    } else if ($(this).val() === 'new') {
+                        const newInput = $(this).next().val();
+                        if(newInput === '') {
+                            $(this).next().css('border', '2px solid red');
+                            invalid = true;
+                        } else {
+                            newInputs.push(newInput);
+                        }
                     } else {
                         inputs.push($(this).val());
                     }
                 });
             }
-            return {skinType, skinHtml, inputs, newInputs};
+            return { formData: {skinType, skinHtml, inputs, newInputs}, invalid };
         }
         
         function createSkin(event) {
             event.preventDefault();
-            const formData = getFormData();
-            $.ajax({
-                url: '/create_skin',
-                type: 'POST',
-                data: JSON.stringify(formData),
-                contentType: 'application/json',
-                success: function(response) {
-                    console.log(response);
-                    if (response.success) {
-                        alert('Skin created successfully!');
-                        window.location.href = '/create_skin';
-                    } else {
+            const { formData, invalid } = getFormDataAndValidate();
+            if (invalid) {
+                alert('Invalid form data.');
+            } else {
+                $.ajax({
+                    url: '/create_skin',
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        console.log(response);
+                        if (response.success) {
+                            alert('Skin created successfully!');
+                            window.location.href = '/create_skin';
+                        } else {
+                            alert('Error creating skin.');
+                        }
+                    },
+                    error: function(error) {
+                        console.log(error);
                         alert('Error creating skin.');
                     }
-                },
-                error: function(error) {
-                    console.log(error);
-                    alert('Error creating skin.');
-                }
-            });
+                });
+            }
         }
     </script>
 </html>
