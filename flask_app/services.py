@@ -26,7 +26,7 @@ from db import get_skin_inputs as db_get_skin_inputs
 from db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
 from db import new_skin_input as db_new_skin_input
 from db import create_skin as db_create_skin
-from db import get_skin_type_inputs as db_get_skin_type_inputs
+from db import get_skin_type_with_inputs as db_get_skin_type_with_inputs
 from models import Skin_Input
 from models import Skin_Type_With_Inputs
 from models import Create_Skin_Page
@@ -278,10 +278,10 @@ def purchase_skin(skin_id: int) -> tuple[bool, dict[str, bool|str]]:
     return (True, {'success': True})
 
 def get_skin_types_with_inputs() -> tuple[bool, list[Skin_Type_With_Inputs]|str]:
-    skin_types = db_get_skin_type_inputs()
+    skin_types = db_get_skin_type_with_inputs()
     if not skin_types.success:
         return (False, skin_types.result)
-    return (True, [Skin_Type_With_Inputs(skin[0], [skin[1]]) for skin in skin_types.result])
+    return (True, [Skin_Type_With_Inputs(skin[0], skin[1], [skin[2]]) for skin in skin_types.result])
 
 def get_skin_inputs() -> tuple[bool, list[Skin_Input]|str]:
     skin_inputs = db_get_skin_inputs()

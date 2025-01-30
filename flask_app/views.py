@@ -22,6 +22,7 @@ from typing import Callable
 from models import New_User
 from models import Skin
 from models import New_Skin
+from models import New_Skin_Input
 from models import Game_Data
 from models import Game_Page
 
@@ -155,7 +156,11 @@ def create_skin_view():
         return render_template('505.html'), 505
     return render_template('create_skin.html', new_skin_page = skin_page_result[1])
 
-# page
+# endpoint
 def create_new_skin_view(new_skin: New_Skin):
     result = create_new_skin(new_skin)
     return json_result(result)
+
+# endpoint
+def create_skin_inputs_view(new_skin_input: New_Skin_Input):
+    return json_result((True, {'success': True}))

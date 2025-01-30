@@ -38,6 +38,7 @@ class Skin_Input:
 
 @dataclass
 class Skin_Type_With_Inputs:
+    id: int
     name: str
     inputs: list[str]
 
@@ -52,6 +53,13 @@ class New_Skin:
     html: str
     inputs: list[int]
     new_inputs: list[str]
+
+@dataclass
+class New_Skin_Input:
+    type_id: int
+    inputs: dict[str, str]
+    mapper_json: str | None = None    
+    name: str | None = None
     
 @dataclass
 class Create_Skin_Page:

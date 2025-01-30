@@ -18,6 +18,7 @@ from views import set_user_skin_view
 from views import purchase_skin_view
 from views import create_skin_view
 from views import create_new_skin_view
+from views import create_skin_inputs_view
 from views import login_required_endpoint
 from views import login_required_page
 from views import admin_page
@@ -25,6 +26,7 @@ from views import admin_endpoint
 from models import New_User
 from models import Skin
 from models import New_Skin
+from models import New_Skin_Input
 from models import Game_Data
 
 app = Flask(__name__)
@@ -127,6 +129,15 @@ def create_new_skin():
         abort(403)
     data = request.get_json()
     inputs = [int(x) for x in data['inputs']]
-    new_inputs = data['newInputs']
-    new_skin = New_Skin(data['skinType'], data['skinHtml'], inputs, new_inputs)
+    new_skin = New_Skin(data['skinType'], data['skinHtml'], inputs, data['newInputs'])
     return create_new_skin_view(new_skin)
+
+@app.route('/create_skin_inputs', methods=['POST'])
+@admin_endpoint
+def create_skin_inputs():
+    if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:
+        abort(403)
+    data = request.get_json()
+    # formData: {skinTypeId, skinName, mapperJson, inputs}
+    new_skin_input = New_Skin_Input(data['skinTypeId'], data['inputs'], data['skinName'], data['mapperJson'])
+    return create_skin_inputs_view(new_skin_input)

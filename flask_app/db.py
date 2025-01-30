@@ -192,16 +192,16 @@ def get_skin_inputs() -> DB_Result:
         traceback.print_exc()
         return DB_Result(False, None)
     
-def get_skin_type_inputs() -> DB_Result:
+def get_skin_type_with_inputs() -> DB_Result:
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('''
-                    select t.name, jsonb_agg(i.name) inputs
+                    select t.id, t.name, jsonb_agg(i.name) inputs
                     from skin_types t
                     join skin_type_inputs ti on t.id = ti.type_id
                     join skin_inputs i on ti.input_id = i.id
-                    group by t.name
+                    group by t.name, t.id
                 ''')
                 return DB_Result(True, cur.fetchall())
     except:
