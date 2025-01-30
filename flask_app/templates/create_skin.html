@@ -117,7 +117,7 @@
                 justify-content: center;
                 gap: 1.5rem;
                 margin-bottom: 1rem;
-                margin-top: 2.25rem;
+                margin-top: 1.75rem;
                 border-bottom: 1px solid white;
                 width: 100%;
             }
@@ -128,7 +128,7 @@
                 border-radius: 5px 5px 0 0;
                 background-color: black;
                 color: white;
-                padding: 0.25rem 1rem;
+                padding: 0.5rem 1rem;
                 cursor: pointer;
             }
             
@@ -199,7 +199,7 @@
         </div>
     </body>
     <script>
-        const skin_types = {{ new_skin_page.types }};
+        const skin_types = {{ new_skin_page.types | tojson }};
         function addInput() {
             console.log('Adding input');
             $('fieldset').removeClass('no-inputs');
