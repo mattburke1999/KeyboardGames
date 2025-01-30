@@ -1,5 +1,7 @@
 from flask import Flask
 from flask import request
+from flask import redirect
+from flask import abort
 from views import home_view
 from views import game_view
 from views import auth_view
@@ -114,11 +116,15 @@ def purchase_skin():
 @app.route('/create_skin', methods=['GET'])
 @admin_page
 def create_skin():
+    if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:
+        return redirect('/')
     return create_skin_view()
 
 @app.route('/create_skin', methods=['POST'])
 @admin_endpoint
 def create_new_skin():
+    if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:
+        abort(403)
     data = request.get_json()
     inputs = [int(x) for x in data['inputs']]
     new_inputs = data['newInputs']
