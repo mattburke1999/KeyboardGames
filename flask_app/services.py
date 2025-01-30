@@ -23,10 +23,13 @@ from db import get_default_skin as db_get_default_skin
 from db import check_skin_purchaseable as db_check_skin_purchaseable
 from db import purchase_skin as db_purchase_skin
 from db import get_skin_inputs as db_get_skin_inputs
-from models import Skin_Input
 from db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
 from db import new_skin_input as db_new_skin_input
 from db import create_skin as db_create_skin
+from db import get_skin_type_inputs as db_get_skin_type_inputs
+from models import Skin_Input
+from models import Skin_Type_With_Inputs
+from models import Create_Skin_Page
 from db import check_skin_type_exists as db_check_skin_type_exists
 from models import New_Skin
 from redis_store import create_user_session as rd_create_user_session
@@ -274,11 +277,26 @@ def purchase_skin(skin_id: int) -> tuple[bool, dict[str, bool|str]]:
         return (False, purchase_skin.result)
     return (True, {'success': True})
 
+def get_skin_types_with_inputs() -> tuple[bool, list[Skin_Type_With_Inputs]|str]:
+    skin_types = db_get_skin_type_inputs()
+    if not skin_types.success:
+        return (False, skin_types.result)
+    return (True, [Skin_Type_With_Inputs(skin[0], [skin[1]]) for skin in skin_types.result])
+
 def get_skin_inputs() -> tuple[bool, list[Skin_Input]|str]:
     skin_inputs = db_get_skin_inputs()
     if not skin_inputs.success:
         return (False, skin_inputs.result)
     return (True, [Skin_Input(skin[0], skin[1]) for skin in skin_inputs.result])
+
+def create_skin_page() -> tuple[bool, Create_Skin_Page|str]:
+    skin_types = get_skin_types_with_inputs()
+    if not skin_types[0]: 
+        return (False, skin_types[1]) # type: ignore
+    skin_inputs = get_skin_inputs()
+    if not skin_inputs[0]:
+        return (False, skin_inputs[1]) # type: ignore
+    return (True, Create_Skin_Page(skin_inputs[1], skin_types[1])) # type: ignore
 
 def add_new_skin_inputs(conn, new_skin: New_Skin) -> tuple[bool, dict[str, bool]]:
     for new_input in new_skin.new_inputs:

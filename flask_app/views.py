@@ -15,7 +15,7 @@ from services import set_user_skin
 from services import purchase_skin
 from services import check_login
 from services import check_admin
-from services import get_skin_inputs
+from services import create_skin_page
 from services import create_new_skin
 from functools import wraps
 from typing import Callable
@@ -150,10 +150,10 @@ def purchase_skin_view(skin_id: int):
 
 # page 
 def create_skin_view():
-    skin_input_result = get_skin_inputs()
-    if not skin_input_result[0]:
+    skin_page_result = create_skin_page()
+    if not skin_page_result[0]:
         return render_template('505.html'), 505
-    return render_template('create_skin.html', new_skin_page = {'inputs': skin_input_result[1]})
+    return render_template('create_skin.html', new_skin_page = skin_page_result[1])
 
 # page
 def create_new_skin_view(new_skin: New_Skin):

@@ -19,6 +19,7 @@ from views import create_new_skin_view
 from views import login_required_endpoint
 from views import login_required_page
 from views import admin_page
+from views import admin_endpoint
 from models import New_User
 from models import Skin
 from models import New_Skin
@@ -116,7 +117,7 @@ def create_skin():
     return create_skin_view()
 
 @app.route('/create_skin', methods=['POST'])
-@admin_page
+@admin_endpoint
 def create_new_skin():
     data = request.get_json()
     inputs = [int(x) for x in data['inputs']]

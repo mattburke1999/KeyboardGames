@@ -37,6 +37,11 @@ class Skin_Input:
     name: str
 
 @dataclass
+class Skin_Type_With_Inputs:
+    name: str
+    inputs: list[str]
+
+@dataclass
 class Skins_Page:
     points: int
     skins: list[Skin]
@@ -47,6 +52,11 @@ class New_Skin:
     html: str
     inputs: list[int]
     new_inputs: list[str]
+    
+@dataclass
+class Create_Skin_Page:
+    inputs: list[Skin_Input]
+    types: list[Skin_Type_With_Inputs]
     
 @dataclass
 class Game_Info:

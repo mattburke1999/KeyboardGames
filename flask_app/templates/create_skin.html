@@ -9,10 +9,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Ceviche+One&family=Fugaz+One&family=Itim&family=Monoton&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Special+Elite&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
         <style>
-            .main {
-                justify-content: center;
-            }
-            .create-skin-container {
+            .form-container {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -24,7 +21,7 @@
                 overflow-x: hidden;
                 max-height: 80vh;
             }
-            .create-skin-container label {
+            .form-container label {
                 font-size: 1.25rem;
             }
             input {
@@ -34,7 +31,7 @@
                 border-radius: 5px;
                 border: 1px solid gray;
             }
-            .create-skin-container button {
+            .form-container button {
                 margin: 1rem;
             }
             h3 {
@@ -111,6 +108,38 @@
                 overflow-x: hidden;
                 overflow-y: auto;
             }
+            .title {
+                margin: 1rem;
+            }
+            .tabs {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 1.5rem;
+                margin-bottom: 1rem;
+                margin-top: 2.25rem;
+                border-bottom: 1px solid white;
+                width: 100%;
+            }
+            .tab {
+                font-size: 1.25rem;
+                border: 1px solid white;
+                border-bottom: none;
+                border-radius: 5px 5px 0 0;
+                background-color: black;
+                color: white;
+                padding: 0.25rem 1rem;
+                cursor: pointer;
+            }
+            
+            .tab:hover {
+                background-color: white;
+                color: black;
+            }
+            .tab.active {
+                background-color: white;
+                color: black;
+            }
         </style>
     </head>
     <body>
@@ -119,7 +148,15 @@
             <div class='auth-btns'>
                 <button onclick="logout()">Logout</button>
             </div>
-            <div class='create-skin-container' >
+            <div class='tabs'>
+                <div class='tab active' disabled onclick='showForm("create-skin", this)'>
+                    Create Skin
+                </div>
+                <div class='tab' onclick='showForm("add-skin-inputs", this)'>
+                    Add Skin Inputs
+                </div>
+            </div>
+            <div id='create-skin' class='form-container' >
                 <h1 class='title'>Create Skin</h1>
                 <div>
                     <label for='skin-type'>Skin Type:</label>
@@ -149,9 +186,20 @@
                 </fieldset>
                 <button onclick="createSkin(event)">Create Skin</button>
             </div>
+            <div id='add-skin-inputs' class='form-container' style='display: none;'>
+                <h1 class='title'>Add Skin Inputs</h1>
+                <select id='skin-type'>
+                    <option value='' disabled selected>Select an Skin Type</option>
+                    {% for skin_type in new_skin_page.types %}
+                        <option value='{{ skin_type.name }}'>{{ skin_type.name }}</option>
+                    {% endfor %}
+                </select>
+                <button>Add Skin Inputs</button>
+            </div>
         </div>
     </body>
     <script>
+        const skin_types = {{ new_skin_page.types }};
         function addInput() {
             console.log('Adding input');
             $('fieldset').removeClass('no-inputs');
@@ -265,5 +313,13 @@
                 });
             }
         }
+
+        function showForm(formId, tab) {
+            $('.form-container').css('display', 'none');
+            $(`#${formId}`).css('display', 'flex');
+            $('.tab').removeClass('active');
+            $(tab).addClass('active');
+        }
+
     </script>
 </html>
