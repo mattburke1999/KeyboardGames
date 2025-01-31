@@ -66,6 +66,10 @@
                 background-color: white;
                 color: black;
             }
+            .link {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 1.5rem;
+            }
             select {
                 font-family: 'Courier New', Courier, monospace;
                 margin: .5rem;
@@ -215,8 +219,8 @@
                     <input type='text' id='skin-type' required>
                 </div>
                 <fieldset class='skin-html-fieldset'>
-                    <legend>Skin HTML:</legend>
-                    <textarea id='skin-html' name='skin_html' required></textarea>
+                    <legend>Skin HTML (leave blank if already added manually):</legend>
+                    <textarea id='skin-html' name='skin_html'></textarea>
                 </fieldset>
                 <fieldset id='inputs-fieldset' class='no-inputs'>
                     <legend>Inputs</legend>
@@ -255,6 +259,7 @@
                         <label for='points'>Points:</label>
                         <input type='text' id='points' required/>
                     </div>
+                    <a class='link' style='align-self: center;' href='https://htmlcolorcodes.com/' target='_blank'>HTML Color Codes</a>
                     <fieldset id='value-fieldset' style='display: none; width: fit-content;'>
                     </fieldset>
                     <div class='input-container'>
