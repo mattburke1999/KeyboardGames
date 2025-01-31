@@ -1,0 +1,17 @@
+{% macro simple_face(page, skin) %}
+    <div
+        {% if page == 'game' %}         
+            id='dot'
+        {% else %}
+            class='dot{{ " user-skin" if skin.user_skin else ""}}'
+        {% endif %}
+        style='background-color: {{ skin.data.color }}; position: relative;'
+    >
+        <div style='position: absolute; top: 20%; left: 0;'>
+            {% include 'skin_macros/shared/eye.html' %}
+        </div>
+        <div style='position: absolute; top: 20%; right: 0;'>
+            {% include 'skin_macros/shared/eye.html' %}
+        </div>
+    </div>
+{% endmacro %}
