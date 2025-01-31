@@ -23,6 +23,9 @@
 - points awarded from games
     - possibly make place a multiplier times points scored = profile points
 - possible add login bonus
+- create a new simple app that can be run locally for adding new skins to make it easier
+    - if an admin page is created, this could be moved into that
+- add a base_colors table for colors that skin_input_values can link to
 
 # NEW GAMES
 - shaky dot

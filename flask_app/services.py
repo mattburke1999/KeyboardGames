@@ -33,6 +33,7 @@ from models import Skin_Type_With_Inputs
 from models import Create_Skin_Page
 from db import check_skin_type_exists as db_check_skin_type_exists
 from models import New_Skin
+from db import get_skin_input_list as db_get_skin_input_list
 from db import new_skin as db_new_skin
 from db import new_skin_values as db_new_skin_values
 from models import New_Skin_Input
@@ -378,18 +379,15 @@ def add_skin(conn: pg.extensions.connection, name: str, new_skin_input: New_Skin
     if not skin_id_result.success:
         conn.rollback()
         return Func_Result(False, skin_id_result.result)
-    for input_name in new_skin_input.input_names: # type: ignore
-        input_id_result = db_get_skin_input_id_by_name(input_name)
-        if not input_id_result.success:
-            conn.rollback()
-            return Func_Result(False, input_id_result.result)
-        value = new_skin_input.input_values[input_name][i].strip()
-        new_skin_values_result = db_new_skin_values(conn, skin_id_result.result, input_id_result.result, value)
+    for input_name in new_skin_input.inputs:
+        input_id = int(new_skin_input.inputs[input_name]['id'])  # type: ignore
+        value = new_skin_input.inputs[input_name]['values'][i].strip() # type: ignore
+        new_skin_values_result = db_new_skin_values(conn, skin_id_result.result, input_id, value)
         if not new_skin_values_result.success:
             conn.rollback()
             return Func_Result(False, new_skin_values_result.result)
     return Func_Result(True, None)
-
+    
 def add_skin_input_name_list(new_skin_input: New_Skin_Input) -> Func_Result:
     names = new_skin_input.names.split(',') # type: ignore
     with connect_db() as conn:
@@ -405,11 +403,12 @@ def add_skin_input_mapper_json(new_skin_input: New_Skin_Input) -> Func_Result:
     mapper_dict = json.loads(new_skin_input.mapper_json) # type: ignore
     values_dict = mapper_dict['ValuesMap']
     with connect_db() as conn:
-        for i in range(len(new_skin_input.input_values[new_skin_input.input_names[0]])): # type: ignore
+        first_key = list(new_skin_input.inputs.keys())[0]
+        for i in range(len(new_skin_input.inputs[first_key]['values'])): # type: ignore
             name = mapper_dict['NameFormatter']
-            for input_name in new_skin_input.input_names: # type: ignore
+            for input_name in new_skin_input.inputs:
                 replace_str = '{' + input_name + '}'
-                value = new_skin_input.input_values[input_name][i].strip()
+                value = new_skin_input.inputs[input_name]['values'][i].strip() # type: ignore
                 value_name = values_dict[value]
                 name = name.replace(replace_str, value_name)
             added_skin = add_skin(conn, name, new_skin_input, i)
@@ -419,12 +418,15 @@ def add_skin_input_mapper_json(new_skin_input: New_Skin_Input) -> Func_Result:
     return Func_Result(True, {'success': True})
 
 def create_new_skin_input(new_skin_input: New_Skin_Input) -> Func_Result:
-    input_names = []
-    for key in new_skin_input.input_values.keys():
-        input_names.append(key)
-        new_skin_input.input_values[key] = new_skin_input.input_values[key].split(',') # type: ignore
-    new_skin_input.input_names = input_names
-    if new_skin_input.names:
-        return add_skin_input_name_list(new_skin_input)
-    else:
-        return add_skin_input_mapper_json(new_skin_input)
+    input_names = list(new_skin_input.inputs.keys())
+    if len(input_names) > 0:
+        input_id_names = db_get_skin_input_list(input_names)
+        if not input_id_names.success:
+            return Func_Result(False, input_id_names.result)
+        input_id_names = {input_id_name[1]: input_id_name[0] for input_id_name in input_id_names.result}
+        new_skin_input.inputs = {input_name: {'values': new_skin_input.inputs[input_name].split(','), "id": input_id_names[input_name]} for input_name in input_names} # type: ignore
+        if new_skin_input.names:
+            return add_skin_input_name_list(new_skin_input)
+        else:
+            return add_skin_input_mapper_json(new_skin_input)
+    return Func_Result(False, {'error': 'No inputs found'})

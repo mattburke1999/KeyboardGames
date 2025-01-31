@@ -57,11 +57,10 @@ class New_Skin:
 @dataclass
 class New_Skin_Input:
     type_id: int
-    input_values: dict[str, str|list[str]]
+    inputs: dict[str, str|dict[str, list[str]|int]]
     points: int  
     names: str | None = None
     mapper_json: str | None = None  
-    input_names: list[str] | None = None
     
 @dataclass
 class Create_Skin_Page:

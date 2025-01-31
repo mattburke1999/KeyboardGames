@@ -17,6 +17,7 @@ from services import check_login
 from services import check_admin
 from services import create_skin_page
 from services import create_new_skin
+from services import create_new_skin_input
 from functools import wraps
 from typing import Callable
 from models import New_User
@@ -162,4 +163,5 @@ def create_new_skin_view(new_skin: New_Skin):
 
 # endpoint
 def create_skin_inputs_view(new_skin_input: New_Skin_Input):
-    return json_result(Func_Result(True, {'success': True}))
+    result = create_new_skin_input(new_skin_input)
+    return json_result(result)

@@ -191,7 +191,17 @@ def get_skin_inputs() -> Func_Result:
     except:
         traceback.print_exc()
         return Func_Result(False, None)
-    
+
+def get_skin_input_list(input_names: list[str]) -> Func_Result:
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"select id, name from skin_inputs where name in({', '.join(['%s'] * len(input_names))})", input_names)
+                return Func_Result(True, cur.fetchall())
+    except:
+        traceback.print_exc()
+        return Func_Result(False, None)
+
 def get_skin_type_with_inputs() -> Func_Result:
     try:
         with connect_db() as conn:
