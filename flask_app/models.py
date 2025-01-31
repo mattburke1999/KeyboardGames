@@ -9,7 +9,7 @@ class New_User:
     password: str
     
 @dataclass
-class DB_Result:
+class Func_Result:
     success: bool
     result: any # type: ignore
         
@@ -57,9 +57,11 @@ class New_Skin:
 @dataclass
 class New_Skin_Input:
     type_id: int
-    inputs: dict[str, str]
-    mapper_json: str | None = None    
-    name: str | None = None
+    input_values: dict[str, str|list[str]]
+    points: int  
+    names: str | None = None
+    mapper_json: str | None = None  
+    input_names: list[str] | None = None
     
 @dataclass
 class Create_Skin_Page:

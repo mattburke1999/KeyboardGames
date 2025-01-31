@@ -139,5 +139,5 @@ def create_skin_inputs():
         abort(403)
     data = request.get_json()
     # formData: {skinTypeId, skinName, mapperJson, inputs}
-    new_skin_input = New_Skin_Input(data['skinTypeId'], data['inputs'], data['skinName'], data['mapperJson'])
+    new_skin_input = New_Skin_Input(data['skinTypeId'], data['inputs'], data['points'], data.get('skinName', None), data.get('mapperJson',  None))
     return create_skin_inputs_view(new_skin_input)

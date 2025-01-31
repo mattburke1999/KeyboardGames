@@ -25,6 +25,7 @@ from models import New_Skin
 from models import New_Skin_Input
 from models import Game_Data
 from models import Game_Page
+from models import Func_Result
 
 def admin_page(f: Callable):
     @wraps(f)
@@ -38,7 +39,7 @@ def admin_endpoint(f: Callable):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_admin():
-            return json_result((False, {'is_admin': False, 'message': 'You must be an admin to access this page.'}))
+            return json_result(Func_Result(False, {'is_admin': False, 'message': 'You must be an admin to access this page.'}))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -54,32 +55,31 @@ def login_required_endpoint(f: Callable):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not check_login():
-            return json_result((False, {'logged_in': False, 'message': 'You must be logged in to access this page.'}))
+            return json_result(Func_Result(False, {'logged_in': False, 'message': 'You must be logged in to access this page.'}))
         return f(*args, **kwargs)
     return decorated_function
 
-def json_result(result: tuple[bool, any]): # type: ignore
-    if result[0]:
-        return (jsonify(result[1]), 200) 
+def json_result(result: Func_Result):
+    if result.success:
+        return (jsonify(result.result), 200) 
     else:
-        if result[1] and 'logged_in' in result[1] and not result[1]['logged_in']:
-            return (jsonify(result[1]), 401)
-        return (jsonify(result[1]), 500)
+        if result.result and 'logged_in' in result.result and not result.result['logged_in']:
+            return (jsonify(result.result), 401)
+        return (jsonify(result.result), 500)
 
 # page
 def home_view():
-    home_page_result = get_home_page_data()
-    if not home_page_result[0] or not home_page_result[1]:
+    home_page = get_home_page_data()
+    if not home_page.success or not home_page.result:
         return render_template('505.html'), 505
-    home_page = home_page_result[1]
-    return render_template('index.html', home_page=home_page)
+    return render_template('index.html', home_page=home_page.result)
 
 # page
 def game_view(game: str):
-    game_info_result = get_game_info(game)
-    if not game_info_result[0] and type(game_info_result[1]) == dict:
-        return render_template(f"{game_info_result[1]['type']}.html", message=game_info_result[1]['message']), game_info_result[1]['type']
-    game_page = game_info_result[1]
+    game_info = get_game_info(game)
+    if not game_info.success and type(game_info.result) == dict:
+        return render_template(f"{game_info.result['type']}.html", message=game_info.result['message']), game_info.result['type']
+    game_page = game_info.result
     if game_page.game_info.basic_circle_template: # type: ignore
         return basic_circle_template(game, game_page) # type: ignore
     return render_template(f'{game}.html', game_page=game_page)
@@ -129,15 +129,14 @@ def score_update_view(game_id: int, client_ip: str|None, client_game_data: Game_
 
 # page
 def skins_view():
-    skins_page_result = get_all_skins()
-    if not skins_page_result[0]:
+    skins_page = get_all_skins()
+    if not skins_page.success:
         return render_template('505.html'), 505
-    skins_page = skins_page_result[1]
-    return render_template('skins.html', skins_page=skins_page)
+    return render_template('skins.html', skins_page=skins_page.result)
 
 # endpoint
 def get_skin_view(page: str, skin: Skin):
-    return json_result((True, {'html': render_template('skin_macros/skin_render.html', page=page, skin=skin)}))
+    return json_result(Func_Result(True, {'html': render_template('skin_macros/skin_render.html', page=page, skin=skin)}))
 
 # endpoint
 def set_user_skin_view(skin_id: int):
@@ -151,10 +150,10 @@ def purchase_skin_view(skin_id: int):
 
 # page 
 def create_skin_view():
-    skin_page_result = create_skin_page()
-    if not skin_page_result[0]:
+    create_skin = create_skin_page()
+    if not create_skin.success:
         return render_template('505.html'), 505
-    return render_template('create_skin.html', new_skin_page = skin_page_result[1])
+    return render_template('create_skin.html', new_skin_page = create_skin.result)
 
 # endpoint
 def create_new_skin_view(new_skin: New_Skin):
@@ -163,4 +162,4 @@ def create_new_skin_view(new_skin: New_Skin):
 
 # endpoint
 def create_skin_inputs_view(new_skin_input: New_Skin_Input):
-    return json_result((True, {'success': True}))
+    return json_result(Func_Result(True, {'success': True}))
