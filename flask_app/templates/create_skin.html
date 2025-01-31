@@ -249,7 +249,11 @@
                 <div class='input-section' style='display: none;'>
                     <div class='input-container'>
                         <label for='skin-name'>Name:</label>
-                        <input type='text' id='skin-name' required/>
+                        <input type='text' id='skin-name'/>
+                    </div>
+                    <div class='input-container'>
+                        <label for='points'>Points:</label>
+                        <input type='text' id='points' required/>
                     </div>
                     <fieldset id='value-fieldset' style='display: none; width: fit-content;'>
                     </fieldset>
@@ -268,6 +272,7 @@
                             <legend>Mapper JSON:</legend>
                             <textarea id='mapper-json' name='mapper_json'></textarea>
                         </fieldset>
+                    </div>
                     <button onclick="addInputs()">Add Inputs</button>
                 </div>
             </div>
@@ -341,8 +346,8 @@
 
         function getCreateSkinFormDataAndValidate() {
             let invalid = false;
-            const skinType = $('#skin-type').val(); // required attribute prevents empty value
-            const skinHtml = $('#skin-html').val(); // required attribute
+            const skinType = $('#skin-type').val(); 
+            const skinHtml = $('#skin-html').val(); 
             const inputs = [];
             const newInputs = [];
             if ($('#no-inputs').css('display') === 'none') {
@@ -516,6 +521,7 @@
             // for now just get the data, we will add validation later
             const skinTypeId = $('#add-skin-inputs select').val();
             const skinName = $('#skin-name').val();
+            const points = $('#points').val();
             let mapperJson; 
             if (!skinName) {
                 const mapperJSON = $('#mapper-json').val();
@@ -533,7 +539,7 @@
                 const inputVal = $(this).find('input').val();
                 inputs[inputName] = inputVal;
             });
-            return { formData: {skinTypeId, skinName, mapperJson: JSON.stringify(mapperJson), inputs}, invalid: false };
+            return { formData: {skinTypeId, skinName, mapperJson: JSON.stringify(mapperJson), points, inputs}, invalid: false };
         }
 
         function addInputs() {
