@@ -25,7 +25,7 @@ from views import admin_page
 from views import admin_endpoint
 from models import New_User
 from models import Skin
-from models import New_Skin
+from models import New_Skin_Type
 from models import New_Skin_Input
 from models import Game_Data
 
@@ -129,7 +129,7 @@ def create_new_skin():
         abort(403)
     data = request.get_json()
     inputs = [int(x) for x in data['inputs']]
-    new_skin = New_Skin(data['skinType'], data['skinHtml'], inputs, data['newInputs'])
+    new_skin = New_Skin_Type(data['skinType'], inputs, data['newInputs'], data['skinHtml'])
     return create_new_skin_view(new_skin)
 
 @app.route('/create_skin_inputs', methods=['POST'])

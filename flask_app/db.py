@@ -4,7 +4,7 @@ import traceback
 import bcrypt
 from models import New_User
 from models import Func_Result
-from models import New_Skin
+from models import New_Skin_Type
 
 DATABASE_URL = None
 
@@ -241,7 +241,7 @@ def new_skin_input(conn: pg.extensions.connection, name: str) -> Func_Result:
         traceback.print_exc()
         return Func_Result(False, None)
     
-def create_skin(conn: pg.extensions.connection, new_skin: New_Skin) -> Func_Result:
+def create_skin_type(conn: pg.extensions.connection, new_skin: New_Skin_Type) -> Func_Result:
     try:
         with conn.cursor() as cur:
             cur.execute('insert into skin_types (name) values (%s) returning id', (new_skin.type,))

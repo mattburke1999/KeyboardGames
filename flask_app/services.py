@@ -26,13 +26,13 @@ from db import purchase_skin as db_purchase_skin
 from db import get_skin_inputs as db_get_skin_inputs
 from db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
 from db import new_skin_input as db_new_skin_input
-from db import create_skin as db_create_skin
+from db import create_skin_type as db_create_skin_type
 from db import get_skin_type_with_inputs as db_get_skin_type_with_inputs
 from models import Skin_Input
 from models import Skin_Type_With_Inputs
 from models import Create_Skin_Page
 from db import check_skin_type_exists as db_check_skin_type_exists
-from models import New_Skin
+from models import New_Skin_Type
 from db import get_skin_input_list as db_get_skin_input_list
 from db import new_skin as db_new_skin
 from db import new_skin_values as db_new_skin_values
@@ -299,7 +299,7 @@ def create_skin_page() -> Func_Result:
         return Func_Result(False, skin_inputs.result)
     return Func_Result(True, Create_Skin_Page(skin_inputs.result, skin_types.result))
 
-def add_new_skin_inputs(conn, new_skin: New_Skin) -> Func_Result:
+def add_new_skin_inputs(conn, new_skin: New_Skin_Type) -> Func_Result:
     for new_input in new_skin.new_inputs:
         input_id = db_get_skin_input_id_by_name(new_input)
         if not input_id.success:
@@ -314,17 +314,17 @@ def add_new_skin_inputs(conn, new_skin: New_Skin) -> Func_Result:
             new_skin.inputs.append(new_input_result.result)
     return Func_Result(True, {'success': True})
 
-def add_new_skin_html(new_skin: New_Skin) -> Func_Result:
+def add_new_skin_html(new_skin: New_Skin_Type) -> Func_Result:
     # later we will add some validation checking:
     # - if new_skin.inputs is empty, then skin.data is not in the html
     # - if new_skin.inputs is not empty, then find all skin.data.{input} and make sure any in html are in new_skin.inputs
     macro_name = new_skin.type.replace('-', '_')
     skin_html = "{% macro " + macro_name + "(page, skin) %}\n"
-    skin_html += "\t" + new_skin.html + "\n"
+    skin_html += "\t" + new_skin.html + "\n" # type: ignore
     skin_html += "{% endmacro %}"
     # add to /templates/skin_macros/{macro_name}.html
     try:
-        with open(f'flask_app/templates/skin_macros/{macro_name}.html', 'w') as f:
+        with open(f'flask_app/templates/skin_macros/skins/{macro_name}.html', 'w') as f:
             f.write(skin_html)
         return add_new_html_to_mapper(new_skin.type, macro_name)
     except:
@@ -343,7 +343,7 @@ def add_new_html_to_mapper(type, macro_name) -> Func_Result:
             return Func_Result(False, {'error': 'Error parsing skin mapper'})
         skin_mapper_pre = skin_mapper[:end_if]
         new_macro_mapper = "{% elif skin.type == '" + type + "' %}\n"
-        new_macro_mapper += "\t\t{% from 'skin_macros/" + macro_name + ".html' import " + macro_name + " %}\n"
+        new_macro_mapper += "\t\t{% from 'skin_macros/skins/" + macro_name + ".html' import " + macro_name + " %}\n"
         new_macro_mapper += "\t\t{{ " + macro_name + "(page, skin) }}\n"
         new_skin_mapper = skin_mapper_pre + new_macro_mapper + "    " + skin_mapper[end_if:]
         try:
@@ -354,7 +354,7 @@ def add_new_html_to_mapper(type, macro_name) -> Func_Result:
             return Func_Result(False, {'error': 'Error writing skin mapper'})
     return Func_Result(True, {'success': True})
     
-def create_new_skin(new_skin: New_Skin) -> Func_Result:
+def create_new_skin_type(new_skin: New_Skin_Type) -> Func_Result:
     skin_type_exists = db_check_skin_type_exists(new_skin.type)
     if not skin_type_exists.success:
         return Func_Result(False, skin_type_exists.result)
@@ -365,13 +365,14 @@ def create_new_skin(new_skin: New_Skin) -> Func_Result:
             add_skin_inputs = add_new_skin_inputs(conn, new_skin)
             if not add_skin_inputs.success:
                 return add_skin_inputs
-        create_skin_result = db_create_skin(conn, new_skin)
+        create_skin_result = db_create_skin_type(conn, new_skin)
         if not create_skin_result.success:
             conn.rollback()
             return Func_Result(False, create_skin_result.result)
-    add_html = add_new_skin_html(new_skin)
-    if not add_html.success:
-        return add_html
+    if new_skin.html:
+        add_html = add_new_skin_html(new_skin)
+        if not add_html.success:
+            return add_html
     return Func_Result(True, {'success': True})
 
 def add_skin(conn: pg.extensions.connection, name: str, new_skin_input: New_Skin_Input, i: int) -> Func_Result:

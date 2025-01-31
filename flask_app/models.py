@@ -48,11 +48,11 @@ class Skins_Page:
     skins: list[Skin]
     
 @dataclass
-class New_Skin:
+class New_Skin_Type:
     type: str
-    html: str
     inputs: list[int]
     new_inputs: list[str]
+    html: str | None = None
 
 @dataclass
 class New_Skin_Input:

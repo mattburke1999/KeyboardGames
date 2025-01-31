@@ -16,13 +16,13 @@ from services import purchase_skin
 from services import check_login
 from services import check_admin
 from services import create_skin_page
-from services import create_new_skin
+from services import create_new_skin_type
 from services import create_new_skin_input
 from functools import wraps
 from typing import Callable
 from models import New_User
 from models import Skin
-from models import New_Skin
+from models import New_Skin_Type
 from models import New_Skin_Input
 from models import Game_Data
 from models import Game_Page
@@ -157,8 +157,8 @@ def create_skin_view():
     return render_template('create_skin.html', new_skin_page = create_skin.result)
 
 # endpoint
-def create_new_skin_view(new_skin: New_Skin):
-    result = create_new_skin(new_skin)
+def create_new_skin_view(new_skin: New_Skin_Type):
+    result = create_new_skin_type(new_skin)
     return json_result(result)
 
 # endpoint
