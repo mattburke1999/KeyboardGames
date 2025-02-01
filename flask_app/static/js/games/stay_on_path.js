@@ -20,13 +20,11 @@ function gameStarter() {
         intervalFunction: {
             function: clone_circle,
             inputs: {timeout: 3500, extra_actions: null},
-        },
-        interval: 750
+            interval: 750
+        }
     });
 }
 
-function clone_circle() {
-}
 // available circle positions are anything that lie on the center vertical axis
 // or the horizontal axis of the screen
 const screenWidth = window.innerWidth;
@@ -39,7 +37,7 @@ for (let i = 0; i < screenHeight; i++) {
     availablePositions.push({x: screenWidth / 2 - 25, y: i, axis: 'y'});
 }
 
-function clone_circle({timeout, extra_actions}) {
+function clone_circle({timeout, _}) {
     const $circleTemplate = $('#circle-template');
     const $circle = $circleTemplate.clone(true);
     $circle.attr('id', '');

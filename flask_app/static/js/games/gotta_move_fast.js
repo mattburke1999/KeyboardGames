@@ -21,8 +21,8 @@ function gameStarter() {
         intervalFunction: {
             function: display_circles,
             inputs: {},
-        },
-        interval: 890
+            interval: 890
+        }
     });
 }
 

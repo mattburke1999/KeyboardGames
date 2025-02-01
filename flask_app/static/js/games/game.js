@@ -345,7 +345,7 @@ async function addPointToServer() {
     game_socket.send(message);
 }
 
-function dotEnteredCircle($circle) {
+function dotEnteredCircle($circle, extra_actions) {
     console.log('Dot entered this circle!');
     if ($circle.data('pointAdded') === 'true') {
         return;
@@ -358,7 +358,7 @@ function dotEnteredCircle($circle) {
     $('#score').text(currentScore + 1);
     $('#final-score').text(currentScore + 1);
     // Perform a specific action for this circle
-    circleDone($circle, true);
+    circleDone($circle, true, extra_actions);
 }
 
 function resetPointListInDB() {
@@ -416,7 +416,7 @@ async function startGameServer(session_jwt) {
     game_socket.send(message);
 }
 
-function startGame({intervalFunction, interval}) {
+function startGame({intervalFunction}) {
     console.log('Starting game!');
     let countDown = 3;
     $('#instructions').css('display', 'none');
@@ -431,9 +431,11 @@ function startGame({intervalFunction, interval}) {
             $('#starting').css('display', 'none');
             $('#score-card').css('display', 'flex');
             intervalFunction.function(intervalFunction.inputs);
-            circleInterval = setInterval(function() {
-                intervalFunction.function(intervalFunction.inputs);
-            }, interval);
+            if (intervalFunction.interval) {
+                circleInterval = setInterval(function() {
+                    intervalFunction.function(intervalFunction.inputs);
+                }, intervalFunction.interval);
+            }
             startTimer();
             const session_jwt = await getSessionJWT();
             if (loggedIn && enteredGameRoom && session_jwt) {
@@ -471,7 +473,7 @@ function checkDotInsideCircle(event, $circle) {
 
 function endGameSocketListener(response) {
     console.log('Game ended from server');
-    clearInterval(circleInterval);
+    if (circleInterval) { clearInterval(circleInterval); }
     $('#dot').css('display', 'none');
     clearCircles();
     $('#timer').css('display', 'none');
@@ -575,7 +577,7 @@ async function setHighScoreServer(end_game_token) {
 }
 
 function finishGame() {
-    clearInterval(circleInterval);
+    if (circleInterval) { clearInterval(circleInterval); }
     $('#dot').css('display', 'none');
     clearCircles();
     $('#timer').css('display', 'none');
@@ -604,7 +606,7 @@ function circleDone($circle, hit) {
     }, 500);
 }
 
-function clone_circle({timeout, extra_actions}) {
+function clone_circle_base() {
     const $circleTemplate = $('#circle-template');
     const $circle = $circleTemplate.clone(true);
     $circle.attr('id', '');
@@ -616,7 +618,11 @@ function clone_circle({timeout, extra_actions}) {
     $circle.data('pointAdded', 'false');
     $circle.data('done', 'false');
     $circle.appendTo('body');
+    return $circle;
+}
 
+function clone_circle({timeout, extra_actions}) {
+    $circle = clone_circle_base();
     if (extra_actions) {
         extra_actions($circle);
     }

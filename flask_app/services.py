@@ -148,7 +148,13 @@ def get_user_skin() -> Func_Result:
     user_skin = db_get_user_skin(user_id)
     if not user_skin.success:
         return Func_Result(False, user_skin.result)
-    return Func_Result(True, Skin(user_skin.result[0], user_skin.result[1], user_skin.result[1]))
+    return Func_Result(True, Skin(user_skin.result[0], user_skin.result[1], user_skin.result[2]))
+
+def get_default_skin() -> Func_Result:
+    default_skin = db_get_default_skin()
+    if not default_skin.success:
+        return Func_Result(False, default_skin.result)
+    return Func_Result(True, Skin(default_skin.result[0], default_skin.result[1], default_skin.result[2]))
 
 def get_game_info(game: str) -> Func_Result:
     global GAME_INFO
@@ -162,7 +168,7 @@ def get_game_info(game: str) -> Func_Result:
     if check_login():
         user_skin = get_user_skin()
     if not user_skin.success or not user_skin.result:
-        default_skin = db_get_default_skin()
+        default_skin = get_default_skin()
         if not default_skin.success:
             return Func_Result(False, {'error': default_skin.result, 'message': 'Unable to load game', 'type': 500})
         user_skin.result = default_skin.result

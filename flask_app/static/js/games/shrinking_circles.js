@@ -6,8 +6,8 @@ function gameStarter() {
         intervalFunction: {
             function: clone_circle,
             inputs: {timeout: 7000, extra_actions: shrinkCircle},
-        },
-        interval: 1000
+            interval: 1000
+        }
     });
 }
 

@@ -5,8 +5,8 @@ function gameStarter() {
         intervalFunction: {
             function: clone_circle,
             inputs: {timeout: 8000, extra_actions: moveCircle},
-        },
-        interval: 1500
+            interval: 1500
+        }
     });
 }
 
@@ -14,9 +14,9 @@ function animationFunc ($circle, xMovement, yMovement) {
     if ($circle.data('done') === 'true') {
         return;
     }
-        let circleRect = $circle.get(0).getBoundingClientRect();
-        let currentX = circleRect.left;
-        let currentY = circleRect.top;
+        const circleRect = $circle.get(0).getBoundingClientRect();
+        const currentX = circleRect.left;
+        const currentY = circleRect.top;
         let newX = currentX + xMovement;
         let newY = currentY + yMovement - 20;
         if (newX < 0) {
@@ -37,13 +37,14 @@ function animationFunc ($circle, xMovement, yMovement) {
             animationFunc($circle, xMovement, yMovement);
         });
 }
+const speed = 2.75; 
 function moveCircle($circle) {
-    let radians = Math.random() * 2 * Math.PI;
-    let speed = 2.75; 
+    const radians = Math.random() * 2 * Math.PI;
+
 
     // Calculate movement per frame
-    let xMovement = Math.cos(radians) * speed;
-    let yMovement = Math.sin(radians) * speed;
+    const xMovement = Math.cos(radians) * speed;
+    const yMovement = Math.sin(radians) * speed;
 
     // Start animation
     let animationFrame = window.requestAnimationFrame(() => {
@@ -53,7 +54,7 @@ function moveCircle($circle) {
     //log all cirlce data
 }
 function getCurrentCirclePosition($circle) {
-    let circleRect = $circle.get(0).getBoundingClientRect();
+    const circleRect = $circle.get(0).getBoundingClientRect();
     return {
         x: circleRect.left,
         y: circleRect.top
