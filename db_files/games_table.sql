@@ -13,48 +13,48 @@ CREATE TABLE IF NOT EXISTS games
     last_updated_time timestamp without time zone DEFAULT now()
 );
 
-create table skin_types (
+create table skins.types (
 	id serial primary key,
 	name character varying not null
 );
 
-create table skin_inputs (
+create table skins.inputs (
 	id serial primary key,
 	name character varying not null
 );
 
-create table skin_type_inputs (
+create table skins.type_inputs (
 	id serial primary key,
 	type_id int not null,
 	input_id int not null,
-	foreign key (type_id) references skin_types(id)
+	foreign key (type_id) references skins.types(id)
 	on update cascade
 	on delete cascade,
-	foreign key (input_id) references skin_inputs(id)
+	foreign key (input_id) references skins.inputs(id)
 	on update cascade
 	on delete cascade
 );
 
-CREATE TABLE IF NOT EXISTS skins
+CREATE TABLE skins.core
 (
     id serial primary key,
     type_id int not null,
     name character varying COLLATE pg_catalog."default" NOT NULL,
     points integer NOT NULL,
-	foreign key (type_id) references skin_types(id)
+	foreign key (type_id) references skins.types(id)
 	on update cascade
 	on delete cascade
 );
 
-create table skin_input_values (
+create table skins.input_values (
 	id serial primary key,
 	skin_id int not null,
 	input_id int not null,
 	value character varying not null,
-	foreign key (skin_id) references skins(id)
+	foreign key (skin_id) references skins.core(id)
 	on update cascade
 	on delete cascade,
-	foreign key (input_id) references skin_inputs(id)
+	foreign key (input_id) references skins.inputs(id)
 	on update cascade
 	on delete cascade
 );
@@ -108,7 +108,7 @@ create table point_updates (
     update_time timestamp without time zone NOT NULL DEFAULT now(),
     foreign key (account_id) references accounts(id)
     on update cascade on delete cascade,
-	foreign key (skin_id) references skins(id)
+	foreign key (skin_id) references skins.core(id)
 	on update cascade on delete set null,
 	foreign key (score_update_id) references score_updates(id)
 	on update cascade on delete set null
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS public.user_skins
 (
     id serial primary key,
     account_id integer NOT NULL REFERENCES accounts (id),
-    skin_id integer NOT NULL REFERENCES skins (id),
+    skin_id integer NOT NULL REFERENCES skins.core(id),
     purchase_date timestamp without time zone NOT NULL DEFAULT now()
 );
 
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS public.user_skins
 
 --- VIEWS
 
-create view skins_view as
+create view skins.skins_view as
 select s.id, s.name, s.points, t.name type, jsonb_object_agg(i.name, sv.value) AS data
 from skins s
 join skin_types t on s.type_id = t.id
@@ -272,13 +272,15 @@ BEGIN
 END;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION purchase_skin(_account_id int, _skin_id int)
-RETURNS void AS $$
+CREATE OR REPLACE FUNCTION skins.purchase_skin(_account_id int, _skin_id int)
+RETURNS void
+LANGUAGE 'plpgsql'
+as $$
 declare 
 _skin_points int;
 _purchaseable bool;
 BEGIN
-    select points into _skin_points from skins where id = _skin_id;
+    select points into _skin_points from skins.core where id = _skin_id;
 	select _skin_points is not null and points >= _skin points into _purchaseable;
 
 	if purchaseable then
@@ -290,3 +292,4 @@ BEGIN
         insert into user_skins (account_id, skin_id) values (_account_id, _skin_id);
 	end if;
 END;
+$$
