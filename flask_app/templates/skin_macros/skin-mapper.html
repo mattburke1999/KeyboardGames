@@ -21,5 +21,8 @@
     {% elif skin.type == 'simple-face' %}
         {% from 'skin_macros/skins/simple-face.html' import simple_face %}
         {{ simple_face(page, skin) }}
+    {% elif skin.type == 'one-eye-face' %}
+        {% from 'skin_macros/skins/one-eye-face.html' import one_eye_face %}
+        {{ one_eye_face(page, skin) }}
     {% endif %}
 {% endmacro %}
