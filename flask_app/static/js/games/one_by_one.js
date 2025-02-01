@@ -12,12 +12,8 @@ function gameStarter() {
 const defaultMovement = 100;
 function showCircle() {
     $circle = clone_circle_base();
-    // $circle.css('left', '1000px');
-    // $circle.css('top', '1000px');
     movementInterval = setInterval(function() {
         const circleRect = $circle.get(0).getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const windowWidth = window.innerWidth;
         const bottom = window.innerHeight - circleRect.top > 0 ? window.innerHeight - circleRect.top : 0;
         const right = window.innerWidth - circleRect.left > 0 ? window.innerWidth - circleRect.left : 0;
         const maxMovements = {
@@ -27,15 +23,26 @@ function showCircle() {
             'left': defaultMovement > right ? right : defaultMovement
         }
         // x can move [-right, left]
-        const movementX = Math.random() * (maxMovements['left'] + maxMovements['right']) - maxMovements['right'] + 20;
+        const movementX = Math.random() * (maxMovements['left'] + maxMovements['right']) - maxMovements['right'];
         // y can move [-down, up]
-        const movementY = Math.random() * (maxMovements['up'] + maxMovements['down']) - maxMovements['down'] + 20; // -50, 10
+        const movementY = Math.random() * (maxMovements['up'] + maxMovements['down']) - maxMovements['down']; // -50, 10
         const currentX = circleRect.left;
+        let newX = currentX - movementX;
+        if (newX < 10) {
+            newX = 10;
+        } else if (newX > window.innerWidth - 10) {
+            newX = window.innerWidth - 10;
+        }
         const currentY = circleRect.top;
-        // debugger;
-        $circle.css('left', `${currentX - movementX}px`);
-        $circle.css('top', `${currentY - movementY}px`);
-    }, 650);
+        let newY = currentY - movementY;
+        if (newY < 10) {
+            newY = 10;
+        } else if (newY > window.innerHeight - 10) {
+            newY = window.innerHeight - 10;
+        }
+        $circle.css('left', `${newX}px`);
+        $circle.css('top', `${newY - 20}px`);
+    }, 750);
 
     document.addEventListener('keydown', function(event) {
         event.stopPropagation();
