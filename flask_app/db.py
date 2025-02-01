@@ -166,7 +166,7 @@ def purchase_skin(user_id: int, skin_id: int) -> Func_Result:
     try:
         with connect_db() as conn:
             with conn.cursor() as cur:
-                cur.execute('select purchase_skin(%s, %s)', (user_id, skin_id,))
+                cur.execute('select skins.purchase_skin(%s, %s)', (user_id, skin_id,))
                 return Func_Result(True, None)
     except:
         traceback.print_exc()
