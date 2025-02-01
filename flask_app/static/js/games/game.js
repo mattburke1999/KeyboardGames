@@ -437,15 +437,17 @@ function startGame({intervalFunction}) {
                 }, intervalFunction.interval);
             }
             startTimer();
-            const session_jwt = await getSessionJWT();
-            if (loggedIn && enteredGameRoom && session_jwt) {
-                console.log(`UserId starting game`);
-                startGameServer(session_jwt);
-            } else {
-                console.log('Starting game without server');
-                enteredGameRoom = false;
-                loggedIn = false;
+            if (loggedIn && enteredGameRoom) {
+                const session_jwt = await getSessionJWT();
+                if(session_jwt) {
+                    console.log(`UserId starting game`);
+                    startGameServer(session_jwt);
+                    return;
+                }
             }
+            console.log('Starting game without server');
+            enteredGameRoom = false;
+            loggedIn = false;
         }
     }, 1000);
 }
