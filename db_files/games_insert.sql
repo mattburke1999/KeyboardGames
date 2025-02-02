@@ -7,4 +7,5 @@ values
 ('Shrinking Circles', 'double-circle open', '#84dcff', '#b06ffa', '#4a69f7', 115, 'shrinking_circles', True),
 ('Moving Circles', 'triangle open', '#f7a3ff','#fff435', '#006eff', 80, 'moving_circles', True),
 ('Stay On The Path', '+', '#00bcd4', '#ffeb3b', '#9c27b0', 160, 'stay_on_path', True),
-('One By One', '~', '#1a3dff', '#73cfa8', '#6a00d4', 30, 'one_by_one', True);
+('One By One', '''~''', '#1a3dff', '#73cfa8', '#6a00d4', 30, 'one_by_one', True),
+('Shaky Dot', '''~''', '#1a3dff', '#73cfa8', '#6a00d4', 30, 'shaky_dot', True);

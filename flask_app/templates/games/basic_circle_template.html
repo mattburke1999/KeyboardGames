@@ -1,4 +1,4 @@
-{% extends 'game_template.html' %}
+{% extends '/games/game_template.html' %}
 {% block title %}{{ game_page.game_info.title }}{% endblock %}
 {% block script %}
     <script src="{{ url_for('static', filename='js/games/' + game + '.js') }}" defer></script>
