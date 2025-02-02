@@ -1,0 +1,90 @@
+{% from 'skin_macros/skin-mapper.html' import render_skin %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Games - {% block title %}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ceviche+One&family=Fugaz+One&family=Itim&family=Monoton&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Special+Elite&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/games/game.js') }}" defer></script>
+    {% block script %}{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/games.css') }}">
+    {% block style %}{% endblock %}
+</head>
+<body>
+    <input type="hidden" id='start_game_token' value='' />
+    <input type="hidden" id='end_game_token' value='' />
+    <a class='home-btn' href="{{ url_for('home') }}"><button>Home</button></a>
+    {{ render_skin('game', game_page.user_skin) }}
+    <div id="instructions">
+        <h1 class='game-title'>{% block game_title %}{% endblock %}</h1>
+        <h2>Instructions</h2>
+        {% block instructions %}
+            <ol>
+                <li>
+                    Press arrow keys or WASD to move the dot.
+                </li>
+                <li>
+                    Try to move the dot into the circles after they appear.
+                </li>
+                <li>
+                    When the dot is inside a circle, press 'space' to capture the circle.
+                </li>
+                <li>
+                    Try to capture as many circles as possible before the timer runs out.
+                </li>
+            </ol>
+        {% endblock %}
+        <button id='start-game-btn' onclick="gameStarter()">Start Game</button>
+    </div>
+    <div id="starting">
+        <h1>Starting in </h1>
+        <div id='startCount'>3</div>
+    </div>
+    <div id="timer">
+        <h1>Timer</h1>
+        <p id="time">0</p>
+        <div id="score-card">
+            <h1>Score</h1>
+            <p id="score">0</p>
+        </div>
+    </div>
+    <div id="game-over">
+        <h1>Game Over</h1>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <div class='high-score' id="high-score-offline">
+            <h2>High Scores</h2>
+            <ol></ol>
+        </div>
+        {% if game_page.logged_in %}
+            <p class='score-ranking'>Rank: <span id='score-rank'></span></p>
+            <p class='score-ranking'>Points Awarded: <span id='score-points'></span></p>
+            <div class='high-score' id="high-score-online">
+                <h2>All High Scores</h2>
+                <ol id='top10'></ol>
+                <div class='line-break'></div>
+                <h2>Personal High Scores</h2>
+                <ol id='top3'></ol>
+            </div>
+        {% endif %}
+        <button id="restart">Restart</button>
+    </div>
+    <div id='loading-screen'>
+        <h1>
+            Loading
+            <span class='loading-dot' id='loading-dot1'>.</span>
+            <span class='loading-dot' id='loading-dot2'>.</span>
+            <span class='loading-dot' id='loading-dot3'>.</span>
+        </h1>
+    </div>
+    {% block game_content %}{% endblock %}
+</body>
+<script>
+    const gameId = {{ game_page.game_info.id }};
+    const GAME_DURATION = {{ game_page.game_info.duration }};
+    const IP = '{{ game_page.ip }}';
+</script>
+</html>

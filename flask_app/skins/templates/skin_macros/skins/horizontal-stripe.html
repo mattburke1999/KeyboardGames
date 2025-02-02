@@ -1,0 +1,12 @@
+{% macro horizontal_stripe(page, skin) %}
+    <div
+        {% if page == 'game' %}         
+            id='dot'
+        {% else %}
+            class='dot{{ " user-skin" if skin.user_skin else ""}}'
+        {% endif %}
+        style='background-color: {{ skin.data.main }}; position: relative;'
+    >
+        <div style='background-color: {{ skin.data.stripe }}; position: absolute; top: 34%; left: 0; width: 100%; height: 33%;'></div>
+    </div>
+{% endmacro %}
