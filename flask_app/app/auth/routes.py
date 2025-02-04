@@ -15,7 +15,7 @@ from app.auth.views import not_admin_view
 from app.auth.views import auth_view
 from app.views import json_result
 
-bp = Blueprint('auth', __name__, url_prefix='/auth')
+bp = Blueprint('auth', __name__, url_prefix='/auth', template_folder='templates', static_folder='static')
 
 def admin_page(f: Callable):
     @wraps(f)

@@ -1,5 +1,5 @@
 function logout() {
-    window.location.href = '/logout';
+    window.location.href = '/auth/logout';
 }
 
 function handleError(response) {
@@ -11,7 +11,7 @@ function handleError(response) {
 function get_profile() {
     if($('#profile-username').text() === '') {
         $.ajax({
-            url: '/profile',
+            url: '/auth/profile',
             type: 'GET',
             success: function(response) {
                 console.log(response);

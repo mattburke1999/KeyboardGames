@@ -13,7 +13,7 @@ from app.skins.services import create_skin_page
 from app.skins.services import create_new_skin_type as create_new_skin_type_s
 from app.skins.services import create_new_skin_input
 
-bp = Blueprint('skins', __name__, url_prefix='/skins')
+bp = Blueprint('skins', __name__, url_prefix='/skins', template_folder='templates', static_folder='static')
 
 @bp.route('/', methods=['GET'])
 #@login_required_page

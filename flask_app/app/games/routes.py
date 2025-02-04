@@ -6,7 +6,7 @@ from app.games.services import score_update as score_update_s
 from app.games.views import game_view
 from app.views import json_result
 
-bp = Blueprint('games', __name__, url_prefix='/games')
+bp = Blueprint('games', __name__, url_prefix='/games', template_folder='templates', static_folder='static')
 
 @bp.route('/<game_name>', methods=['GET']) # type: ignore
 def game(game_name: str):

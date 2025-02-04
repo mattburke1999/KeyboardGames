@@ -9,14 +9,14 @@
         <link href="https://fonts.googleapis.com/css2?family=Ceviche+One&family=Fugaz+One&family=Itim&family=Monoton&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Special+Elite&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/theme.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/profile.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('auth.static', filename='css/profile.css') }}">
     </head>
     <body>
         <div class="main">
             <div class='auth-btns'>
                 {% if not home_page.logged_in %}
-                    <button onclick="window.location.href='/login'">Login</button>
-                    <button onclick="window.location.href='/register'">Register</button>
+                    <button onclick="window.location.href='/auth/login'">Login</button>
+                    <button onclick="window.location.href='/auth/register'">Register</button>
                 {% else %}
                     <button onclick="logout()">Logout</button>
                     <button onclick="get_profile()">Profile</button>
