@@ -22,7 +22,7 @@ connectSocket();
 function fetchNewSession() {
     return new Promise((resolve, reject) => {
         $.ajax({
-            url: '/create_session',
+            url: '/games/create_session',
             type: 'GET',
             contentType: 'application/json',
             success: function(response) {
@@ -542,7 +542,7 @@ async function setHighScoreServer(end_game_token) {
     const pointList = await getFinalPointListFromDB();
     console.log(pointList);
     $.ajax({
-        url: `/game/${gameId}/score_update`,
+        url: `/games/${gameId}/score_update`,
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({start_game_token, end_game_token, score, pointList}),

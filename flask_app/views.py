@@ -2,21 +2,16 @@ from flask import render_template
 from flask import redirect
 from flask import jsonify
 from services import get_home_page_data
-from services import get_game_info
 from services import check_unique_register_input
 from services import create_user
 from services import try_login
 from services import logout
-from services import create_session
 from services import get_profile
-from services import score_update
 from services import check_login
 from services import check_admin
 from functools import wraps
 from typing import Callable
 from models import New_User
-from models import Game_Data
-from models import Game_Page
 from models import Func_Result
 
 def admin_page(f: Callable):
@@ -67,20 +62,6 @@ def home_view():
     return render_template('index.html', home_page=home_page.result)
 
 # page
-def game_view(game: str):
-    game_info = get_game_info(game)
-    if not game_info.success and type(game_info.result) == dict:
-        return render_template(f"{game_info.result['type']}.html", message=game_info.result['message']), game_info.result['type']
-    game_page = game_info.result  # type: Game_Page
-    if game_page.game_info.basic_circle_template: # type: ignore
-        return basic_circle_template(game, game_page) # type: ignore
-    return render_template(f'/games/{game}.html', game_page=game_page)
-
-# page
-def basic_circle_template(game: str, game_page: Game_Page):
-    return render_template('/games/basic_circle_template.html', game=game, game_page=game_page)
-
-# page
 def auth_view(page: str):
     return render_template('login.html', page=page)
 
@@ -105,16 +86,6 @@ def logout_view():
     return redirect('/')
 
 # endpoint
-def create_session_view(client_ip):
-    session_result = create_session(client_ip)
-    return json_result(session_result)
-
-# endpoint
 def profile_view():
     result = get_profile()
-    return json_result(result)
-
-# endpoint
-def score_update_view(game_id: int, client_ip: str|None, client_game_data: Game_Data, score: int):
-    result = score_update(game_id, client_ip, client_game_data, score)
     return json_result(result)
