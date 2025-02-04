@@ -49,7 +49,7 @@ def create_skin():
     create_skin = create_skin_page()
     return create_skin_view(create_skin)
 
-@bp.route('/create_skin', methods=['POST'])
+@bp.route('/create_skin_type', methods=['POST'])
 # @admin_endpoint
 def create_new_skin_type():
     if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:

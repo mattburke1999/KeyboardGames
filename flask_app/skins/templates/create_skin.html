@@ -382,7 +382,7 @@
                 alert('Invalid form data.');
             } else {
                 $.ajax({
-                    url: '/create_skin',
+                    url: '/skins/create_skin_type',
                     type: 'POST',
                     data: JSON.stringify(formData),
                     contentType: 'application/json',
@@ -550,7 +550,7 @@
         function addInputs() {
             const { formData, invalid } = getAddInputsFormDataAndValidate();
             $.ajax({
-                url: '/create_skin_inputs',
+                url: '/skins/create_skin_inputs',
                 type: 'POST',
                 data: JSON.stringify(formData),
                 contentType: 'application/json',
