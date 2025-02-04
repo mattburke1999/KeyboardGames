@@ -2,8 +2,8 @@ import psycopg2 as pg
 import os
 import traceback
 import bcrypt
-from models import New_User
 from models import Func_Result
+from flask_app.auth.models import New_User
 from flask_app.skins.models import New_Skin_Type
 
 DATABASE_URL = None

@@ -38,7 +38,7 @@ function addOnChangeEventListeners() {
 
 function checkUniqueUsername(username) {
     $.ajax({
-        url: '/unique_username',
+        url: '/auth/unique_username',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({username}),
@@ -60,7 +60,7 @@ function checkUniqueUsername(username) {
 
 function checkUniqueEmail(email) {
     $.ajax({
-        url: '/unique_email',
+        url: '/auth/unique_email',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({email}),
@@ -108,10 +108,10 @@ function register(event) {
     event.preventDefault();
     const formData = getFormData('register');
     $.ajax({
-        url: '/register',
+        url: '/auth/register',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({formData}),
+        data: JSON.stringify(formData),
         success: function(response) {
             console.log(response);
             if (response.registered) {
@@ -128,10 +128,10 @@ function login(event) {
     event.preventDefault();
     const formData = getFormData('login');
     $.ajax({
-        url: '/login',
+        url: '/auth/login',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({formData}),
+        data: JSON.stringify(formData),
         success: function(response) {
             console.log(response);
             if (response.logged_in) {
