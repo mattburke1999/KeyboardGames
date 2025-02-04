@@ -55,7 +55,7 @@ def login():
 
 @bp.route('/login', methods=['POST'])
 def login_post():
-    data = request.get_json()['formData']
+    data = request.get_json()
     result = try_login(data)
     return json_result(result)
 
