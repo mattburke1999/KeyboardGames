@@ -10,20 +10,11 @@ from services import logout
 from services import create_session
 from services import get_profile
 from services import score_update
-from services import get_all_skins
-from services import set_user_skin
-from services import purchase_skin
 from services import check_login
 from services import check_admin
-from services import create_skin_page
-from services import create_new_skin_type
-from services import create_new_skin_input
 from functools import wraps
 from typing import Callable
 from models import New_User
-from models import Skin
-from models import New_Skin_Type
-from models import New_Skin_Input
 from models import Game_Data
 from models import Game_Page
 from models import Func_Result
@@ -126,42 +117,4 @@ def profile_view():
 # endpoint
 def score_update_view(game_id: int, client_ip: str|None, client_game_data: Game_Data, score: int):
     result = score_update(game_id, client_ip, client_game_data, score)
-    return json_result(result)
-
-# page
-def skins_view():
-    skins_page = get_all_skins()
-    if not skins_page.success:
-        return render_template('505.html'), 505
-    return render_template('skins.html', skins_page=skins_page.result)
-
-# endpoint
-def get_skin_view(page: str, skin: Skin):
-    return json_result(Func_Result(True, {'html': render_template('skin_macros/skin_render.html', page=page, skin=skin)}))
-
-# endpoint
-def set_user_skin_view(skin_id: int):
-    result = set_user_skin(skin_id)
-    return json_result(result)
-
-# endpoint
-def purchase_skin_view(skin_id: int):
-    result = purchase_skin(skin_id)
-    return json_result(result)
-
-# page 
-def create_skin_view():
-    create_skin = create_skin_page()
-    if not create_skin.success:
-        return render_template('505.html'), 505
-    return render_template('create_skin.html', new_skin_page = create_skin.result)
-
-# endpoint
-def create_new_skin_view(new_skin: New_Skin_Type):
-    result = create_new_skin_type(new_skin)
-    return json_result(result)
-
-# endpoint
-def create_skin_inputs_view(new_skin_input: New_Skin_Input):
-    result = create_new_skin_input(new_skin_input)
     return json_result(result)

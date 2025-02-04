@@ -4,7 +4,7 @@ import traceback
 import bcrypt
 from models import New_User
 from models import Func_Result
-from models import New_Skin_Type
+from flask_app.skins.models import New_Skin_Type
 
 DATABASE_URL = None
 

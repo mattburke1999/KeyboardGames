@@ -12,21 +12,11 @@ from views import logout_view
 from views import create_session_view
 from views import profile_view
 from views import score_update_view
-from views import skins_view
-from views import get_skin_view
-from views import set_user_skin_view
-from views import purchase_skin_view
-from views import create_skin_view
-from views import create_new_skin_view
-from views import create_skin_inputs_view
 from views import login_required_endpoint
 from views import login_required_page
 from views import admin_page
 from views import admin_endpoint
 from models import New_User
-from models import Skin
-from models import New_Skin_Type
-from models import New_Skin_Input
 from models import Game_Data
 
 app = Flask(__name__)
@@ -90,54 +80,3 @@ def score_update(game_id):
     client_ip = request.remote_addr
     client_game_data = Game_Data(data['start_game_token'], data['end_game_token'], data['pointList'])
     return score_update_view(game_id, client_ip, client_game_data, data['score'])
-
-@app.route('/skins', methods=['GET'])
-@login_required_page
-def skins():
-    return skins_view()
-
-@app.route('/skins/get_skin', methods=['POST'])
-@login_required_endpoint
-def get_skin():
-    data = request.get_json()
-    skin = Skin(**data['skin'])
-    return get_skin_view(data['page'], skin)
-
-@app.route('/skins/select', methods=['POST'])
-@login_required_endpoint
-def select_skin():
-    data = request.get_json()
-    return set_user_skin_view(data['skin_id'])
-
-@app.route('/skins/purchase', methods=['POST'])
-@login_required_endpoint
-def purchase_skin():
-    data = request.get_json()
-    return purchase_skin_view(data['skin_id'])
-
-@app.route('/create_skin', methods=['GET'])
-@admin_page
-def create_skin():
-    if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:
-        return redirect('/')
-    return create_skin_view()
-
-@app.route('/create_skin', methods=['POST'])
-@admin_endpoint
-def create_new_skin():
-    if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:
-        abort(403)
-    data = request.get_json()
-    inputs = [int(x) for x in data['inputs']]
-    new_skin = New_Skin_Type(data['skinType'], inputs, data['newInputs'], data['skinHtml'])
-    return create_new_skin_view(new_skin)
-
-@app.route('/create_skin_inputs', methods=['POST'])
-@admin_endpoint
-def create_skin_inputs():
-    if request.host != 'localhost:5000' and '127.0.0.1:5000' not in request.host:
-        abort(403)
-    data = request.get_json()
-    # formData: {skinTypeId, skinName, mapperJson, inputs}
-    new_skin_input = New_Skin_Input(data['skinTypeId'], data['inputs'], data['points'], data.get('skinName', None), data.get('mapperJson',  None))
-    return create_skin_inputs_view(new_skin_input)
