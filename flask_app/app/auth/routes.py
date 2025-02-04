@@ -3,19 +3,17 @@ from flask import request
 from flask import redirect
 from functools import wraps
 from typing import Callable
-from flask_app.auth.services import check_login
-from flask_app.auth.services import check_admin
-from flask_app.auth.services import try_login
-from flask_app.auth.services import logout as logout_s
-from flask_app.auth.services import create_user
-from flask_app.auth.services import check_unique_register_input
-from flask_app.auth.services import get_profile
-from flask_app.auth.views import not_logged_in_view
-from flask_app.auth.views import not_admin_view
-from flask_app.auth.views import auth_view
-
-
-from flask_app.views import json_result
+from app.auth.services import check_login
+from app.auth.services import check_admin
+from app.auth.services import try_login
+from app.auth.services import logout as logout_s
+from app.auth.services import create_user
+from app.auth.services import check_unique_register_input
+from app.auth.services import get_profile
+from app.auth.views import not_logged_in_view
+from app.auth.views import not_admin_view
+from app.auth.views import auth_view
+from app.views import json_result
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 

@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from datetime import timezone
 import os
-from models import Func_Result
+from app.models import Func_Result
 
 redis_client = redis.StrictRedis(host="localhost", password= os.environ.get('REDIS_PASSWORD'), port=6379, decode_responses=True)
 

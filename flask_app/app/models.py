@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from flask_app.games.models import Game_Info
+from app.games.models import Game_Info
  
 @dataclass
 class Func_Result:

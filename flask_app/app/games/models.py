@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from flask_app.skins.models import Skin
+from app.skins.models import Skin
 
 @dataclass
 class Game_Info:

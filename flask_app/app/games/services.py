@@ -1,23 +1,19 @@
 from flask import session
-from flask_app.games.models import Game_Page
-from flask_app.games.models import Game_Info
-from flask_app.games.models import Game_Data
-from flask_app.games.models import Top10_Score
-from flask_app.games.models import Top3_Score
-from flask_app.games.models import Score_View
-from flask_app.models import Func_Result
-from flask_app.db import get_games as db_get_games
-from flask_app.db import update_score as db_update_score
-from flask_app.redis_store import create_user_session as rd_create_user_session
-from flask_app.redis_store import get_game_data as rd_get_game_data
-from flask_app.redis_store import clear_user_sessions as rd_clear_user_sessions
-
-from flask_app.skins.services import get_user_skin
-from flask_app.skins.services import get_default_skin
-
-
-from flask_app.services import check_login
-from flask_app.services import get_server_ip
+from app.models import Func_Result
+from app.games.models import Game_Page
+from app.games.models import Game_Info
+from app.games.models import Game_Data
+from app.games.models import Top10_Score
+from app.games.models import Top3_Score
+from app.games.models import Score_View
+from app.db import get_games as db_get_games
+from app.db import update_score as db_update_score
+from app.redis_store import create_user_session as rd_create_user_session
+from app.redis_store import get_game_data as rd_get_game_data
+from app.redis_store import clear_user_sessions as rd_clear_user_sessions
+from app.skins.services import get_user_skin
+from app.skins.services import get_default_skin
+from app.auth.services import check_login
 
 import os
 import jwt
@@ -26,7 +22,7 @@ import threading
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
-
+import socket
 
 GAME_INFO = {}
 GAMES = []
@@ -151,3 +147,6 @@ def score_update(client_ip: str|None, data: dict, game_id: int) -> Func_Result:
     return Func_Result(True, Score_View(top10, top3, points_added, score_rank))
 
 
+def get_server_ip() -> str:
+    hostname = socket.gethostname()
+    return socket.gethostbyname(hostname)

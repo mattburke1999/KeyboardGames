@@ -1,8 +1,7 @@
 from flask import render_template
-from flask import redirect
 from flask import jsonify
-from services import get_home_page_data
-from models import Func_Result
+from app.services import get_home_page_data
+from app.models import Func_Result
 
 def json_result(result: Func_Result):
     if result.success:

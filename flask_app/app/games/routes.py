@@ -1,10 +1,10 @@
 from flask import Blueprint
 from flask import request
-from flask_app.games.services import get_game_info
-from flask_app.games.services import create_session as create_session_s
-from flask_app.games.services import score_update as score_update_s
-from flask_app.games.views import game_view
-from flask_app.views import json_result
+from app.games.services import get_game_info
+from app.games.services import create_session as create_session_s
+from app.games.services import score_update as score_update_s
+from app.games.views import game_view
+from app.views import json_result
 
 bp = Blueprint('games', __name__, url_prefix='/games')
 

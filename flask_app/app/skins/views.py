@@ -1,7 +1,6 @@
 from flask import render_template
-from flask_app.views import json_result
-
-from flask_app.models import Func_Result
+from app.views import json_result
+from app.models import Func_Result
 
 # page
 def skins_view(skins_page: Func_Result):

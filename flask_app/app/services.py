@@ -1,12 +1,8 @@
-from models import Func_Result
-from models import Home_Page
-import socket
+from app.models import Func_Result
+from app.models import Home_Page
 
-from flask_app.games.services import get_games
-from flask_app.auth.services import check_login
-
-GAME_INFO = {}
-GAMES = []
+from app.games.services import get_games
+from app.auth.services import check_login
 
 def get_home_page_data() -> Func_Result:
     games = get_games()
@@ -16,7 +12,4 @@ def get_home_page_data() -> Func_Result:
     print(f'service logged_in: {logged_in}')
     return Func_Result(True, Home_Page(games.result[1], games.result[0], logged_in))
 
-def get_server_ip() -> str:
-    hostname = socket.gethostname()
-    return socket.gethostbyname(hostname)
 

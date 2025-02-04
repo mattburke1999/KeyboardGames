@@ -2,16 +2,16 @@ from flask import Blueprint
 from flask import request
 from flask import redirect
 from flask import abort
-from flask_app.views import json_result
-from flask_app.skins.views import skins_view
-from flask_app.skins.views import get_skin_view
-from flask_app.skins.views import create_skin_view
-from flask_app.skins.services import get_all_skins
-from flask_app.skins.services import set_user_skin
-from flask_app.skins.services import purchase_skin as purchase_skin_s
-from flask_app.skins.services import create_skin_page
-from flask_app.skins.services import create_new_skin_type as create_new_skin_type_s
-from flask_app.skins.services import create_new_skin_input
+from app.views import json_result
+from app.skins.views import skins_view
+from app.skins.views import get_skin_view
+from app.skins.views import create_skin_view
+from app.skins.services import get_all_skins
+from app.skins.services import set_user_skin
+from app.skins.services import purchase_skin as purchase_skin_s
+from app.skins.services import create_skin_page
+from app.skins.services import create_new_skin_type as create_new_skin_type_s
+from app.skins.services import create_new_skin_input
 
 bp = Blueprint('skins', __name__, url_prefix='/skins')
 

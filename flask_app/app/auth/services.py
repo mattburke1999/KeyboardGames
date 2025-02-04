@@ -1,13 +1,12 @@
 from flask import session
-from flask_app.models import Func_Result
-from flask_app.auth.models import New_User
-from models import Profile
-from db import check_unique_register_input as db_check_unique_register_input
-from db import create_user as db_create_user
-from db import check_user as db_check_user
-from db import get_profile as db_get_profile
-from redis_store import clear_user_sessions as rd_clear_user_sessions
-
+from app.models import Func_Result
+from app.auth.models import New_User
+from app.auth.models import Profile
+from app.db import check_unique_register_input as db_check_unique_register_input
+from app.db import create_user as db_create_user
+from app.db import check_user as db_check_user
+from app.db import get_profile as db_get_profile
+from app.redis_store import clear_user_sessions as rd_clear_user_sessions
 import bcrypt
 import threading
 

@@ -1,7 +1,8 @@
-from flask_socketio import SocketIO
+
 from flask import session
+from flask_socketio import SocketIO
 from flask_socketio import disconnect
-from services import check_login
+from app.auth.services import check_login
 
 socketio = SocketIO()
 

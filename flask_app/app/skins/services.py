@@ -1,29 +1,29 @@
 
 from flask import session
-from flask_app.models import Func_Result
-from flask_app.skins.models import Skin
-from flask_app.skins.models import Skins_Page
-from flask_app.skins.models import Skin_Input
-from flask_app.skins.models import Skin_Type_With_Inputs
-from flask_app.skins.models import Create_Skin_Page
-from flask_app.skins.models import New_Skin_Type
-from flask_app.skins.models import New_Skin_Input
-from flask_app.db import connect_db
-from flask_app.db import get_all_skins as db_get_all_skins
-from flask_app.db import set_user_skin as db_set_user_skin
-from flask_app.db import get_user_skin as db_get_user_skin
-from flask_app.db import get_default_skin as db_get_default_skin
-from flask_app.db import check_skin_purchaseable as db_check_skin_purchaseable
-from flask_app.db import purchase_skin as db_purchase_skin
-from flask_app.db import get_skin_inputs as db_get_skin_inputs
-from flask_app.db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
-from flask_app.db import new_skin_input as db_new_skin_input
-from flask_app.db import create_skin_type as db_create_skin_type
-from flask_app.db import get_skin_type_with_inputs as db_get_skin_type_with_inputs
-from flask_app.db import check_skin_type_exists as db_check_skin_type_exists
-from flask_app.db import get_skin_input_list as db_get_skin_input_list
-from flask_app.db import new_skin as db_new_skin
-from flask_app.db import new_skin_values as db_new_skin_values
+from app.models import Func_Result
+from app.skins.models import Skin
+from app.skins.models import Skins_Page
+from app.skins.models import Skin_Input
+from app.skins.models import Skin_Type_With_Inputs
+from app.skins.models import Create_Skin_Page
+from app.skins.models import New_Skin_Type
+from app.skins.models import New_Skin_Input
+from app.db import connect_db
+from app.db import get_all_skins as db_get_all_skins
+from app.db import set_user_skin as db_set_user_skin
+from app.db import get_user_skin as db_get_user_skin
+from app.db import get_default_skin as db_get_default_skin
+from app.db import check_skin_purchaseable as db_check_skin_purchaseable
+from app.db import purchase_skin as db_purchase_skin
+from app.db import get_skin_inputs as db_get_skin_inputs
+from app.db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
+from app.db import new_skin_input as db_new_skin_input
+from app.db import create_skin_type as db_create_skin_type
+from app.db import get_skin_type_with_inputs as db_get_skin_type_with_inputs
+from app.db import check_skin_type_exists as db_check_skin_type_exists
+from app.db import get_skin_input_list as db_get_skin_input_list
+from app.db import new_skin as db_new_skin
+from app.db import new_skin_values as db_new_skin_values
 import psycopg2 as pg
 
 def get_user_skin() -> Func_Result:

@@ -1,5 +1,5 @@
 from flask import Flask
-from views import home_view
+from app.views import home_view
 
 app = Flask(__name__)
 
