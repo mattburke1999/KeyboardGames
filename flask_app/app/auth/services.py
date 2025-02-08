@@ -41,7 +41,7 @@ def try_login(data: dict[str, str]) -> Func_Result:
     except Exception as e:
         return Func_Result(False, {'error': str(e)})
 
-def logout() -> None:
+def logout_process() -> None:
     session.clear()
     # create a thread to clear user sessions in the background so this returns immediately
     threading.Thread(target=RD.clear_user_sessions, args=(session['user_id'],)).start()
