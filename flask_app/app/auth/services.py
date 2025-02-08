@@ -11,29 +11,35 @@ DB = AuthDB()
 
 def create_user(data: dict[str, str]) -> Func_Result:
     new_user = New_User(data['first_name'], data['last_name'], data['username'], data['email'], data['password'])
-    register = DB.create_user(new_user)
-    if not register.success:
-        session['logged_in'] = False
-        session['user_id'] = None
-        return Func_Result(False, None)
-    session['logged_in'] = True
-    session['user_id'] = register.result
-    return Func_Result(True, {'registered': True})
+    with DB.connect_db() as conn:
+        try:
+            new_user_id = DB.create_user(conn, new_user)
+            if not new_user_id:
+                raise Exception('Error creating user')
+            DB.add_default_skin(conn, new_user_id)
+            conn.commit()
+            session['logged_in'] = True
+            session['user_id'] = new_user_id
+            return Func_Result(True, {'registered': True})
+        except Exception as e:
+            conn.rollback()
+            session['logged_in'] = False
+            session['user_id'] = None
+            return Func_Result(False, {'error': str(e)})
 
 def try_login(data: dict[str, str]) -> Func_Result:
     username = data['username']
     password = data['password']
-    check_user = DB.check_user(username)
-    if not check_user.success:
-        return Func_Result(False, None)
-    if check_user.result:
-        user_id, hashed_password, is_admin = check_user.result
-        if bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)):
+    try:
+        user_id, hashed_password, is_admin = DB.check_user(username)
+        if user_id and bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)):
             session['logged_in'] = True
             session['user_id'] = user_id
-            session['is_admin'] = is_admin
+            session['is_admin'] = is_admin or False
             return Func_Result(True, {'logged_in': True})
-    return Func_Result(True, {'logged_in': False})
+        return Func_Result(True, {'logged_in': False})
+    except Exception as e:
+        return Func_Result(False, {'error': str(e)})
 
 def logout() -> None:
     session.clear()
