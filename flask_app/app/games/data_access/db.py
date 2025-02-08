@@ -1,8 +1,8 @@
 from app.data_access.db import BaseDB
 import psycopg2 as pg
 
-from app.games.data_access.models import Game_Info
-from app.games.data_access.models import Score_View
+from .models import Game_Info
+from .models import Score_View
 
 class GameDB(BaseDB):
     def get_games(self) -> dict[str, Game_Info]:

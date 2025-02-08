@@ -2,10 +2,10 @@
 from flask import session
 import psycopg2 as pg
 from app.data_access.models import Func_Result
-from app.skins.data_access.models import Create_Skin_Page
-from app.skins.data_access.models import New_Skin_Type
-from app.skins.data_access.models import New_Skin_Input
-from app.skins.data_access.db import SkinDB
+from .data_access.models import Create_Skin_Page
+from .data_access.models import New_Skin_Type
+from .data_access.models import New_Skin_Input
+from .data_access.db import SkinDB
 
 DB = SkinDB()
 

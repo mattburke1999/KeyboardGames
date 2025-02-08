@@ -1,10 +1,10 @@
 from app.data_access.db import BaseDB
 import psycopg2 as pg
 
-from app.skins.data_access.models import Skin
-from app.skins.data_access.models import Skins_Page
-from app.skins.data_access.models import Skin_Input
-from app.skins.data_access.models import Skin_Type_With_Inputs
+from .models import Skin
+from .models import Skins_Page
+from .models import Skin_Input
+from .models import Skin_Type_With_Inputs
 
 class SkinDB(BaseDB):
     

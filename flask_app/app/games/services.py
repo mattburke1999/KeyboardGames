@@ -1,8 +1,8 @@
 from flask import session
 from app.data_access.models import Func_Result
-from app.games.data_access.models import Game_Page
-from app.games.data_access.models import Game_Data
-from app.games.data_access.db import GameDB
+from .data_access.models import Game_Page
+from .data_access.models import Game_Data
+from .data_access.db import GameDB
 from app.data_access import RD
 from app.skins.services import get_user_skin
 from app.skins.services import get_default_skin
@@ -116,13 +116,15 @@ def score_update_process(client_ip: str|None, data: dict, game_id: int) -> Func_
     session_jwt = session.get('session_jwt', None)
     if not session_jwt:
         return Func_Result(False, {'error': 'No session token'})
+    server_data = None
     try:
         server_data = RD.get_game_data(session_jwt)
-        # delete session as soon as the data is fetched
-        threading.Thread(target=RD.clear_user_sessions, args=(user_id, client_ip)).start()
     except Exception as e:
-        threading.Thread(target=RD.clear_user_sessions, args=(user_id, client_ip)).start()
         return Func_Result(False, {'error': 'Error fetching game data', 'message': str(e)})
+    finally:
+        threading.Thread(target=RD.clear_user_sessions, args=(user_id, client_ip)).start()
+    if not server_data:
+        return Func_Result(False, {'error': 'No server game data'})
     validation = validate_game(client_data, server_data, score)
     if not validation.success:
         return Func_Result(False, validation.success)

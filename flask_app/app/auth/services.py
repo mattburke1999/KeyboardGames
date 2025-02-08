@@ -1,9 +1,8 @@
 from flask import session
-from app.data_access.models import Func_Result
-from app.auth.data_access.models import New_User
-
-from app.auth.data_access.db import AuthDB
+from .data_access.models import New_User
+from .data_access.db import AuthDB
 from app.data_access import RD
+from app.data_access.models import Func_Result
 import bcrypt
 import threading
 

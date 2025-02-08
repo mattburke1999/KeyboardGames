@@ -1,6 +1,6 @@
 from app.data_access.db import BaseDB
 
-from app.auth.data_access.models import New_User
+from .models import New_User
 
 import psycopg2 as pg
 import bcrypt
