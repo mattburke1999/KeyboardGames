@@ -12,6 +12,6 @@ def get_home_page_data() -> Func_Result:
         return Func_Result(False, None)
     logged_in = check_login()
     print(f'service logged_in: {logged_in}')
-    return Func_Result(True, Home_Page(list(games.result.keys()), games.result, logged_in))
+    return Func_Result(True, Home_Page(games.result, logged_in))
 
 
