@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from app.skins.models import Skin
+from datetime import datetime
 
 @dataclass
 class Game_Info:
@@ -45,3 +46,11 @@ class Score_View:
     top3: list[Top3_Score]
     points_added: int
     score_rank: int
+    
+    def __init__(self, high_scores: list[dict], points_added: int, score_rank: int):
+        self.top10 = [Top10_Score(hs['username'], hs['score'], datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'), hs['current_score'])
+            for hs in high_scores if hs['score_type'] == 'top10']
+        self.top3 = [Top3_Score(hs['score'], datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'), hs['current_score'])
+            for hs in high_scores if hs['score_type'] == 'top3']
+        self.points_added = points_added
+        self.score_rank = score_rank

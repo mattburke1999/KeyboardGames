@@ -1,11 +1,8 @@
 from flask import session
 from app.models import Func_Result
 from app.games.models import Game_Page
-from app.games.models import Game_Info
 from app.games.models import Game_Data
-from app.games.models import Top10_Score
-from app.games.models import Top3_Score
-from app.games.models import Score_View
+from app.db import connect_db
 from app.db import get_games as db_get_games
 from app.db import update_score as db_update_score
 from app.redis_store import create_user_session as rd_create_user_session
@@ -17,32 +14,30 @@ from app.auth.services import check_login
 
 import os
 import jwt
-import json
 import threading
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 import socket
+import traceback
 
 GAME_INFO = {}
-GAMES = []
 
-def get_games() -> Func_Result:
+def get_games_process() -> Func_Result:
     global GAME_INFO
-    global GAMES
-    if len(GAMES) == 0:
-        games = db_get_games()
-        if not games.success or not games.result:
-            return Func_Result(False, None)
-        for game in games.result:
-            GAMES.append(game[7])
-            GAME_INFO[game[7]] = Game_Info(int(game[0]), game[1], game[2], game[3], int(game[4]), game[5], game[6], int(game[8]), game[9])
-    return Func_Result(True, (GAME_INFO, GAMES))
+    try:
+        if not GAME_INFO:
+            GAME_INFO = db_get_games()
+            print(f'Game info: {GAME_INFO}')
+        return Func_Result(True, GAME_INFO)
+    except Exception as e:
+        traceback.print_exc()
+        return Func_Result(False, {'error': str(e)})
 
-def get_game_info(game: str) -> Func_Result:
+def get_game_page(game: str) -> Func_Result:
     global GAME_INFO
     if not GAME_INFO:
-        games = get_games()
+        games = get_games_process()
         if not games.success:
             return Func_Result(False, {'error': 'No games found', 'type': 404})
     if game not in GAME_INFO:
@@ -57,16 +52,22 @@ def get_game_info(game: str) -> Func_Result:
         user_skin.result = default_skin.result
     return Func_Result(True, Game_Page(GAME_INFO[game], check_login(), get_server_ip(), user_skin.result))
 
-def create_session(client_ip: str | None) -> Func_Result:
+def create_session_process(client_ip: str | None) -> Func_Result:
     if not client_ip:
         return Func_Result(False, {'error': 'No client IP'})
     client_ip = client_ip.replace('127.0.0.1', get_server_ip())
     user_id = session['user_id']
-    session_created = rd_create_user_session(user_id, client_ip)
-    if not session_created.success:
-        return Func_Result(False, session_created.result)
-    session_jwt = create_session_jwt(session_created.result, client_ip)
-    return Func_Result(True, {'session_jwt': session_jwt, 'logged_in': True})
+    session_id = None
+    try:
+        session_id = rd_create_user_session(user_id, client_ip)
+        session_jwt = create_session_jwt(session_id, client_ip)
+        return Func_Result(True, {'session_jwt': session_jwt, 'logged_in': True})
+    except Exception as e:
+        if session_id:
+            threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
+        session['session_jwt'] = None
+        session['client_ip'] = None
+        return Func_Result(False, {'error': str(e)})
 
 def create_session_jwt(session_id: str, client_ip: str) -> str:
     secret_key = os.getenv('SHARED_SECRET_KEY')
@@ -76,11 +77,6 @@ def create_session_jwt(session_id: str, client_ip: str) -> str:
     session['session_jwt'] = str(jwt_token)
     session['client_ip'] = client_ip
     return jwt_token
-
-def get_user_jwt() -> Func_Result:
-    if 'logged_in' in session and session['logged_in'] and 'user_jwt' in session and session['user_jwt']:
-        return Func_Result(True, {'logged_in': True, 'user_jwt': session['user_jwt']})
-    return Func_Result(True, {'logged_in': False, 'user_jwt': None})
 
 def validate_points(server_point_list: list, client_point_list: list, score: int) -> Func_Result:
     # print('Server points:')
@@ -115,7 +111,7 @@ def validate_game(client_data: Game_Data, server_data: Game_Data, score: int) ->
         return Func_Result(False, {'error': 'Invalid start and end tokens'})
     return validate_points(server_data.point_list, client_data.point_list, score)
 
-def score_update(client_ip: str|None, data: dict, game_id: int) -> Func_Result:
+def score_update_process(client_ip: str|None, data: dict, game_id: int) -> Func_Result:
     if not client_ip:
         return Func_Result(False, {'error': 'No client IP'})
     client_data = Game_Data(data['start_game_token'], data['end_game_token'], data['pointList'])
@@ -124,28 +120,26 @@ def score_update(client_ip: str|None, data: dict, game_id: int) -> Func_Result:
     session_jwt = session.get('session_jwt', None)
     if not session_jwt:
         return Func_Result(False, {'error': 'No session token'})
-    server_data = rd_get_game_data(session_jwt)
-    # delete session as soon as the data is fetched
-    threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
-    if not server_data.success:
-        return Func_Result(False, server_data.result)
-    server_data = Game_Data(**json.loads(server_data.result))
+    try:
+        server_data = rd_get_game_data(session_jwt)
+        # delete session as soon as the data is fetched
+        threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
+    except Exception as e:
+        threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
+        return Func_Result(False, {'error': 'Error fetching game data', 'message': str(e)})
     validation = validate_game(client_data, server_data, score)
     if not validation.success:
         return Func_Result(False, validation.success)
     score = int(validation.result['points'])
     print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
-    score_update = db_update_score(user_id, game_id, score)
-    if not score_update.success:
-        return Func_Result(False, score_update.result)
-    high_scores, points_added, score_rank = score_update.result
-    # format date as mm/dd/yyyy
-    top10 = [Top10_Score(hs['username'], hs['score'], datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'), hs['current_score'])
-        for hs in high_scores if hs['score_type'] == 'top10']
-    top3 = [Top3_Score(hs['score'], datetime.strptime(hs['score_date'], '%Y-%m-%d').strftime('%m/%d/%Y'), hs['current_score'])
-        for hs in high_scores if hs['score_type'] == 'top3']
-    return Func_Result(True, Score_View(top10, top3, points_added, score_rank))
-
+    with connect_db() as conn:
+        try:
+            score_update = db_update_score(conn, user_id, game_id, score)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            return Func_Result(False, {'error': 'Error updating score', 'message': str(e)})
+    return Func_Result(True, score_update)
 
 def get_server_ip() -> str:
     hostname = socket.gethostname()

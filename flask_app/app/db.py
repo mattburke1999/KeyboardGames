@@ -5,6 +5,11 @@ import bcrypt
 from app.models import Func_Result
 from app.auth.models import New_User
 from app.skins.models import New_Skin_Type
+from app.games.models import Game_Info
+from app.skins.models import Skin
+from app.games.models import Score_View
+from app.auth.models import Profile
+from app.skins.models import Skins_Page
 
 DATABASE_URL = None
 
@@ -44,96 +49,69 @@ def check_user(username: str) -> Func_Result:
             traceback.print_exc()
             return Func_Result(False, None)
 
-def get_games() -> Func_Result:
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('SELECT id, title, title_style, title_color, bg_rot, bg_color1, bg_color2, abbrev_name, duration, basic_circle_template from games order by id')
-                return Func_Result(True, cur.fetchall())
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
+def get_games() -> dict[str, Game_Info]:
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, title, title_style, title_color, bg_rot, bg_color1, bg_color2, abbrev_name, duration, basic_circle_template from games order by id')
+            results = cur.fetchall()
+            return {res[7]: Game_Info(res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[8], res[9]) for res in results} if results else {}
     
-def check_unique_register_input(type: str, value: str) -> Func_Result:
-    try:
-        if type not in {'username', 'email'}:
-            raise ValueError(f'Invalid type: {type}')
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(f'SELECT count(*) from accounts where {type} = %s', (value,))
-                result = cur.fetchone()
-                if result:
-                    return Func_Result(True, result[0] == 0)
-                return Func_Result(False, None)
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
+def check_unique_register_input(type: str, value: str) -> bool:
+    if type not in {'username', 'email'}:
+        raise ValueError(f'Invalid type: {type}')
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f'SELECT count(*) from accounts where {type} = %s', (value,))
+            result = cur.fetchone()
+            return result[0] == 0 if result else True
     
-def get_profile(user_id: int) -> Func_Result:
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('select username, created_time, points, num_top10, ranks from profile_view where id = %s', (user_id,))
-                return Func_Result(True, cur.fetchone())
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
+def get_profile(user_id: int) -> Profile:
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute('select username, created_time, points, num_top10, ranks from profile_view where id = %s', (user_id,))
+            result = cur.fetchone()
+            return Profile(result[0], result[1], result[2], result[3], result[4]) if result else None
     
-def update_score(user_id: int, game_id: int, score: int) -> Func_Result:
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('select high_scores, points_added, score_rank from update_scores(%s, %s, %s)', (user_id, game_id, score))
-                result = cur.fetchone()
-                conn.commit()
-                return Func_Result(True, result)
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
+def update_score(conn: pg.extensions.connection, user_id: int, game_id: int, score: int) -> Score_View:
+    with conn.cursor() as cur:
+        cur.execute('select high_scores, points_added, score_rank from update_scores(%s, %s, %s)', (user_id, game_id, score))
+        result = cur.fetchone()
+        return Score_View(result[0], result[1], result[2]) if result else None
     
-def get_all_skins(user_id: int) -> Func_Result:
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('''
-                        select points, skins
-                        from (
-                            select json_agg(json_build_object('id', s.id, 'type', s.type, 'name', s.name, 'data', s.data, 'points', s.points, 'user_choice', a.id is not null and a.id = %s, 'user_skin', us.id is not null and us.account_id = %s)) skins
-                            from skins.skins_view s
-                            left join accounts a on s.id = a.skin_id and a.id = %s
-                            left join user_skins us on s.id = us.skin_id and us.account_id = %s
-                        ) s, accounts a 
-                        where a.id = %s
-                ''', (user_id, user_id, user_id, user_id, user_id))
-                return Func_Result(True, cur.fetchone())
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
-    
-def get_user_skin(user_id: int) -> Func_Result:
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('''
-                    select type, name, data 
-                    from skins.skins_view s
-                    join accounts a on s.id = a.skin_id
+def get_all_skins(user_id: int) -> Skins_Page:
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                    select points, skins
+                    from (
+                        select json_agg(json_build_object('id', s.id, 'type', s.type, 'name', s.name, 'data', s.data, 'points', s.points, 'user_choice', a.id is not null and a.id = %s, 'user_skin', us.id is not null and us.account_id = %s)) skins
+                        from skins.skins_view s
+                        left join accounts a on s.id = a.skin_id and a.id = %s
+                        left join user_skins us on s.id = us.skin_id and us.account_id = %s
+                    ) s, accounts a 
                     where a.id = %s
-                ''', (user_id,))
-                return Func_Result(True, cur.fetchone())
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
+            ''', (user_id, user_id, user_id, user_id, user_id))
+            result = cur.fetchone()
+    return Skins_Page(result[0], result[1]) if result else None
     
-def get_default_skin() -> Func_Result:
-    try:
-        with connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("select type, name, data from skins.skins_view where name = 'Black'")
-                return Func_Result(True, cur.fetchone())
-    except:
-        traceback.print_exc()
-        return Func_Result(False, None)
+def get_user_skin(user_id: int) -> Skin:
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                select type, name, data 
+                from skins.skins_view s
+                join accounts a on s.id = a.skin_id
+                where a.id = %s
+            ''', (user_id,))
+            result = cur.fetchone()
+    return Skin(result[0], result[1], result[2]) if result else None
+    
+def get_default_skin() -> Skin:
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("select type, name, data from skins.skins_view where name = 'Black'")
+            result = cur.fetchone()
+    return Skin(result[0], result[1], result[2]) if result else None
         
 def set_user_skin(user_id: int, skin_id: int) -> Func_Result:
     try:

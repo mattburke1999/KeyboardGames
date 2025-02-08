@@ -26,6 +26,10 @@ class Skins_Page:
     points: int
     skins: list[Skin]
     
+    def __init__(self, points: int, skins: list[dict]):
+        self.points = points
+        self.skins = sorted([Skin(**skin) for skin in skins], key=lambda x: (x.points, x.type, x.id))
+    
 @dataclass
 class New_Skin_Type:
     type: str

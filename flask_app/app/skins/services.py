@@ -28,25 +28,26 @@ import psycopg2 as pg
 
 def get_user_skin() -> Func_Result:
     user_id = session['user_id']
-    user_skin = db_get_user_skin(user_id)
-    if not user_skin.success:
-        return Func_Result(False, user_skin.result)
-    return Func_Result(True, Skin(user_skin.result[0], user_skin.result[1], user_skin.result[2]))
+    try:
+        user_skin = db_get_user_skin(user_id)
+        return Func_Result(True, user_skin)
+    except Exception as e:
+        return Func_Result(False, {'error': str(e)})
 
 def get_default_skin() -> Func_Result:
-    default_skin = db_get_default_skin()
-    if not default_skin.success:
-        return Func_Result(False, default_skin.result)
-    return Func_Result(True, Skin(default_skin.result[0], default_skin.result[1], default_skin.result[2]))
+    try:
+        default_skin = db_get_default_skin()
+        return Func_Result(True, default_skin)
+    except Exception as e:
+        return Func_Result(False, {'error': str(e)})
 
 def get_all_skins() -> Func_Result:
     user_id = session['user_id']
-    all_skins = db_get_all_skins(user_id)
-    if not all_skins.success:
-        return Func_Result(False, all_skins.result)
-    skin_list = [Skin(**skin) for skin in all_skins.result[1]]
-    skin_list.sort(key=lambda x: (x.points, x.type, x.id))
-    return Func_Result(True, Skins_Page(all_skins.result[0], skin_list))
+    try:
+        all_skins = db_get_all_skins(user_id)
+        return Func_Result(True, all_skins)
+    except Exception as e:
+        return Func_Result(False, {'error': str(e)})
     
 def set_user_skin(data: dict[str, int]) -> Func_Result:
     user_id = session['user_id']
