@@ -1,6 +1,6 @@
 from flask import render_template
-from app.models import Func_Result
-from app.games.models import Game_Page
+from app.data_access.models import Func_Result
+from app.games.data_access.models import Game_Page
 
 # page
 def game_view(game_info: Func_Result, game: str):

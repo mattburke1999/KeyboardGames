@@ -1,13 +1,9 @@
 from flask import session
-from app.models import Func_Result
-from app.games.models import Game_Page
-from app.games.models import Game_Data
-from app.db import connect_db
-from app.db import get_games as db_get_games
-from app.db import update_score as db_update_score
-from app.redis_store import create_user_session as rd_create_user_session
-from app.redis_store import get_game_data as rd_get_game_data
-from app.redis_store import clear_user_sessions as rd_clear_user_sessions
+from app.data_access.models import Func_Result
+from app.games.data_access.models import Game_Page
+from app.games.data_access.models import Game_Data
+from app.games.data_access.db import GameDB
+from app.data_access import RD
 from app.skins.services import get_user_skin
 from app.skins.services import get_default_skin
 from app.auth.services import check_login
@@ -22,12 +18,13 @@ import socket
 import traceback
 
 GAME_INFO = {}
+db = GameDB()
 
 def get_games_process() -> Func_Result:
     global GAME_INFO
     try:
         if not GAME_INFO:
-            GAME_INFO = db_get_games()
+            GAME_INFO = db.get_games()
             print(f'Game info: {GAME_INFO}')
         return Func_Result(True, GAME_INFO)
     except Exception as e:
@@ -59,12 +56,12 @@ def create_session_process(client_ip: str | None) -> Func_Result:
     user_id = session['user_id']
     session_id = None
     try:
-        session_id = rd_create_user_session(user_id, client_ip)
+        session_id = RD.create_user_session(user_id, client_ip)
         session_jwt = create_session_jwt(session_id, client_ip)
         return Func_Result(True, {'session_jwt': session_jwt, 'logged_in': True})
     except Exception as e:
         if session_id:
-            threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
+            threading.Thread(target=RD.clear_user_sessions, args=(user_id, client_ip)).start()
         session['session_jwt'] = None
         session['client_ip'] = None
         return Func_Result(False, {'error': str(e)})
@@ -121,20 +118,20 @@ def score_update_process(client_ip: str|None, data: dict, game_id: int) -> Func_
     if not session_jwt:
         return Func_Result(False, {'error': 'No session token'})
     try:
-        server_data = rd_get_game_data(session_jwt)
+        server_data = RD.get_game_data(session_jwt)
         # delete session as soon as the data is fetched
-        threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
+        threading.Thread(target=RD.clear_user_sessions, args=(user_id, client_ip)).start()
     except Exception as e:
-        threading.Thread(target=rd_clear_user_sessions, args=(user_id, client_ip)).start()
+        threading.Thread(target=RD.clear_user_sessions, args=(user_id, client_ip)).start()
         return Func_Result(False, {'error': 'Error fetching game data', 'message': str(e)})
     validation = validate_game(client_data, server_data, score)
     if not validation.success:
         return Func_Result(False, validation.success)
     score = int(validation.result['points'])
     print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
-    with connect_db() as conn:
+    with db.connect_db() as conn:
         try:
-            score_update = db_update_score(conn, user_id, game_id, score)
+            score_update = db.update_score(conn, user_id, game_id, score)
             conn.commit()
         except Exception as e:
             conn.rollback()

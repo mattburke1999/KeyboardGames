@@ -1,8 +1,10 @@
-from app.models import Func_Result
-from app.models import Home_Page
+from app.data_access.models import Func_Result
+from app.data_access.models import Home_Page
 
 from app.games.services import get_games_process
 from app.auth.services import check_login
+
+
 
 def get_home_page_data() -> Func_Result:
     games = get_games_process()

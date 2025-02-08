@@ -1,7 +1,7 @@
 from flask import render_template
 from flask import jsonify
 from app.services import get_home_page_data
-from app.models import Func_Result
+from app.data_access.models import Func_Result
 
 def json_result(result: Func_Result):
     if result.success:
@@ -15,5 +15,5 @@ def json_result(result: Func_Result):
 def home_view():
     home_page = get_home_page_data()
     if not home_page.success or not home_page.result:
-        return render_template('505.html'), 505
+        return render_template('500.html'), 500
     return render_template('index.html', home_page=home_page.result)

@@ -1,42 +1,27 @@
 
 from flask import session
-from app.models import Func_Result
-from app.skins.models import Skin
-from app.skins.models import Skins_Page
-from app.skins.models import Skin_Input
-from app.skins.models import Skin_Type_With_Inputs
-from app.skins.models import Create_Skin_Page
-from app.skins.models import New_Skin_Type
-from app.skins.models import New_Skin_Input
-from app.db import connect_db
-from app.db import get_all_skins as db_get_all_skins
-from app.db import set_user_skin as db_set_user_skin
-from app.db import get_user_skin as db_get_user_skin
-from app.db import get_default_skin as db_get_default_skin
-from app.db import check_skin_purchaseable as db_check_skin_purchaseable
-from app.db import purchase_skin as db_purchase_skin
-from app.db import get_skin_inputs as db_get_skin_inputs
-from app.db import get_skin_input_id_by_name as db_get_skin_input_id_by_name
-from app.db import new_skin_input as db_new_skin_input
-from app.db import create_skin_type as db_create_skin_type
-from app.db import get_skin_type_with_inputs as db_get_skin_type_with_inputs
-from app.db import check_skin_type_exists as db_check_skin_type_exists
-from app.db import get_skin_input_list as db_get_skin_input_list
-from app.db import new_skin as db_new_skin
-from app.db import new_skin_values as db_new_skin_values
 import psycopg2 as pg
+from app.data_access.models import Func_Result
+from app.skins.data_access.models import Skin_Input
+from app.skins.data_access.models import Skin_Type_With_Inputs
+from app.skins.data_access.models import Create_Skin_Page
+from app.skins.data_access.models import New_Skin_Type
+from app.skins.data_access.models import New_Skin_Input
+from app.skins.data_access.db import SkinDB
+
+db = SkinDB()
 
 def get_user_skin() -> Func_Result:
     user_id = session['user_id']
     try:
-        user_skin = db_get_user_skin(user_id)
+        user_skin = db.get_user_skin(user_id)
         return Func_Result(True, user_skin)
     except Exception as e:
         return Func_Result(False, {'error': str(e)})
 
 def get_default_skin() -> Func_Result:
     try:
-        default_skin = db_get_default_skin()
+        default_skin = db.get_default_skin()
         return Func_Result(True, default_skin)
     except Exception as e:
         return Func_Result(False, {'error': str(e)})
@@ -44,7 +29,7 @@ def get_default_skin() -> Func_Result:
 def get_all_skins() -> Func_Result:
     user_id = session['user_id']
     try:
-        all_skins = db_get_all_skins(user_id)
+        all_skins = db.get_all_skins(user_id)
         return Func_Result(True, all_skins)
     except Exception as e:
         return Func_Result(False, {'error': str(e)})
@@ -52,7 +37,7 @@ def get_all_skins() -> Func_Result:
 def set_user_skin(data: dict[str, int]) -> Func_Result:
     user_id = session['user_id']
     skin_id = data['skin_id']
-    set_skin = db_set_user_skin(user_id, skin_id)
+    set_skin = db.set_user_skin(user_id, skin_id)
     if not set_skin.success:
         return Func_Result(False, set_skin.result)
     return Func_Result(True, {'success': True})
@@ -60,24 +45,24 @@ def set_user_skin(data: dict[str, int]) -> Func_Result:
 def purchase_skin(data: dict[str, int]) -> Func_Result:
     user_id = session['user_id']
     skin_id = data['skin_id']
-    skin_purchaseable = db_check_skin_purchaseable(user_id, skin_id)
+    skin_purchaseable = db.check_skin_purchaseable(user_id, skin_id)
     if not skin_purchaseable.success:
         return Func_Result(False, skin_purchaseable.result)
     if not skin_purchaseable.result:
         return Func_Result(False, {'error': 'Not enought points.'})
-    purchase_skin = db_purchase_skin(user_id, skin_id)
+    purchase_skin = db.purchase_skin(user_id, skin_id)
     if not purchase_skin.success:
         return Func_Result(False, purchase_skin.result)
     return Func_Result(True, {'success': True})
 
 def get_skin_types_with_inputs() -> Func_Result:
-    skin_types = db_get_skin_type_with_inputs()
+    skin_types = db.get_skin_type_with_inputs()
     if not skin_types.success:
         return Func_Result(False, skin_types.result)
     return Func_Result(True, [Skin_Type_With_Inputs(skin[0], skin[1], [skin[2]]) for skin in skin_types.result])
 
 def get_skin_inputs() -> Func_Result:
-    skin_inputs = db_get_skin_inputs()
+    skin_inputs = db.get_skin_inputs()
     if not skin_inputs.success:
         return Func_Result(False, skin_inputs.result)
     return Func_Result(True, [Skin_Input(skin[0], skin[1]) for skin in skin_inputs.result])
@@ -93,13 +78,13 @@ def create_skin_page() -> Func_Result:
 
 def add_new_skin_inputs(conn, new_skin: New_Skin_Type) -> Func_Result:
     for new_input in new_skin.new_inputs:
-        input_id = db_get_skin_input_id_by_name(new_input)
+        input_id = db.get_skin_input_id_by_name(new_input)
         if not input_id.success:
             return Func_Result(False, input_id.result)
         if input_id.result:
             new_skin.inputs.append(input_id.result)
         else:
-            new_input_result = db_new_skin_input(conn, new_input)
+            new_input_result = db.new_skin_input(conn, new_input)
             if not new_input_result.success:
                 conn.rollback()
                 return Func_Result(False, new_input_result.result)
@@ -149,17 +134,17 @@ def add_new_html_to_mapper(type, macro_name) -> Func_Result:
 def create_new_skin_type(data: dict) -> Func_Result:
     inputs = [int(x) for x in data['inputs']]
     new_skin = New_Skin_Type(data['skinType'], inputs, data['newInputs'], data['skinHtml'])
-    skin_type_exists = db_check_skin_type_exists(new_skin.type)
+    skin_type_exists = db.check_skin_type_exists(new_skin.type)
     if not skin_type_exists.success:
         return Func_Result(False, skin_type_exists.result)
     if skin_type_exists.result:
         return Func_Result(False, {'error': 'Skin type already exists'})
-    with connect_db() as conn:
+    with db.connect_db() as conn:
         if len(new_skin.new_inputs) > 0:
             add_skin_inputs = add_new_skin_inputs(conn, new_skin)
             if not add_skin_inputs.success:
                 return add_skin_inputs
-        create_skin_result = db_create_skin_type(conn, new_skin)
+        create_skin_result = db.create_skin_type(conn, new_skin)
         if not create_skin_result.success:
             conn.rollback()
             return Func_Result(False, create_skin_result.result)
@@ -170,14 +155,14 @@ def create_new_skin_type(data: dict) -> Func_Result:
     return Func_Result(True, {'success': True})
 
 def add_skin(conn: pg.extensions.connection, name: str, new_skin_input: New_Skin_Input, i: int) -> Func_Result:
-    skin_id_result = db_new_skin(conn, name, new_skin_input.points, new_skin_input.type_id)
+    skin_id_result = db.new_skin(conn, name, new_skin_input.points, new_skin_input.type_id)
     if not skin_id_result.success:
         conn.rollback()
         return Func_Result(False, skin_id_result.result)
     for input_name in new_skin_input.inputs:
         input_id = int(new_skin_input.inputs[input_name]['id'])  # type: ignore
         value = new_skin_input.inputs[input_name]['values'][i].strip() # type: ignore
-        new_skin_values_result = db_new_skin_values(conn, skin_id_result.result, input_id, value)
+        new_skin_values_result = db.new_skin_values(conn, skin_id_result.result, input_id, value)
         if not new_skin_values_result.success:
             conn.rollback()
             return Func_Result(False, new_skin_values_result.result)
@@ -185,7 +170,7 @@ def add_skin(conn: pg.extensions.connection, name: str, new_skin_input: New_Skin
     
 def add_skin_input_name_list(new_skin_input: New_Skin_Input) -> Func_Result:
     names = new_skin_input.names.split(',') # type: ignore
-    with connect_db() as conn:
+    with db.connect_db() as conn:
         for i in range(len(names)):
             name = names[i].strip()
             added_skin = add_skin(conn, name, new_skin_input, i)
@@ -197,7 +182,7 @@ def add_skin_input_name_list(new_skin_input: New_Skin_Input) -> Func_Result:
 def add_skin_input_mapper_json(new_skin_input: New_Skin_Input) -> Func_Result:
     mapper_dict = json.loads(new_skin_input.mapper_json) # type: ignore
     values_dict = mapper_dict['ValuesMap']
-    with connect_db() as conn:
+    with db.connect_db() as conn:
         first_key = list(new_skin_input.inputs.keys())[0]
         for i in range(len(new_skin_input.inputs[first_key]['values'])): # type: ignore
             name = mapper_dict['NameFormatter']
@@ -216,7 +201,7 @@ def create_new_skin_input(data: dict) -> Func_Result:
     new_skin_input = New_Skin_Input(data['skinTypeId'], data['inputs'], data['points'], data.get('skinName', None), data.get('mapperJson',  None))
     input_names = list(new_skin_input.inputs.keys())
     if len(input_names) > 0:
-        input_id_names = db_get_skin_input_list(input_names)
+        input_id_names = db.get_skin_input_list(input_names)
         if not input_id_names.success:
             return Func_Result(False, input_id_names.result)
         input_id_names = {input_id_name[1]: input_id_name[0] for input_id_name in input_id_names.result}

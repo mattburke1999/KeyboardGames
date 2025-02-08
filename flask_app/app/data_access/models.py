@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from app.games.models import Game_Info
+from app.games.data_access.models import Game_Info
  
 @dataclass
 class Func_Result:

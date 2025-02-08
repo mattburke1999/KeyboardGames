@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from app.skins.models import Skin
+from app.skins.data_access.models import Skin
 from datetime import datetime
 
 @dataclass
