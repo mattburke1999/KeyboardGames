@@ -32,7 +32,7 @@ def try_login(data: dict[str, str]) -> Func_Result:
     password = data['password']
     try:
         user_id, hashed_password, is_admin = DB.check_user(username)
-        if user_id and bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)):
+        if user_id and bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)): # type: ignore
             session['logged_in'] = True
             session['user_id'] = user_id
             session['is_admin'] = is_admin or False

@@ -8,7 +8,7 @@ from app.skins.data_access.models import Skin_Type_With_Inputs
 
 class SkinDB(BaseDB):
     
-    def get_all_skins(self, user_id: int) -> Skins_Page:
+    def get_all_skins(self, user_id: int) -> Skins_Page | None:
         with self.connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('''
@@ -24,7 +24,7 @@ class SkinDB(BaseDB):
                 result = cur.fetchone()
         return Skins_Page(*result) if result else None
         
-    def get_user_skin(self, user_id: int) -> Skin:
+    def get_user_skin(self, user_id: int) -> Skin | None:
         with self.connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('''
@@ -36,7 +36,7 @@ class SkinDB(BaseDB):
                 result = cur.fetchone()
         return Skin(*result) if result else None
         
-    def get_default_skin(self) -> Skin:
+    def get_default_skin(self) -> Skin | None:
         with self.connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("select type, name, data from skins.skins_view where name = 'Black'")
@@ -61,7 +61,7 @@ class SkinDB(BaseDB):
         with conn.cursor() as cur:
             cur.execute('select skins.purchase_skin(%s, %s)', (user_id, skin_id,))
         
-    def get_skin_inputs(self) -> list[Skin_Input]:
+    def get_skin_inputs(self) -> list[Skin_Input] | None:
         with self.connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('select id, name from skins.inputs')
@@ -75,7 +75,7 @@ class SkinDB(BaseDB):
                 result = cur.fetchone()
         return result[0] if result else {}
 
-    def get_skin_type_with_inputs(self) -> list[Skin_Type_With_Inputs]:
+    def get_skin_type_with_inputs(self) -> list[Skin_Type_With_Inputs] | None:
         with self.connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('''
@@ -86,23 +86,23 @@ class SkinDB(BaseDB):
                     group by t.name, t.id
                 ''')
                 results = cur.fetchall()
-        return [Skin_Type_With_Inputs(*res) for res in results]
+        return [Skin_Type_With_Inputs(*res) for res in results] if results else None
         
-    def get_skin_input_id_by_name(self, name: str) -> int:
+    def get_skin_input_id_by_name(self, name: str) -> int | None:
         with self.connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute('select id from skins.inputs where name = %s', (name,))
                 result = cur.fetchone()
         return result[0] if result else None
         
-    def new_skin_input(self, conn: pg.extensions.connection, name: str) -> int:
+    def new_skin_input(self, conn: pg.extensions.connection, name: str) -> int | None:
         with conn.cursor() as cur:
             cur.execute(
                 'INSERT INTO skins.inputs (name) VALUES (%s) RETURNING id', (name,))
             result = cur.fetchone()
         return result[0] if result else None
         
-    def create_skin_type(self, conn: pg.extensions.connection, type: str) -> int:
+    def create_skin_type(self, conn: pg.extensions.connection, type: str) -> int | None:
         with conn.cursor() as cur:
             cur.execute('insert into skins.types (name) values (%s) returning id', (type,))
             result = cur.fetchone()
@@ -119,7 +119,7 @@ class SkinDB(BaseDB):
                 result = cur.fetchone()
                 return result[0] > 0 if result else False
         
-    def new_skin(self, conn: pg.extensions.connection, name: str, points: int, type_id: int) -> int:
+    def new_skin(self, conn: pg.extensions.connection, name: str, points: int, type_id: int) -> int | None:
         with conn.cursor() as cur:
             cur.execute('INSERT into skins.core (name, points, type_id) VALUES (%s, %s, %s) RETURNING id', (name, points, type_id,))
             result = cur.fetchone()

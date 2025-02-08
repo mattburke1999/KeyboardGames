@@ -163,7 +163,7 @@ def create_new_skin_type(data: dict) -> Func_Result:
                 return add_skin_inputs
         new_type_id = None
         try:
-            new_type_id = DB.create_skin_type(conn, new_skin)
+            new_type_id = DB.create_skin_type(conn, new_skin.type)
         except Exception as e:
             conn.rollback()
             return Func_Result(False, {'error': str(e)})
@@ -192,8 +192,8 @@ def add_skin(conn: pg.extensions.connection, name: str, new_skin_input: New_Skin
     if not skin_id:
         return Func_Result(False, {'error': 'Error creating new skin'})
     for input_name in new_skin_input.inputs:
-        input_id = int(new_skin_input.inputs[input_name]['id'])
-        value = new_skin_input.inputs[input_name]['values'][i].strip()
+        input_id = int(new_skin_input.inputs[input_name]['id']) # type: ignore
+        value = new_skin_input.inputs[input_name]['values'][i].strip() # type: ignore
         try:
             DB.new_skin_values(conn, skin_id, input_id, value)
         except Exception as e:
@@ -201,7 +201,7 @@ def add_skin(conn: pg.extensions.connection, name: str, new_skin_input: New_Skin
     return Func_Result(True, None)
     
 def add_skin_input_name_list(new_skin_input: New_Skin_Input) -> Func_Result:
-    names = new_skin_input.names.split(',')
+    names = new_skin_input.names.split(',') # type: ignore
     with DB.connect_db() as conn:
         for i in range(len(names)):
             name = names[i].strip()

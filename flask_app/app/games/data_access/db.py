@@ -12,7 +12,7 @@ class GameDB(BaseDB):
                 results = cur.fetchall()
                 return {res[7]: Game_Info(res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[8], res[9]) for res in results} if results else {}
 
-    def update_score(self, conn: pg.extensions.connection, user_id: int, game_id: int, score: int) -> Score_View:
+    def update_score(self, conn: pg.extensions.connection, user_id: int, game_id: int, score: int) -> Score_View | None:
         with conn.cursor() as cur:
             cur.execute('select high_scores, points_added, score_rank from update_scores(%s, %s, %s)', (user_id, game_id, score))
             result = cur.fetchone()

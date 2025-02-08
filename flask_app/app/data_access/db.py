@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from typing import Generator
 
 class BaseDB:
-    _pool = None  # Shared pool for all subclasses
+    _pool = None # Shared pool for all subclasses
 
     @classmethod
     def initialize_pool(cls, db_str: str, minconn: int = 1, maxconn: int = 10):
@@ -16,8 +16,8 @@ class BaseDB:
 
     @contextmanager
     def connect_db(self) -> Generator[pg.extensions.connection, None, None]:
-        conn = self._pool.getconn()
+        conn = self._pool.getconn() # type: ignore
         try:
             yield conn
         finally:
-            self._pool.putconn(conn)
+            self._pool.putconn(conn) # type: ignore
