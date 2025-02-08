@@ -1,5 +1,7 @@
+import psycopg2 as pg
 from psycopg2 import pool
 from contextlib import contextmanager
+from typing import Generator
 
 class BaseDB:
     _pool = None  # Shared pool for all subclasses
@@ -13,7 +15,7 @@ class BaseDB:
             )
 
     @contextmanager
-    def connect_db(self):
+    def connect_db(self) -> Generator[pg.extensions.connection, None, None]:
         conn = self._pool.getconn()
         try:
             yield conn
