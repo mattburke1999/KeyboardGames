@@ -8,7 +8,6 @@ from app.auth.services import try_login
 from app.auth.services import logout_process
 from app.auth.services import create_user
 from app.auth.services import check_unique_register_input
-from app.auth.services import get_profile
 from app.auth.views import not_logged_in_view
 from app.auth.views import not_admin_view
 from app.auth.views import not_localhost_view
@@ -84,8 +83,3 @@ def unique_email():
     result = check_unique_register_input('email', data)
     return json_result(result)
 
-@bp.route('/profile', methods=['GET'])
-@login_required('api')
-def profile():
-    result = get_profile()
-    return json_result(result)

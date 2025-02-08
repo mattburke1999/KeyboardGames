@@ -11,7 +11,7 @@ function handleError(response) {
 function get_profile() {
     if($('#profile-username').text() === '') {
         $.ajax({
-            url: '/auth/profile',
+            url: '/profile',
             type: 'GET',
             success: function(response) {
                 console.log(response);

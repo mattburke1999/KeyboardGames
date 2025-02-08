@@ -1,7 +1,6 @@
 from app.data_access.db import BaseDB
 
 from app.auth.data_access.models import New_User
-from app.auth.data_access.models import Profile
 
 import psycopg2 as pg
 import bcrypt
@@ -34,10 +33,4 @@ class AuthDB(BaseDB):
                 result = cur.fetchone()
                 return result[0] == 0 if result else True
         
-    def get_profile(self, user_id: int) -> Profile | None:
-        with self.connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('select username, created_time, points, num_top10, ranks from profile_view where id = %s', (user_id,))
-                result = cur.fetchone()
-                return Profile(*result) if result else None
     
