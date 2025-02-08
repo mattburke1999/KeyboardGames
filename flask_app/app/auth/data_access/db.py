@@ -39,5 +39,5 @@ class AuthDB(BaseDB):
             with conn.cursor() as cur:
                 cur.execute('select username, created_time, points, num_top10, ranks from profile_view where id = %s', (user_id,))
                 result = cur.fetchone()
-                return Profile(result[0], result[1], result[2], result[3], result[4]) if result else None
+                return Profile(*result) if result else None
     

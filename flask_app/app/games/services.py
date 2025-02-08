@@ -18,14 +18,13 @@ import socket
 import traceback
 
 GAME_INFO = {}
-db = GameDB()
+DB = GameDB()
 
 def get_games_process() -> Func_Result:
     global GAME_INFO
     try:
         if not GAME_INFO:
-            GAME_INFO = db.get_games()
-            print(f'Game info: {GAME_INFO}')
+            GAME_INFO = DB.get_games()
         return Func_Result(True, GAME_INFO)
     except Exception as e:
         traceback.print_exc()
@@ -129,9 +128,9 @@ def score_update_process(client_ip: str|None, data: dict, game_id: int) -> Func_
         return Func_Result(False, validation.success)
     score = int(validation.result['points'])
     print(f'Score validated, uploading score: {score} for user {user_id} in game {game_id}')
-    with db.connect_db() as conn:
+    with DB.connect_db() as conn:
         try:
-            score_update = db.update_score(conn, user_id, game_id, score)
+            score_update = DB.update_score(conn, user_id, game_id, score)
             conn.commit()
         except Exception as e:
             conn.rollback()

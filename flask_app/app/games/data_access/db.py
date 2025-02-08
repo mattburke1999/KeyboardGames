@@ -16,5 +16,5 @@ class GameDB(BaseDB):
         with conn.cursor() as cur:
             cur.execute('select high_scores, points_added, score_rank from update_scores(%s, %s, %s)', (user_id, game_id, score))
             result = cur.fetchone()
-            return Score_View(result[0], result[1], result[2]) if result else None
+            return Score_View(*result) if result else None
   

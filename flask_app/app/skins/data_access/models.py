@@ -36,6 +36,12 @@ class New_Skin_Type:
     inputs: list[int]
     new_inputs: list[str]
     html: str | None = None
+    
+    def __init__(self, type: str, inputs: list[str], new_inputs: list[str], html: str):
+        self.type = type
+        self.inputs = [int(x) for x in inputs]
+        self.new_inputs = new_inputs
+        self.html = html
 
 @dataclass
 class New_Skin_Input:
