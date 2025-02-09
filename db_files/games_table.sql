@@ -13,17 +13,19 @@ CREATE TABLE IF NOT EXISTS games
     last_updated_time timestamp without time zone DEFAULT now()
 );
 
-create table skins.types (
+create schema if not exists skins;
+
+create table if not exists skins.types (
 	id serial primary key,
 	name character varying not null
 );
 
-create table skins.inputs (
+create table if not exists skins.inputs (
 	id serial primary key,
 	name character varying not null
 );
 
-create table skins.type_inputs (
+create table if not exists skins.type_inputs (
 	id serial primary key,
 	type_id int not null,
 	input_id int not null,
@@ -35,7 +37,7 @@ create table skins.type_inputs (
 	on delete cascade
 );
 
-CREATE TABLE skins.core
+CREATE TABLE if not exists skins.core
 (
     id serial primary key,
     type_id int not null,
@@ -46,7 +48,7 @@ CREATE TABLE skins.core
 	on delete cascade
 );
 
-create table skins.input_values (
+create table if not exists skins.input_values (
 	id serial primary key,
 	skin_id int not null,
 	input_id int not null,
@@ -71,7 +73,7 @@ create table IF NOT EXISTS accounts (
     skin_id int default 1,
     created_time timestamp without time zone NOT NULL DEFAULT now(),
 	last_updated_time timestamp without time zone NOT NULL DEFAULT now(),
-    foreign key (skin_id) references skins(id) on update cascade on delete set null
+    foreign key (skin_id) references skins.core(id) on update cascade on delete set null
 );
 
 create table IF NOT EXISTS scores (
@@ -98,7 +100,7 @@ CREATE TABLE IF NOT EXISTS public.score_updates
         ON DELETE CASCADE
 );
 
-create table point_updates (
+create table if not exists point_updates (
     id bigserial primary key,
     account_id integer NOT NULL,
     point_amount integer NOT NULL,
@@ -131,11 +133,11 @@ CREATE TABLE IF NOT EXISTS public.user_skins
 
 create view skins.skins_view as
 select s.id, s.name, s.points, t.name type, jsonb_object_agg(i.name, sv.value) AS data
-from skins s
-join skin_types t on s.type_id = t.id
-join skin_type_inputs st on t.id = st.type_id
-join skin_inputs i on i.id = st.input_id
-join skin_input_values sv on s.id = sv.skin_id and sv.input_id = i.id
+from skins.core s
+join skins.types t on s.type_id = t.id
+join skins.type_inputs st on t.id = st.type_id
+join skins.inputs i on i.id = st.input_id
+join skins.input_values sv on s.id = sv.skin_id and sv.input_id = i.id
 group by s.name, s.points, t.name, s.id
 order by s.points, t.name, s.id;
 
@@ -163,7 +165,7 @@ join (
 	group by account_id
 ) s2 on s.account_id = s2.account_id
 join accounts a on a.id = s.account_id
-group by a.id, username, created_time, num_top10, points
+group by a.id, username, created_time, num_top10, points;
 
 
 --- functions
