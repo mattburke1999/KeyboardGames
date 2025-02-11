@@ -36,19 +36,19 @@ def all_test_teardown():
     live_db_conn.close()
     print('Database teardown complete')
 
+def run_unit_tests():
+    all_test_setup()
 
-all_test_setup()
+    try:
+        test_folder = r'flask_app\unit_tests' 
+        test_suite = unittest.TestLoader().discover(test_folder, pattern='test_*.py')
 
-try:
-    test_folder = r'flask_app\unit_tests' 
-    test_suite = unittest.TestLoader().discover(test_folder, pattern='test_*.py')
-
-    xmlrunner.XMLTestRunner(output='test-reports').run(test_suite)
-    convert_xml_to_html()
-       
-finally:
-    all_test_teardown()
-    print('All tests complete')
+        xmlrunner.XMLTestRunner(output='test-reports').run(test_suite)
+        convert_xml_to_html()
+        
+    finally:
+        all_test_teardown()
+        print('All tests complete')
     
 if __name__ == '__main__':
-    unittest.main()
+    run_unit_tests()
