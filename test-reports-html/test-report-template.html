@@ -28,14 +28,20 @@
                     <div class="suite-test-cases" style="display:none;">
                         {% for test_case in suite.test_cases %}
                             <div class="test-case">
-                                <div class="test-case-row">
+                                <div class="test-case-row{{ ' passed' if not test_case.failure else '' }}" 
+                                {% if test_case.failure %}
+                                    onclick="toggleTestCase(this.parentNode)"
+                                {% endif %}
+                                >
                                     <p class="test-case-name">{{ test_case.name }}</p>
                                     <p class="test-case-time">{{ test_case.time }}s</p>
                                     <p class="test-case-file">{{ test_case.file }}</p>
                                     <p class="test-case-line">{{ test_case.line_no }}</p>
                                     <p class="test-case-status">{{ 'failed' if test_case.failure else 'passed' }}</p>
                                     <div class="caret">
-                                        <i class="fas fa-caret-right"></i>
+                                        {% if test_case.failure %}
+                                            <i class="fas fa-caret-right"></i>
+                                        {% endif %}
                                     </div>
                                     {% if test_case.failure %}
                                         <div class="failure" style="display:none;">

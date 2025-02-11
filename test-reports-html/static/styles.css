@@ -15,7 +15,7 @@
     cursor: pointer;
 }
 .suite-row {
-    background-color: #e0e0e0;
+    background-color: #bdbdbd;
     border: 1px solid black;
     border-bottom: none;
 }
@@ -24,20 +24,22 @@
 }
 
 .suite-row:hover{
-    background-color: #d0d0d0;
+    background-color: #b0b0b0;
 }
 .suite-test-cases {
-    background-color: #dbdbdb;
     border: 1px solid black;
     border-bottom: none;
 }
 .test-case-row {
-    background-color: #bdbdbd;
+    background-color: #e0e0e0;
     border-bottom: 1px solid black;
+}
+.test-case-row.passed {
+    cursor: default;
 }
 .test-case:nth-last-child(1) .test-case-row{
     border-bottom: none;
 }
 .test-case-row:hover{
-    background-color: #b0b0b0;
+    background-color: #d0d0d0;
 }

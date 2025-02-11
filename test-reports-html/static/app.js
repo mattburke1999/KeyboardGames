@@ -3,6 +3,22 @@
 function toggleSuite(suite) {
     const caret = suite.querySelector('.caret i');
     const caretClass = caret.classList[1];
+    allSuites = document.querySelectorAll('.suite');
+    allSuites.forEach(suite => {
+        suite.querySelector('.caret i').classList.remove('fa-caret-down');
+        suite.querySelector('.caret i').classList.add('fa-caret-right');
+        suite.querySelector('.suite-test-cases').style.display = 'none';
+    });
+    if (caretClass === 'fa-caret-right') {
+        caret.classList.remove('fa-caret-right');
+        caret.classList.add('fa-caret-down');
+        suite.querySelector('.suite-test-cases').style.display = 'flex';
+    }
+}
+
+function toggleTestCase(testCase) {
+    const caret = testCase.querySelector('.caret i');
+    const caretClass = caret.classList[1];
     let open = false;
     if (caretClass === 'fa-caret-right') {
         caret.classList.remove('fa-caret-right');
@@ -13,8 +29,8 @@ function toggleSuite(suite) {
         caret.classList.add('fa-caret-right');
     }
     if (open) {
-        suite.querySelector('.suite-test-cases').style.display = 'flex';
+        testCase.querySelector('.failure').style.display = 'flex';
     } else {
-        suite.querySelector('.suite-test-cases').style.display = 'none';
+        testCase.querySelector('.failure').style.display = 'none';
     }
 }
