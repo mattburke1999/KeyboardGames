@@ -12,7 +12,7 @@
         <div class='suites'>
             {% for suite in test_suites %}
                 <div class='suite'>
-                    <div class="suite-row">
+                    <div class="suite-row" onclick="toggleSuite(this.parentNode)">
                         <p class="suite-name">{{ suite.name }}</p>
                         <p class="suite-num-tests">{{ suite.num_tests }} tests</p>
                         <p class="suite-file">{{ suite.file }}</p>
