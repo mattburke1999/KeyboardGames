@@ -1,10 +1,14 @@
 
 import os
 from dataclasses import dataclass
+from dataclasses import asdict
 from datetime import datetime        
 from jinja2 import Environment, FileSystemLoader
+import uuid
+import json
 
 current_date = datetime.now().strftime('%Y-%m-%d')
+all_test_failures = {}
 
 def sample_xml():
     return r"""
@@ -43,26 +47,29 @@ class TestFailure:
 
 @dataclass
 class TestCase:
+    id: str
     name: str
     time: float
-    timestamp: str
     file: str
     line_no: int
     failure: TestFailure | None
     
     def __init__(self, test_case: str):
+        global all_test_failures
+        self.id = str(uuid.uuid4())
+        self.name = parse_value(test_case, 'name')
+        self.time = float(parse_value(test_case, 'time'))
+        self.file = parse_value(test_case, 'file')
+        self.line_no = int(parse_value(test_case, 'line'))
         if '<failure' in test_case:
             failure_start = test_case.find('<failure')
             failure_end = test_case.find('</failure>') + len('</failure>')
             self.failure = TestFailure(test_case[failure_start:failure_end])
+            self_dict = asdict(self)
+            self_dict.pop('id')
+            all_test_failures[self.id] = json.dumps(self_dict)
         else:
             self.failure = None
-        self.name = parse_value(test_case, 'name')
-        self.time = float(parse_value(test_case, 'time'))
-        # we may convert to datetime and reformat later
-        self.timestamp = parse_value(test_case, 'timestamp')
-        self.file = parse_value(test_case, 'file')
-        self.line_no = int(parse_value(test_case, 'line'))
 
 def find_test_cases(test_suite: str):
     test_cases = []
@@ -110,14 +117,16 @@ class TestSuite:
 
 
 def render_test_report(test_suites: list, test_report_html_dir: str) -> str:
+    global current_date, all_test_failures
     # Load the Jinja2 environment and specify the folder containing the template
     env = Environment(loader=FileSystemLoader(test_report_html_dir))  # Adjust folder if needed
     template = env.get_template('test-report-template.html')  # Load the template file
     # Render the template with test_suites data
-    return template.render(test_suites=test_suites, current_date=current_date)
+    return template.render(test_suites=test_suites, current_date=current_date, failures = all_test_failures)
 
 
 def convert_xml_to_html(test_report_dir = 'test-reports', test_report_html_dir = 'test-reports-html'):
+    global current_date
     xml_files = os.listdir(test_report_dir)
     test_suites = []
     for file in xml_files:
