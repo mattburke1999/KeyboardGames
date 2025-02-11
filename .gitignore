@@ -45,3 +45,6 @@ Thumbs.db
 test_rust/
 
 /skin_data
+
+/test-reports
+/test-reports-html/reports

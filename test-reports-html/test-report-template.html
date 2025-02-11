@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Unit Test Report - {{ current_date }}</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="../static/styles.css">
+        <script src="../static/app.js"></script>
+    </head>
+    <body>
+        <h1>Unit Test Report</h1>
+        <p>Generated on: {{ current_date }}</p>
+        <div class='suites'>
+            {% for suite in test_suites %}
+                <div class='suite'>
+                    <div class="suite-row">
+                        <p class="suite-name">{{ suite.name }}</p>
+                        <p class="suite-num-tests">{{ suite.num_tests }} tests</p>
+                        <p class="suite-file">{{ suite.file }}</p>
+                        <p class="suite-time">{{ suite.time }}s</p>
+                        <p class="suite-timestamp">{{ suite.timestamp }}</p>
+                        <p class="suite-failures">{{ suite.failures }} failures</p>
+                        <p class="suite-errors">{{ suite.errors }} errors</p>
+                        <p class="suite-skipped">{{ suite.skipped }} skipped</p>
+                        <div class="caret">
+                            <i class="fas fa-caret-right"></i>
+                        </div>
+                    </div>
+                    <div class="suite-test-cases" style="display:none;">
+                        {% for test_case in suite.test_cases %}
+                            <div class="test-case">
+                                <div class="test-case-row">
+                                    <p class="test-case-name">{{ test_case.name }}</p>
+                                    <p class="test-case-time">{{ test_case.time }}s</p>
+                                    <p class="test-case-file">{{ test_case.file }}</p>
+                                    <p class="test-case-line">{{ test_case.line_no }}</p>
+                                    <p class="test-case-status">{{ 'failed' if test_case.failure else 'passed' }}</p>
+                                    <div class="caret">
+                                        <i class="fas fa-caret-right"></i>
+                                    </div>
+                                    {% if test_case.failure %}
+                                        <div class="failure" style="display:none;">
+                                            <p class="failure-type">{{ test_case.failure.type }}</p>
+                                            <p class="failure-message">{{ test_case.failure.message }}</p>
+                                            <p class="failure-traceback">{{ test_case.failure.traceback }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </body>
+</html>
