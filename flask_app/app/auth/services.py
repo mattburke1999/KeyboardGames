@@ -4,6 +4,7 @@ from .data_access.db import AuthDB
 from app.data_access import RD
 from app.data_access.models import Func_Result
 import bcrypt
+import traceback
 import threading
 
 DB = AuthDB()
@@ -37,7 +38,8 @@ def try_login(data: dict[str, str]) -> Func_Result:
             session['is_admin'] = is_admin or False
             return Func_Result(True, {'logged_in': True})
         return Func_Result(True, {'logged_in': False})
-    except Exception as e:
+    except Exception:
+        e = traceback.format_exc()
         return Func_Result(False, {'error': str(e)})
 
 def logout_process() -> None:
