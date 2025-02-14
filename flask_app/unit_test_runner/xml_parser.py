@@ -3,9 +3,6 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 from datetime import datetime
-from datetime import timedelta
-
-current_date = datetime.now().strftime('%Y-%m-%d')
 
 def sample_xml():
     return r"""
@@ -25,7 +22,7 @@ AssertionError: 2 != 1
 """
 
 def parse_value(whole_str: str, label: str, type: type = str):
-    start = whole_str.find(f'{label}=') + len(f'{label}="')
+    start = whole_str.find(f' {label}=') + len(f' {label}="')
     end = whole_str.find('"', start)
     if type == datetime:
         return datetime.fromisoformat(whole_str[start:end])
@@ -116,7 +113,7 @@ class TestSuite:
         num_tests = parse_value(xml_test_report, 'tests', int)
         file = parse_value(xml_test_report, 'file')
         time = parse_value(xml_test_report, 'time', float)
-        timestamp = parse_value(xml_test_report, 'timestamp', datetime) + timedelta(days=-1)
+        timestamp = parse_value(xml_test_report, 'timestamp', datetime)
         failures = parse_value(xml_test_report, 'failures', int)
         errors = parse_value(xml_test_report, 'errors', int)
         skipped = parse_value(xml_test_report, 'skipped', int)
@@ -141,7 +138,9 @@ def parse_xmls(test_report_dir = 'test-reports') -> list[TestSuite]:
         file_name = f'{test_report_dir}/{file}'
         with open(file_name, 'r') as xml_file:
             xml = xml_file.read()
-            test_suites.append(TestSuite.parse_test_report(xml))
+            test_timestamp = parse_value(xml, 'timestamp', datetime)
+            if test_timestamp.date() == datetime.now().date():
+                test_suites.append(TestSuite.parse_test_report(xml))
         # delete the xml file
         os.remove(file_name)
     return test_suites
