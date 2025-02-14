@@ -94,7 +94,7 @@ def insert_test_suites_into_db(test_suites: list[TestSuite]):
             conn.rollback()
             # if database insert fails, we will write to a temporary json file for the time being
             
-def run_unit_tests():
+def run_tests():
     all_test_setup()
 
     try:
@@ -184,4 +184,4 @@ if __name__ == '__main__':
         s = 'test'
         start_app()
     else:
-        run_unit_tests()
+        run_tests()
