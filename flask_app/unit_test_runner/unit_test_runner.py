@@ -26,7 +26,13 @@ def test_connect_db():
     conn = pg.connect(os.getenv('TEST_DATABASE_URL'))
     return conn
 
-def all_test_setup():
+def all_test_setup(save_to_db: bool, test_report_dir: str):
+    if save_to_db:
+        if os.path.exists(test_report_dir):
+            # remove previous test results
+            for file in os.listdir(test_report_dir):
+                os.remove(f'{test_report_dir}/{file}')
+        print('Test report directory cleaned')
     sql_create_script = None
     with open(sql_create, 'r') as file:
         sql_create_script = file.read()
@@ -95,15 +101,17 @@ def insert_test_suites_into_db(test_suites: list[TestSuite]):
             # if database insert fails, we will write to a temporary json file for the time being
             
 def run_tests(save_to_db=False):
-    all_test_setup()
+    
+    test_report_dir = 'test-reports'
+    all_test_setup(save_to_db, test_report_dir)
 
     try:
-        test_report_dir = 'test-reports'
         test_folder = 'flask_app' 
         test_suite = unittest.TestLoader().discover(test_folder, pattern='test_*.py')
 
         xmlrunner.XMLTestRunner(output=test_report_dir).run(test_suite)
         if save_to_db:
+            print('saving results to db')
             test_suites = parse_xmls(test_report_dir)
             insert_test_suites_into_db(test_suites)
         
@@ -174,7 +182,7 @@ def index():
     integration_test_suites = [test_suite for test_suite in test_suites if test_suite.type == 'integration']
     failures = get_all_failures_from_test_suites(test_suites)
     return render_template('test-report-template.html', 
-        unit_test_suites=unit_test_suites, integration_test_suites=integration_test_suites, all_dates=all_dates, current_date=timestamp, failures=failures)
+        unit_test_suites=unit_test_suites, integration_test_suites=integration_test_suites, all_dates=all_dates, current_date=timestamp, failures=failures, len=len)
 
 def start_app():
     app.run(debug=True)
@@ -182,7 +190,6 @@ def start_app():
 if __name__ == '__main__':
     args = sys.argv[1:]
     if args and args[0] == '-view':
-        s = 'test'
         start_app()
     else:
         save_to_db = True if args and args[0] == '-save' else False
