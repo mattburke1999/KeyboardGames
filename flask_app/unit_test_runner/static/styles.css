@@ -23,12 +23,12 @@
 }
 .suite-row.header, .test-case-row.header {
     border-bottom: none;
-    background-color: #959595;
+    background-color: #818181;
     cursor: default;
     font-weight: bold;
 }
 .suite-row.header:hover, .test-case-row.header:hover {
-    background-color: #959595;
+    background-color: #818181;
 }
 .suite:nth-last-child(1) .suite-row {
     border-bottom: none;
@@ -44,10 +44,14 @@
 .test-case-row {
     background-color: #e0e0e0;
     border-bottom: 1px solid black;
+    padding-left: 5rem;
 }
 
 .test-case-row.header {
     border: none;
+}
+.test-case-row p {
+    margin: .25rem 0;
 }
 .test-case-row.passed {
     cursor: default;
@@ -173,4 +177,21 @@
 #test-traceback {
     border: 1px solid black;
     padding: .5rem;
+}
+.date-selection {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    margin: 1rem 0;
+}
+.date-selection select {
+    padding: .5rem;
+    font-size: 1rem;
+    border-radius: 5px;
+}
+
+.test-type {
+    margin-top: 1.5rem;
+    margin-bottom: .5rem;
 }

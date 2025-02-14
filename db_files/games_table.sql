@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS games
 );
 
 create schema if not exists skins;
+create schema if not exists unit_tests;
 
 create table if not exists skins.types (
 	id serial primary key,
@@ -128,6 +129,41 @@ CREATE TABLE IF NOT EXISTS public.user_skins
 );
 
 
+create table IF NOT EXISTS unit_tests.test_suite (
+	id bigserial primary key,
+	name character varying not null,
+	type character varying not null,
+	num_tests int not null default 0,
+	file character varying not null,
+	time float not null default 0,
+	timestamp timestamp without time zone,
+	failures int not null default 0,
+	errors int not null default 0,
+	skipped int not null default 0
+);
+
+create table IF NOT EXISTS unit_tests.test_case (
+	id bigserial primary key,
+	test_suite_id int not null ,
+	name character varying not null,
+	time float not null default 0,
+	file character varying not null,
+	line_no int not null default 0,
+	passed bool not null,
+	foreign key (test_suite_id) references unit_tests.test_suite(id)
+	on delete cascade on update cascade
+);
+
+create table IF NOT EXISTS unit_tests.failures (
+	id bigserial primary key,
+	test_case_id int not null,
+	type character varying,
+	message character varying,
+	traceback character varying,
+	foreign key (test_case_id) references unit_tests.test_case(id)
+	on delete cascade on update cascade
+);
+
 
 --- VIEWS
 
@@ -167,6 +203,19 @@ join (
 join accounts a on a.id = s.account_id
 group by a.id, username, created_time, num_top10, points;
 
+
+create view unit_tests.test_view as
+select s.name, s.type, s.num_tests, s.file, s.time, s.timestamp, s.failures, s.errors, s.skipped,
+	json_agg(json_build_object('name', c.name, 'time', c.time, 'file', c.file, 'line_no', c.line_no, 'passed', c.passed, 
+	'failures', case when c.passed then null else c.failure end)) as test_cases
+from unit_tests.test_suite s
+join (
+	select test_suite_id, name, time, file, line_no, passed, 
+	json_build_object('id', f.id, 'type', f.type, 'message', f.message, 'traceback', f.traceback) failure
+	from unit_tests.test_case c
+	left join unit_tests.failures f on c.id = f.test_case_id
+) c on s.id = c.test_suite_id
+group by s.name, s.type, s.num_tests, s.file, s.time, s.timestamp, s.failures, s.errors, s.skipped;
 
 --- functions
 

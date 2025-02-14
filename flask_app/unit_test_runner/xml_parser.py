@@ -1,14 +1,11 @@
 
 import os
 from dataclasses import dataclass
-from dataclasses import asdict
-from datetime import datetime        
-from jinja2 import Environment, FileSystemLoader
-import uuid
-import json
+from typing import Literal
+from datetime import datetime
+from datetime import timedelta
 
 current_date = datetime.now().strftime('%Y-%m-%d')
-all_test_failures = {}
 
 def sample_xml():
     return r"""
@@ -27,49 +24,59 @@ AssertionError: 2 != 1
 </testsuite>
 """
 
-def parse_value(whole_str, label):
+def parse_value(whole_str: str, label: str, type: type = str):
     start = whole_str.find(f'{label}=') + len(f'{label}="')
     end = whole_str.find('"', start)
-    return whole_str[start:end]
+    if type == datetime:
+        return datetime.fromisoformat(whole_str[start:end])
+    return type(whole_str[start:end])
 
 @dataclass
 class TestFailure:
     type: str
     message: str
     traceback: str
+    id: int | None = None
     
-    def __init__(self, failure: str):
-        self.type = parse_value(failure, 'type')
-        self.message = parse_value(failure, 'message')
+    @classmethod
+    def parse_failure(cls, failure: str, id = None):
+        type = parse_value(failure, 'type')
+        message = parse_value(failure, 'message')
         traceback_start = failure.find('<![CDATA[') + len('<![CDATA[')
         traceback_end = failure.find(']]>', traceback_start)
-        self.traceback = failure[traceback_start:traceback_end].replace('\t', '')
+        traceback = failure[traceback_start:traceback_end].replace('\t', '')
+        return cls(type, message, traceback, id)
 
 @dataclass
 class TestCase:
-    id: str
     name: str
     time: float
     file: str
     line_no: int
+    passed: bool
     failure: TestFailure | None
     
-    def __init__(self, test_case: str):
-        global all_test_failures
-        self.id = str(uuid.uuid4())
-        self.name = parse_value(test_case, 'name')
-        self.time = float(parse_value(test_case, 'time'))
-        self.file = parse_value(test_case, 'file')
-        self.line_no = int(parse_value(test_case, 'line'))
+    @classmethod
+    def parse_test_case(cls, test_case: str):
+        name = parse_value(test_case, 'name')
+        time = parse_value(test_case, 'time', float)
+        file = parse_value(test_case, 'file')
+        line_no = parse_value(test_case, 'line', int)
+        failure = None
+        passed = True
         if '<failure' in test_case:
             failure_start = test_case.find('<failure')
             failure_end = test_case.find('</failure>') + len('</failure>')
-            self.failure = TestFailure(test_case[failure_start:failure_end])
-            self_dict = asdict(self)
-            self_dict.pop('id')
-            all_test_failures[self.id] = json.dumps(self_dict)
-        else:
-            self.failure = None
+            failure = TestFailure.parse_failure(test_case[failure_start:failure_end])
+            passed = False
+        return cls(name, time, file, line_no, passed, failure)
+    
+    @classmethod
+    def from_db(cls, name: str, time: float, file: str, line_no: int, passed: bool, failures: dict | None):
+        if failures:
+            failures = TestFailure(**failures)
+        return cls(name, time, file, line_no, passed, failures)
+        
 
 def find_test_cases(test_suite: str):
     test_cases = []
@@ -85,7 +92,7 @@ def find_test_cases(test_suite: str):
             test_case_end = test_suite.find('</testcase>') + len('</testcase>')
             test_case = test_suite[test_case_start:test_case_end]
         
-        test_cases.append(TestCase(test_case))
+        test_cases.append(TestCase.parse_test_case(test_case))
         test_suite = test_suite[test_case_end:]
     return test_cases
 
@@ -93,50 +100,50 @@ def find_test_cases(test_suite: str):
 class TestSuite:
     test_cases: list[TestCase]
     name: str
+    type: Literal['unit', 'integration']
     num_tests: int
     file: str
     time: float
-    timestamp: str
+    timestamp: datetime
     failures: int
     errors: int
     skipped: int
     
-    def __init__(self, xml_test_report: str):
-        self.name = parse_value(xml_test_report, 'name')
-        self.num_tests = int(parse_value(xml_test_report, 'tests'))
-        self.file = parse_value(xml_test_report, 'file')
-        self.time = float(parse_value(xml_test_report, 'time'))
-        self.timestamp = parse_value(xml_test_report, 'timestamp')
-        self.failures = int(parse_value(xml_test_report, 'failures'))
-        self.errors = int(parse_value(xml_test_report, 'errors'))
-        self.skipped = int(parse_value(xml_test_report, 'skipped'))
+    @classmethod
+    def parse_test_report(cls, xml_test_report: str):
+        name = parse_value(xml_test_report, 'name')
+        type = 'unit' if r'flask_app\unit_tests' in xml_test_report else 'integration'
+        num_tests = parse_value(xml_test_report, 'tests', int)
+        file = parse_value(xml_test_report, 'file')
+        time = parse_value(xml_test_report, 'time', float)
+        timestamp = parse_value(xml_test_report, 'timestamp', datetime) + timedelta(days=-1)
+        failures = parse_value(xml_test_report, 'failures', int)
+        errors = parse_value(xml_test_report, 'errors', int)
+        skipped = parse_value(xml_test_report, 'skipped', int)
         test_suite_start = xml_test_report.find('<testsuite')
         test_suite_end = xml_test_report.find('</testsuite>') + len('</testsuite>')
         test_suite = xml_test_report[test_suite_start:test_suite_end]
-        self.test_cases = find_test_cases(test_suite)
+        test_cases = find_test_cases(test_suite)
+        return cls(test_cases, name, type, num_tests, file, time, timestamp, failures, errors, skipped)
+    
+    @classmethod
+    def from_db(cls, name: str, type: Literal['unit', 'integration'], num_tests: int, file: str, time: float, timestamp: datetime, failures: int, errors: int, skipped: int, test_cases: list[dict]):
+        new_test_cases = []
+        for test_case in test_cases:
+            new_test_cases.append(TestCase.from_db(**test_case))
+        return cls(new_test_cases, name, type, num_tests, file, time, timestamp, failures, errors, skipped)
+            
 
-
-def render_test_report(test_suites: list, test_report_html_dir: str) -> str:
-    global current_date, all_test_failures
-    # Load the Jinja2 environment and specify the folder containing the template
-    env = Environment(loader=FileSystemLoader(test_report_html_dir))  # Adjust folder if needed
-    template = env.get_template('test-report-template.html')  # Load the template file
-    # Render the template with test_suites data
-    return template.render(test_suites=test_suites, current_date=current_date, failures = all_test_failures)
-
-
-def convert_xml_to_html(test_report_dir = 'test-reports', test_report_html_dir = 'test-reports-html'):
-    global current_date
+def parse_xmls(test_report_dir = 'test-reports') -> list[TestSuite]:
     xml_files = os.listdir(test_report_dir)
     test_suites = []
     for file in xml_files:
         file_name = f'{test_report_dir}/{file}'
         with open(file_name, 'r') as xml_file:
             xml = xml_file.read()
-            test_suites.append(TestSuite(xml))
+            test_suites.append(TestSuite.parse_test_report(xml))
         # delete the xml file
         os.remove(file_name)
-    # will need to check if the timestamp is today, then convert to html, then delete all xml files
-    html = render_test_report(test_suites, test_report_html_dir)
-    with open(f'{test_report_html_dir}\\reports\\test-report-{current_date}.html', 'w') as html_file:
-        html_file.write(html)
+    return test_suites
+    
+
