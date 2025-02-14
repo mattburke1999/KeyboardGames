@@ -12,6 +12,10 @@ function toggleSuite(suite) {
     if (caretClass === 'fa-caret-right') {
         caret.classList.remove('fa-caret-right');
         caret.classList.add('fa-caret-down');
+        // check if current suite is last suite in allSuitesDiv
+        if (suite.nextElementSibling === null) {
+            suite.querySelector('.suite-test-cases').style.borderBottom = 'none';
+        }
         suite.querySelector('.suite-test-cases').style.display = 'flex';
     }
 }
