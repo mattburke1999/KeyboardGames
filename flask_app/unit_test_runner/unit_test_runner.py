@@ -94,7 +94,7 @@ def insert_test_suites_into_db(test_suites: list[TestSuite]):
             conn.rollback()
             # if database insert fails, we will write to a temporary json file for the time being
             
-def run_tests():
+def run_tests(save_to_db=False):
     all_test_setup()
 
     try:
@@ -103,8 +103,9 @@ def run_tests():
         test_suite = unittest.TestLoader().discover(test_folder, pattern='test_*.py')
 
         xmlrunner.XMLTestRunner(output=test_report_dir).run(test_suite)
-        test_suites = parse_xmls(test_report_dir)
-        insert_test_suites_into_db(test_suites)
+        if save_to_db:
+            test_suites = parse_xmls(test_report_dir)
+            insert_test_suites_into_db(test_suites)
         
     finally:
         all_test_teardown()
@@ -180,8 +181,9 @@ def start_app():
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if args and args[0] == '-admin':
+    if args and args[0] == '-view':
         s = 'test'
         start_app()
     else:
-        run_tests()
+        save_to_db = True if args and args[0] == '-save' else False
+        run_tests(save_to_db)
