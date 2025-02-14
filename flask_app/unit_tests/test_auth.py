@@ -1,9 +1,7 @@
-from unit_tests import BaseTestClass
 import unittest
-from app import create_app
-from app.auth.services import create_user
 
-class TestAuth(BaseTestClass):
+class TestAuth(unittest.TestCase):
+    
     
     def test_sample(self):
         self.assertEqual(1, 1)

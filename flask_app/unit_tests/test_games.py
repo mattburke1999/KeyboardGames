@@ -1,8 +1,6 @@
-from unit_tests import BaseTestClass
 import unittest
-from app import create_app
 
-class TestGames(BaseTestClass):
+class TestGames(unittest.TestCase):
     
     def test_sample(self):
         self.assertEqual(1, 1)
