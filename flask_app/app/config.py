@@ -2,8 +2,6 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 import os
 
-FLASK_ENV = os.environ.get('FLASK_ENV')
-
 class Config():
     DB_CNXN = os.getenv('DATABASE_URL')
     SECRET_KEY = os.getenv('SECRET_KEY')
