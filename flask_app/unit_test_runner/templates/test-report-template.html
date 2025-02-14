@@ -1,5 +1,8 @@
 {% macro display_suite(type, suites) %}
     <h2 class='test-type'>{{ type }} Tests</h2>
+    {% if len(suites) == 0 %}
+        <p>No {{ type }} test results found.</p>
+    {% else %}
     <div class='suites'>
         <div class="suite-row header">
             <p class="suite-name">Name</p>
@@ -63,6 +66,7 @@
             </div>
         {% endfor %}
     </div>
+    {% endif %}
 {% endmacro %}
 
 
