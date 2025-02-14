@@ -24,7 +24,7 @@ def create_app(config: Literal['prod', 'test'] = 'prod'):
         app.config.from_object(TestConfig)
     
     print(f'Config: {config}')
-    print(f'CNXN: {app.config['DB_CNXN']}')
+    print(f'CNXN: {app.config["DB_CNXN"]}')
         
     BaseDB.initialize_pool(db_str=app.config['DB_CNXN'], minconn=1, maxconn=10)
     Redis_Store.initialize(host='localhost', port=6379, password=app.config['DB_CNXN'])
