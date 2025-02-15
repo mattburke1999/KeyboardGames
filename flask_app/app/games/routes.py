@@ -6,6 +6,7 @@ from app.games.services import score_update_process
 from app.games.views import game_view
 from app.views import json_result
 from app.utils.route_decorators import login_required
+from app.utils.route_decorators import require_json
 
 bp = Blueprint('games', __name__, url_prefix='/games', template_folder='templates', static_folder='static')
 
@@ -23,8 +24,8 @@ def create_session():
 
 @bp.route('/<game_id>/score_update', methods=['POST'])
 @login_required('api')
-def score_update(game_id):
-    data = request.get_json()
+@require_json
+def score_update(game_id, data):
     client_ip = request.remote_addr
     result = score_update_process(client_ip, data, game_id)
     return json_result(result)

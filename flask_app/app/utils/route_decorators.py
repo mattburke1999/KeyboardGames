@@ -7,6 +7,7 @@ from app.auth.services import check_admin
 from app.auth.views import not_logged_in_view
 from app.auth.views import not_admin_view
 from app.auth.views import not_localhost_view
+from app.views import invalid_request_format_view
 
 def admin_only(type: str):
     def decorator(f: Callable):
@@ -37,3 +38,12 @@ def localhost_only(type: str):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+def require_json(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return invalid_request_format_view()
+        return f(data, *args, **kwargs)
+    return decorated_function
