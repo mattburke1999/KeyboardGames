@@ -10,9 +10,9 @@ from app.skins.services import purchase_skin as purchase_skin_s
 from app.skins.services import create_skin_page
 from app.skins.services import create_new_skin_type as create_new_skin_type_s
 from app.skins.services import create_new_skin_input
-from app.auth.routes import login_required
-from app.auth.routes import admin_only
-from app.auth.routes import localhost_only
+from app.utils.route_decorators import login_required
+from app.utils.route_decorators import admin_only
+from app.utils.route_decorators import localhost_only
 
 bp = Blueprint('skins', __name__, url_prefix='/skins', template_folder='templates', static_folder='static')
 

@@ -5,7 +5,7 @@ from app.games.services import create_session_process
 from app.games.services import score_update_process
 from app.games.views import game_view
 from app.views import json_result
-from app.auth.routes import login_required
+from app.utils.route_decorators import login_required
 
 bp = Blueprint('games', __name__, url_prefix='/games', template_folder='templates', static_folder='static')
 
