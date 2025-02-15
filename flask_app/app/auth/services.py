@@ -9,8 +9,22 @@ import threading
 
 DB = AuthDB()
 
+def parse_user_data_and_validate(data: dict[str, str]) -> Func_Result:
+    first_name = data.get('first_name', None)
+    last_name = data.get('last_name', None)
+    username = data.get('username', None)
+    email = data.get('email', None)
+    password = data.get('password', None)
+    if not first_name or not last_name or not username or not email or not password:
+        return Func_Result(False, {'error': 'Missing required fields'})
+    new_user = New_User(first_name, last_name, username, email, password)
+    return Func_Result(True, new_user)
+
 def create_user(data: dict[str, str]) -> Func_Result:
-    new_user = New_User(data['first_name'], data['last_name'], data['username'], data['email'], data['password'])
+    new_user = parse_user_data_and_validate(data)
+    if not new_user.success:
+        return new_user
+    new_user = new_user.result
     with DB.connect_db() as conn:
         try:
             new_user_id = DB.create_user(conn, new_user)
@@ -28,8 +42,10 @@ def create_user(data: dict[str, str]) -> Func_Result:
             return Func_Result(False, {'error': str(e)})
 
 def try_login(data: dict[str, str]) -> Func_Result:
-    username = data['username']
-    password = data['password']
+    username = data.get('username', None)
+    password = data.get('password', None)
+    if not username or not password:
+        return Func_Result(False, {'error': 'Missing username or password'})
     try:
         user_id, hashed_password, is_admin = DB.check_user(username)
         if user_id and bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)): # type: ignore

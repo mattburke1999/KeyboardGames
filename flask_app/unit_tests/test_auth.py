@@ -108,6 +108,33 @@ class Test_try_login(unittest.TestCase):
                 mock_bcrypt.assert_not_called()
                 mock_session.__setitem__.assert_not_called()
                 mock_session.__getitem__.assert_not_called()
+    
+    @patch('app.auth.services.DB.check_user')
+    @patch('app.auth.services.bcrypt.checkpw')
+    def test_login_incorrect_input(self, mock_bcrypt, mock_DB):
+        with self.app.test_request_context():
+            with patch('app.auth.services.session') as mock_session:
+                # arrange
+                user_id = 1
+                password = 'test'
+                mock_DB.return_value = (user_id, password, False)
+                
+                mock_session.__getitem__.side_effect = self.mock_session_get
+                mock_session.__setitem__.side_effect = self.mock_session_set
+                
+                data = {'username': '', 'password': ''}
+                
+                # act
+                result = try_login(data)
+                
+                # assert
+                self.assertFalse(result.success)
+                self.assertIn('error', result.result)
+                mock_bcrypt.assert_not_called()
+                mock_DB.assert_not_called()
+                mock_session.__setitem__.assert_not_called()
+                mock_session.__getitem__.assert_not_called()
+                
         
 if __name__ == '__main__':
     unittest.main()
