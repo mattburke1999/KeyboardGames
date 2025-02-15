@@ -47,3 +47,9 @@ def require_json(f):
             return invalid_request_format_view()
         return f(data, *args, **kwargs)
     return decorated_function
+
+def get_client_ip(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        return f(request.remote_addr, *args, **kwargs)
+    return decorated_function
