@@ -5,6 +5,7 @@ from .data_access.redis_store import Redis_Store
 from .auth.routes import bp as auth_bp
 from .games.routes import bp as games_bp
 from .skins.routes import bp as skins_bp
+from .profile.routes import bp as profile_bp
 from flask_cors import CORS
 from .config import Config
 from .config import ProdConfig
@@ -16,6 +17,7 @@ def create_app(config: Literal['prod', 'test'] = 'prod'):
     app.register_blueprint(auth_bp)
     app.register_blueprint(games_bp)
     app.register_blueprint(skins_bp)
+    app.register_blueprint(profile_bp)
     app.secret_key = Config.SECRET_KEY
     
     if config == 'prod':

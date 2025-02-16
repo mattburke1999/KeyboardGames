@@ -2,7 +2,6 @@ import psycopg2 as pg
 from psycopg2 import pool
 from contextlib import contextmanager
 from typing import Generator
-from .models import Profile
 
 class BaseDB:
     _pool = None # Shared pool for all subclasses
@@ -22,10 +21,5 @@ class BaseDB:
             yield conn
         finally:
             self._pool.putconn(conn) # type: ignore
-            
-    def get_profile(self, user_id: int) -> Profile | None:
-        with self.connect_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute('select username, created_time, points, num_top10, ranks from profile_view where id = %s', (user_id,))
-                result = cur.fetchone()
-                return Profile(*result) if result else None
+    
+    
