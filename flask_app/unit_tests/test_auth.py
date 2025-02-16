@@ -203,6 +203,32 @@ class Test_create_user(AuthTest_WithSession):
                 self.assertEqual(mock_session['user_id'], user_id)
                 self.mock_connection.commit.assert_called()
                 self.mock_connection.rollback.assert_not_called()
+                
+    @patch('app.auth.services.DB')
+    def test_create_user_db_exception(self, mock_DB):
+        with self.app.test_request_context():
+            with patch('app.auth.services.session') as mock_session:
+                # arrange
+                data = {'first_name': 'test', 'last_name': 'test', 'username': 'test', 'email': 'test', 'password': 'test'}
+                mock_DB.create_user.side_effect = Exception('DB error')
+                mock_DB.add_default_skin.return_value = None
+                mock_DB.connect_db.return_value = yield self.mock_connection
+                
+                mock_session.__getitem__.side_effect = self.mock_session_get
+                mock_session.__setitem__.side_effect = self.mock_session_set
+                
+                # act
+                result = create_user(data)
+                
+                # assert
+                self.assertFalse(result.success)
+                self.assertIn('error', result.result)
+                self.mock_connection.commit.assert_not_called()
+                self.mock_connection.rollback.assert_called()
+                self.assertIn('logged_in', self.mock_session)
+                self.assertFalse(mock_session['logged_in'])
+                self.assertIn('user_id', self.mock_session)
+                self.assertIsNone(mock_session['user_id'])
     
 if __name__ == '__main__':
     unittest.main()
