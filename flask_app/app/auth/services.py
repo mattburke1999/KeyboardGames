@@ -22,11 +22,13 @@ def parse_user_data_and_validate(data: dict[str, str]) -> Func_Result:
 
 def create_user(data: dict[str, str]) -> Func_Result:
     new_user = parse_user_data_and_validate(data)
+    print(new_user)
     if not new_user.success:
         return new_user
     new_user = new_user.result
-    with DB.connect_db() as conn:
-        try:
+    conn = None
+    try:
+        with DB.connect_db() as conn:
             new_user_id = DB.create_user(conn, new_user)
             if not new_user_id:
                 raise Exception('Error creating user')
@@ -35,11 +37,13 @@ def create_user(data: dict[str, str]) -> Func_Result:
             session['logged_in'] = True
             session['user_id'] = new_user_id
             return Func_Result(True, {'registered': True})
-        except Exception as e:
+    except Exception:
+        e = traceback.format_exc()
+        if conn:
             conn.rollback()
-            session['logged_in'] = False
-            session['user_id'] = None
-            return Func_Result(False, {'error': str(e)})
+        session['logged_in'] = False
+        session['user_id'] = None
+        return Func_Result(False, {'error': str(e)})
 
 def try_login(data: dict[str, str]) -> Func_Result:
     username = data.get('username', None)
