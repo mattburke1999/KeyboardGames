@@ -67,7 +67,7 @@ class Test_try_login(AuthTest_WithSession):
                 
     @patch('app.auth.services.DB.check_user')
     @patch('app.auth.services.bcrypt.checkpw')
-    def test_login_failure(self, mock_bcrypt, mock_DB):
+    def test_login_wrong_creds(self, mock_bcrypt, mock_DB):
         with self.app.test_request_context():
             with patch('app.auth.services.session') as mock_session:
                 # arrange
@@ -81,7 +81,7 @@ class Test_try_login(AuthTest_WithSession):
                 mock_session.__getitem__.side_effect = self.mock_session_get
                 mock_session.__setitem__.side_effect = self.mock_session_set
                 
-                data = {'username': 'test', 'password': password}
+                data = {'username': 'test', 'password': f'wrong{password}'}
                 
                 # act
                 result = try_login(data)
@@ -124,7 +124,7 @@ class Test_try_login(AuthTest_WithSession):
     
     @patch('app.auth.services.DB.check_user')
     @patch('app.auth.services.bcrypt.checkpw')
-    def test_login_incorrect_input(self, mock_bcrypt, mock_DB):
+    def test_login_missing_fields(self, mock_bcrypt, mock_DB):
         with self.app.test_request_context():
             with patch('app.auth.services.session') as mock_session:
                 # arrange
