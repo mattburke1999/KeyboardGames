@@ -1,9 +1,7 @@
 import unittest
 
 class TestGames(unittest.TestCase):
-    
-    def test_sample(self):
-        self.assertEqual(1, 1)
+    pass
         
 if __name__ == '__main__':
     unittest.main()
