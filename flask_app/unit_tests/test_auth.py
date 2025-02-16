@@ -3,7 +3,6 @@ from flask import Flask
 from unittest.mock import patch
 from app.auth.services import create_user
 from app.auth.services import try_login
-from contextlib import contextmanager
 import random
 
 class MockConnectionObject:
@@ -17,20 +16,13 @@ class AuthTest_WithSession(unittest.TestCase):
     def setUp(self):
         self.app = Flask('test')
         self.mock_session = {}
+        self.mock_connection = MockConnectionObject()
         
     def mock_session_get(self, key):
         return self.mock_session[key]
     
     def mock_session_set(self, key, value):
         self.mock_session[key] = value
-        
-    def mock_connection(self):
-        # return a fake object with commit() and rollback() methods
-        return MockConnectionObject()
-    
-    @contextmanager
-    def mock_connect_db(self, func):
-        yield self.mock_connection(func)
     
 
 class Test_try_login(AuthTest_WithSession):
@@ -190,7 +182,7 @@ class Test_create_user(AuthTest_WithSession):
                 user_id = 1
                 mock_DB.create_user.return_value = user_id
                 mock_DB.add_default_skin.return_value = None
-                mock_DB.connect_db.return_value = self.mock_connect_db
+                mock_DB.connect_db.return_value = yield self.mock_connection
                 
                 mock_session.__getitem__.side_effect = self.mock_session_get
                 mock_session.__setitem__.side_effect = self.mock_session_set
@@ -209,8 +201,8 @@ class Test_create_user(AuthTest_WithSession):
                 self.assertTrue(mock_session['logged_in'])
                 self.assertIn('user_id', self.mock_session)
                 self.assertEqual(mock_session['user_id'], user_id)
-                MockConnectionObject.commit.assert_called()
-                MockConnectionObject.rollback.assert_not_called()
+                self.mock_connection.commit.assert_called()
+                self.mock_connection.rollback.assert_not_called()
     
 if __name__ == '__main__':
     unittest.main()
