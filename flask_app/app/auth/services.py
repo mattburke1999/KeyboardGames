@@ -6,26 +6,25 @@ from app.data_access.models import Func_Result
 import bcrypt
 import traceback
 import threading
+from typing import Literal
 
 DB = AuthDB()
 
-def parse_user_data_and_validate(data: dict[str, str]) -> Func_Result:
+def parse_user_data_and_validate(data: dict[str, str]) -> New_User | None:
     first_name = data.get('first_name', None)
     last_name = data.get('last_name', None)
     username = data.get('username', None)
     email = data.get('email', None)
     password = data.get('password', None)
     if not first_name or not last_name or not username or not email or not password:
-        return Func_Result(False, {'error': 'Missing required fields'})
+        return None
     new_user = New_User(first_name, last_name, username, email, password)
-    return Func_Result(True, new_user)
+    return new_user
 
 def create_user(data: dict[str, str]) -> Func_Result:
     new_user = parse_user_data_and_validate(data)
-    print(new_user)
-    if not new_user.success:
-        return new_user
-    new_user = new_user.result
+    if not new_user:
+        return Func_Result(True, {'registered': False, 'error': 'Missing required fields'})
     conn = None
     try:
         with DB.connect_db() as conn:
@@ -49,7 +48,7 @@ def try_login(data: dict[str, str]) -> Func_Result:
     username = data.get('username', None)
     password = data.get('password', None)
     if not username or not password:
-        return Func_Result(False, {'error': 'Missing username or password'})
+        return Func_Result(True, {'error': 'Missing username or password'})
     try:
         user_id, hashed_password, is_admin = DB.check_user(username)
         if user_id and bcrypt.checkpw(bytes(password, 'utf-8'), bytes(hashed_password)): # type: ignore
@@ -73,9 +72,14 @@ def check_login() -> bool:
 def check_admin() -> bool:
     return 'is_admin' in session and session['is_admin']
 
-def check_unique_register_input(input_type: str, data: dict[str, str]) -> Func_Result:
+def check_unique_register_input(input_type: Literal['username', 'email'], data: dict[str, str]) -> Func_Result:
+    if input_type not in {'username', 'email'}:
+            return Func_Result(True, {'error': 'Invalid input type'})
+    input = data.get(input_type, None)
+    if not input:
+        return Func_Result(True, {'error': 'Missing input'})
     try:
-        unique_check = DB.check_unique_register_input(input_type, data[input_type])
+        unique_check = DB.check_unique_register_input(input_type, input)
         return Func_Result(True, {'unique': unique_check})
     except Exception as e:
         return Func_Result(False, {'error': str(e)})
