@@ -29,7 +29,7 @@ target/
 
 # VSCode workspace settings
 .vscode/
-
+.vs/
 # IntelliJ IDEA project files
 .idea/
 
